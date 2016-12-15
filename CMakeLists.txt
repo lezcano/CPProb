@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.6)
 ##############################################################################
 # Project Name
 ##############################################################################
-set(PROJECT_NAME alcp)
+set(PROJECT_NAME CPProb)
 set(PROJECT_LIB ${PROJECT_NAME}_lib)
 
 project(${PROJECT_NAME})

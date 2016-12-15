@@ -1,4 +1,4 @@
-# CPProb
+# CPProb [![Build Status](https://travis-ci.org/Lezcano/CPProb.svg?branch=master)](https://travis-ci.org/Lezcano/CPProb)
 
 > Library to perform probabilistic inference in C++14.
 
