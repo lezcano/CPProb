@@ -18,7 +18,7 @@ is too old.
 
 The library also makes use of the Boost libraries for multiprecission
 intgers support. In the case that boost libraries are not in the path
-you will have to specify the path using the `-DBOOST_ROOT` variable.
+you will have to specify their path using the `-DBOOST_ROOT` variable.
 This will not be needed in most systems.
 
 The compile process is the same as usual, configure the project and compile
