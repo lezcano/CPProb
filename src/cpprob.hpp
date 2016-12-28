@@ -20,8 +20,8 @@ namespace cpprob{
         // Look for default template parameters in deduction template functions
         template<template <class, class> class Distr, class Policy>
         RealType sample(const Distr<RealType, Policy>& distr){
-            std::random_device rd;
-            boost::random::mt19937 rng{rd()};
+            static std::random_device rd;
+            static boost::random::mt19937 rng{rd()};
             static boost::random::uniform_real_distribution<RealType> unif{0,1};
             auto rand_num = unif(rng);
             auto xi = boost::math::quantile(distr, rand_num);
