@@ -3,8 +3,9 @@
 #include <functional>
 #include <cmath>
 #include <random>
+#include <iostream>
+#include <array>
 
-#include <boost/math/distributions.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
@@ -20,8 +21,7 @@ namespace cpprob{
         // Look for default template parameters in deduction template functions
         template<template <class, class> class Distr, class Policy>
         RealType sample(const Distr<RealType, Policy>& distr){
-            static std::random_device rd;
-            static boost::random::mt19937 rng{rd()};
+            static boost::random::mt19937 rng{seeded_rng()};
             static boost::random::uniform_real_distribution<RealType> unif{0,1};
             auto rand_num = unif(rng);
             auto xi = boost::math::quantile(distr, rand_num);
@@ -39,7 +39,18 @@ namespace cpprob{
         }
 
     private:
-        template<class U, class V> friend class Eval;
+        template<class, class> friend class Eval;
+
+        // Idea from
+        // http://codereview.stackexchange.com/questions/109260/seed-stdmt19937-from-stdrandom-device/109266#109266
+        template<class T = boost::random::mt19937, std::size_t N = T::state_size>
+        std::enable_if_t<N != 0, T> seeded_rng(){
+            std::array<typename T::result_type, N> random_data;
+            std::random_device rd;
+            std::generate(random_data.begin(), random_data.end(), std::ref(rd));
+            std::seed_seq seeds(random_data.begin(), random_data.end());
+            return T{seeds};
+        }
 
         std::vector<RealType> _x;
         RealType _w;
@@ -52,51 +63,38 @@ namespace cpprob{
 
         Eval(T f) : _f{f}{ }
 
-        void operator()(bool print=true) {
+        void operator()() {
             using std::exp;
             using boost::multiprecision::exp;
-            _c._w = 0;
-            _c._x.resize(0);
+            _c = Core<RealType>{};
             _f(_c);
             _c._w = exp(_c._w);
-
-            if(print){
-                std::cout << "x:";
-                for(auto x : _c._x)
-                    std::cout << " " << x;
-                std::cout << '\n';
-
-                std::cout << "w: " << _c._w << '\n';
-            }
         }
 
         std::vector<RealType> expectation(
                 const std::function<std::vector<RealType>(const std::vector<RealType>&)>& q,
                 size_t n = 10000){
 
-
             // Assume that the vector is constant in size
             // What to do if M^k is different?!
-            //
             RealType sum_w = 0;
-            std::vector<RealType> aux;
 
-            this->operator()(false);
+            this->operator()();
             sum_w += _c._w;
-            std::vector<RealType> exp = q(_c._x);
-            std::transform(exp.begin(), exp.end(), exp.begin(), [this](RealType e){ return e*_c._w; });
+            std::vector<RealType> ret = q(_c._x);
+            std::transform(ret.begin(), ret.end(), ret.begin(), [this](RealType e){ return e*_c._w; });
 
             for(size_t i = 1; i < n; ++i){
-                this->operator()(false);
+                this->operator()();
                 sum_w += _c._w;
-                aux = q(_c._x);
-                std::transform(exp.begin(), exp.end(), aux.begin(), exp.begin(),
+                auto aux = q(_c._x);
+                std::transform(ret.begin(), ret.end(), aux.begin(), ret.begin(),
                                 [this](RealType a, RealType b){ return a + _c._w * b; });
             }
-            // Normalise (Compute E_\pi instead of E_\gamma)
-            std::transform(exp.begin(), exp.end(), exp.begin(),
+            // Normalise (Compute E_\pi)
+            std::transform(ret.begin(), ret.end(), ret.begin(),
                             [sum_w](RealType x){ return x/sum_w; });
-            return exp;
+            return ret;
         }
 
     private:

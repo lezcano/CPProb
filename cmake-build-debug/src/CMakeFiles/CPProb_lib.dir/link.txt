@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCPProb_lib.a  
+/usr/bin/ranlib libCPProb_lib.a
