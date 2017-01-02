@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/alcp_main.dir/main.cpp.o  -o alcp_main -rdynamic libCPProb_lib.a 
