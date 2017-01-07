@@ -3,18 +3,21 @@
 #include <iterator>
 #include <vector>
 
-#include <boost/math/distributions/beta.hpp>
+#include <boost/random/beta_distribution.hpp>
+#include <boost/random/normal_distribution.hpp>
+
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/distributions/bernoulli.hpp>
+
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include "cpprob.hpp"
 
-//using RealType = boost::multiprecision::cpp_dec_float_100;
-using RealType = double;
+using RealType = boost::multiprecision::cpp_dec_float_100;
+//using RealType = double;
 
 void f(cpprob::Core<RealType>& c){
-    static const boost::math::beta_distribution<RealType> beta{1, 1};
+    static const boost::random::beta_distribution<RealType> beta{1, 1};
     auto x = c.sample(beta);
 
     const boost::math::bernoulli_distribution<RealType> ber{x};
@@ -23,7 +26,7 @@ void f(cpprob::Core<RealType>& c){
 
 void g(cpprob::Core<RealType>& c){
     constexpr auto n = 6;
-    static const boost::math::normal_distribution<RealType> normal{0, 10};
+    static const boost::random::normal_distribution<RealType> normal{0, 10};
     static const std::array<std::pair<RealType, RealType>, n> arr
                     = {{{1.0, 2.1},
                         {2.0, 3.9},
@@ -37,7 +40,6 @@ void g(cpprob::Core<RealType>& c){
     for(size_t i = 0; i < n; ++i){
         c.observe(boost::math::normal_distribution<RealType>{slope*arr[i].first + bias, 1}, arr[i].second);
     }
-
 }
 
 template<typename T>

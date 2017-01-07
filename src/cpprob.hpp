@@ -7,6 +7,7 @@
 #include <array>
 
 #include <boost/random/random_device.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
@@ -17,17 +18,16 @@ namespace cpprob{
     class Core{
     public:
 
-        // Currently it does not work for discrete distributions
-        // Look for default template parameters in deduction template functions
-        template<template <class, class> class Distr, class Policy>
-        RealType sample(const Distr<RealType, Policy>& distr){
+        template<template <class> class Distr>
+        RealType sample(const Distr<RealType>& distr){
             static boost::random::mt19937 rng{seeded_rng()};
-            static boost::random::uniform_real_distribution<RealType> unif{0,1};
-            auto rand_num = unif(rng);
-            auto xi = boost::math::quantile(distr, rand_num);
+            static boost::random::variate_generator<
+                    boost::random::mt19937,
+                    Distr<RealType>> next_val{rng, distr};
+            auto x = next_val();
 
-            _x.emplace_back(xi);
-            return xi;
+            _x.emplace_back(x);
+            return x;
         }
 
         template<template <class, class> class Distr, class Policy>
