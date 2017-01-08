@@ -3,8 +3,8 @@
 #include <functional>
 #include <cmath>
 #include <random>
-#include <iostream>
 #include <array>
+#include <type_traits>
 
 #include <boost/random/random_device.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -18,20 +18,18 @@ namespace cpprob{
     class Core{
     public:
 
-        template<template <class> class Distr>
-        RealType sample(const Distr<RealType>& distr){
+        template<class DistrRand>
+        typename DistrRand::result_type sample(const DistrRand& distr){
             static boost::random::mt19937 rng{seeded_rng()};
-            static boost::random::variate_generator<
-                    boost::random::mt19937,
-                    Distr<RealType>> next_val{rng, distr};
+            static boost::random::variate_generator<boost::random::mt19937, DistrRand> next_val{rng, distr};
             auto x = next_val();
 
-            _x.emplace_back(x);
+            _x.emplace_back(static_cast<RealType>(x));
             return x;
         }
 
-        template<template <class, class> class Distr, class Policy>
-        void observe(const Distr<RealType, Policy>& distr, RealType x){
+        template<class DistrMath>
+        void observe(const DistrMath& distr, RealType x){
             using std::log;
             using boost::multiprecision::log;
             auto log_prob = log(boost::math::pdf(distr, x));
@@ -53,7 +51,7 @@ namespace cpprob{
         }
 
         std::vector<RealType> _x;
-        RealType _w;
+        RealType _w = 0;
 
     };
 
@@ -63,33 +61,28 @@ namespace cpprob{
 
         Eval(T f) : _f{f}{ }
 
-        void operator()() {
-            using std::exp;
-            using boost::multiprecision::exp;
-            _c = Core<RealType>{};
-            _f(_c);
-            _c._w = exp(_c._w);
-        }
-
         std::vector<RealType> expectation(
-                const std::function<std::vector<RealType>(const std::vector<RealType>&)>& q,
+                const std::function<std::vector<RealType>(std::vector<RealType>)>& q
+                    = [](std::vector<RealType> x) -> std::vector<RealType>{return x;},
                 size_t n = 10000){
 
             // Assume that the vector is constant in size
             // What to do if M^k is different?!
+            // Maybe Macros & __COUNTER__ or BOOST_PP_COUNTER
             RealType sum_w = 0;
 
-            this->operator()();
-            sum_w += _c._w;
-            std::vector<RealType> ret = q(_c._x);
-            std::transform(ret.begin(), ret.end(), ret.begin(), [this](RealType e){ return e*_c._w; });
+            auto core = this->eval_f();
+            sum_w += core._w;
+            std::vector<RealType> ret = q(core._x);
+            std::vector<RealType> aux;
+            std::transform(ret.begin(), ret.end(), ret.begin(), [&](RealType e){ return e*core._w; });
 
             for(size_t i = 1; i < n; ++i){
-                this->operator()();
-                sum_w += _c._w;
-                auto aux = q(_c._x);
+                core = this->eval_f();
+                sum_w += core._w;
+                aux = q(core._x);
                 std::transform(ret.begin(), ret.end(), aux.begin(), ret.begin(),
-                                [this](RealType a, RealType b){ return a + _c._w * b; });
+                                [&](RealType a, RealType b){ return a + core._w * b; });
             }
             // Normalise (Compute E_\pi)
             std::transform(ret.begin(), ret.end(), ret.begin(),
@@ -98,7 +91,16 @@ namespace cpprob{
         }
 
     private:
+
+        Core<RealType>  eval_f(){
+            using std::exp;
+            using boost::multiprecision::exp;
+            Core<RealType> core;
+            _f(core);
+            core._w = exp(core._w);
+            return core;
+        }
+
         T _f;
-        Core<RealType> _c;
     };
 }

@@ -5,6 +5,7 @@
 
 #include <boost/random/beta_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/random/binomial_distribution.hpp>
 
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/distributions/bernoulli.hpp>
@@ -13,17 +14,18 @@
 
 #include "cpprob.hpp"
 
-using RealType = boost::multiprecision::cpp_dec_float_100;
-//using RealType = double;
-
+template <class RealType>
 void f(cpprob::Core<RealType>& c){
     static const boost::random::beta_distribution<RealType> beta{1, 1};
     auto x = c.sample(beta);
+    //static const boost::random::binomial_distribution<int, RealType> binom{};
+    //c.sample(binom);
 
     const boost::math::bernoulli_distribution<RealType> ber{x};
     c.observe(ber, 1.0);
 }
 
+template <class RealType>
 void g(cpprob::Core<RealType>& c){
     constexpr auto n = 6;
     static const boost::random::normal_distribution<RealType> normal{0, 10};
@@ -50,10 +52,14 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
 }
 
 int main(){
-    cpprob::Eval<decltype(&f), RealType> e1{&f};
-    cpprob::Eval<decltype(&g), RealType> e2{&g};
+
+    //using RealType = boost::multiprecision::cpp_dec_float_100;
+    using RealType = double;
+
+    cpprob::Eval<decltype(&f<RealType>), RealType> e1{&f<RealType>};
+    cpprob::Eval<decltype(&g<RealType>), RealType> e2{&g<RealType>};
 
     std::cout << std::setprecision(10);
-    std::cout << "Expectation example 1: " << e1.expectation([](auto x){return x;}) << std::endl;
-    std::cout << "Expectation example 2: " << e2.expectation([](auto x){return x;}) << std::endl;
+    std::cout << "Expectation example 1: " << e1.expectation() << std::endl;
+    std::cout << "Expectation example 2: " << e2.expectation() << std::endl;
 }
