@@ -5,6 +5,9 @@
 #include <random>
 #include <array>
 #include <type_traits>
+#include <vector>
+#include <unordered_map>
+#include <execinfo.h>
 
 #include <boost/random/random_device.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -23,8 +26,11 @@ namespace cpprob{
             static boost::random::mt19937 rng{seeded_rng()};
             static boost::random::variate_generator<boost::random::mt19937, DistrRand> next_val{rng, distr};
             auto x = next_val();
+            std::vector<std::string> trace = get_trace();
+            std::string val = std::accumulate(trace.begin(), trace.end(), std::string(""));
+            std::cout << val << std::endl;
 
-            _x.emplace_back(static_cast<RealType>(x));
+            _x[val].emplace_back(static_cast<RealType>(x));
             return x;
         }
 
@@ -39,6 +45,37 @@ namespace cpprob{
     private:
         template<class, class> friend class Eval;
 
+        std::vector<std::string> get_trace(){
+            constexpr int buf_size = 1000;
+            static void *buffer[buf_size];
+            char **strings;
+
+            size_t nptrs = backtrace(buffer, buf_size);
+
+            // We will not store the call to get_traces or the call to observe
+            constexpr size_t str_discarded = 2;
+            std::vector<std::string> ret {nptrs-str_discarded};
+
+            strings = backtrace_symbols(buffer, nptrs);
+            if (strings == nullptr) {
+                perror("backtrace_symbols");
+                exit(EXIT_FAILURE);
+            }
+
+            // The -2 is to discard the call to _start and
+            // the call to __libc_start_main
+            for (int j = str_discarded; j < nptrs - 2; j++){
+                std::cout << strings[j] << std::endl;
+                std::string s {strings[j]};
+                // The +3 is to discard the characters
+                auto first = s.find("[0x") + 3; 
+                auto last = s.find("]");
+                ret[nptrs-j-1] = s.substr(first, last-first);
+            }
+            free(strings);
+            return ret;
+        }
+
         // Idea from
         // http://codereview.stackexchange.com/questions/109260/seed-stdmt19937-from-stdrandom-device/109266#109266
         template<class T = boost::random::mt19937, std::size_t N = T::state_size>
@@ -50,9 +87,8 @@ namespace cpprob{
             return T{seeds};
         }
 
-        std::vector<RealType> _x;
+        std::unordered_map<std::string, std::vector<RealType>> _x;
         RealType _w = 0;
-
     };
 
     template<class T, class RealType = double>
@@ -63,31 +99,29 @@ namespace cpprob{
 
         std::vector<RealType> expectation(
                 const std::function<std::vector<RealType>(std::vector<RealType>)>& q
-                    = [](std::vector<RealType> x) -> std::vector<RealType>{return x;},
-                size_t n = 10000){
+                    = [](std::vector<RealType> x){return x;},
+                size_t n = 1){
 
-            // Assume that the vector is constant in size
-            // What to do if M^k is different?!
-            // Maybe Macros & __COUNTER__ or BOOST_PP_COUNTER
             RealType sum_w = 0;
 
             auto core = this->eval_f();
             sum_w += core._w;
-            std::vector<RealType> ret = q(core._x);
-            std::vector<RealType> aux;
-            std::transform(ret.begin(), ret.end(), ret.begin(), [&](RealType e){ return e*core._w; });
+            //std::vector<RealType> ret = q(core._x);
+            //std::vector<RealType> aux;
+            //std::transform(ret.begin(), ret.end(), ret.begin(), [&](RealType e){ return e*core._w; });
 
             for(size_t i = 1; i < n; ++i){
                 core = this->eval_f();
-                sum_w += core._w;
-                aux = q(core._x);
-                std::transform(ret.begin(), ret.end(), aux.begin(), ret.begin(),
-                                [&](RealType a, RealType b){ return a + core._w * b; });
+                //sum_w += core._w;
+                //aux = q(core._x);
+                //std::transform(ret.begin(), ret.end(), aux.begin(), ret.begin(),
+                //                [&](RealType a, RealType b){ return a + core._w * b; });
             }
             // Normalise (Compute E_\pi)
-            std::transform(ret.begin(), ret.end(), ret.begin(),
-                            [sum_w](RealType x){ return x/sum_w; });
-            return ret;
+            //std::transform(ret.begin(), ret.end(), ret.begin(),
+            //                [sum_w](RealType x){ return x/sum_w; });
+            //return ret;
+            return std::vector<RealType>{};
         }
 
     private:
