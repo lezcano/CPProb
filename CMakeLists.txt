@@ -39,4 +39,5 @@ if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
+include_directories(include)
 add_subdirectory(src)
