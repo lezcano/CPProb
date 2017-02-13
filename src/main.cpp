@@ -49,10 +49,13 @@ void g(Core& c){
 
 template<typename T>
 std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
-    for (auto elem : v)
+    out << "[" << '\n';
+    for (const auto& elem : v)
         out << elem << " ";
+    out << "]";
     return out;
 }
+
 
 template<typename T, typename U>
 std::ostream& operator<< (std::ostream& out, const std::unordered_map<T, U>& v) {
@@ -69,6 +72,6 @@ int main(){
     //using RealType = double;
 
     std::cout << std::setprecision(10);
-    std::cout << "Expectation example 1:\n" << cpprob::expectation(&f) << std::endl;
+    //std::cout << "Expectation example 1:\n" << cpprob::expectation(&f) << std::endl;
     std::cout << "Expectation example 2:\n" << cpprob::expectation(&g) << std::endl;
 }

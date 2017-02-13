@@ -10,7 +10,6 @@
 #include <type_traits>
 #include <vector>
 #include <unordered_map>
-#include <utility>
 #include <execinfo.h>
 
 #include <boost/random/random_device.hpp>
@@ -29,26 +28,27 @@ namespace cpprob{
             static boost::random::mt19937 rng{seeded_rng()};
             static boost::random::variate_generator<boost::random::mt19937, DistrRand> next_val{rng, distr};
             auto x = next_val();
-            std::vector<std::string> trace = get_trace();
-            std::string addr = std::accumulate(trace.begin(), trace.end(), std::string(""));
 
-            auto it = Core::_id.insert(std::make_pair(addr, static_cast<int>(Core::_id.size())));
+            std::string addr = get_addr();
 
-            int id = it.first->second;
+            auto id = Core::_id.emplace(addr, static_cast<int>(Core::_id.size())).first->second;
+
+            if(id >= _x.size())
+                _x.resize(id + 1);
 
             _x[id].emplace_back(static_cast<double>(x));
+
             return x;
         }
 
         template<class DistrMath>
         void observe(const DistrMath& distr, double x){
             using std::log;
-            using boost::multiprecision::log;
             auto log_prob = log(pdf(distr, x));
             _w += log_prob;
         }
 
-        std::vector<std::string> get_trace(){
+        std::string get_addr(){
             constexpr int buf_size = 1000;
             static void *buffer[buf_size];
             char **strings;
@@ -57,7 +57,7 @@ namespace cpprob{
 
             // We will not store the call to get_traces or the call to observe
             constexpr size_t str_discarded = 2;
-            std::vector<std::string> ret;
+            std::vector<std::string> trace;
 
             strings = backtrace_symbols(buffer, nptrs);
             if (strings == nullptr) {
@@ -73,10 +73,10 @@ namespace cpprob{
                 // The +3 is to discard the characters
                 auto first = s.find("[0x") + 3;
                 auto last = s.find("]");
-                ret.emplace_back(s.substr(first, last-first));
+                trace.emplace_back(s.substr(first, last-first));
             }
             free(strings);
-            return ret;
+            return std::accumulate(trace.begin(), trace.end(), std::string(""));
         }
 
         // Idea from
@@ -91,14 +91,13 @@ namespace cpprob{
         }
 
         double _w = 0;
-        std::unordered_map<int, std::vector<double>> _x;
+        std::vector<std::vector<double>> _x;
         static std::unordered_map<std::string, int> _id;
     };
 
     template<typename Func>
     Core eval(Func f){
         using std::exp;
-        using boost::multiprecision::exp;
         Core c;
         f(c);
         c._w = exp(c._w);
@@ -106,48 +105,54 @@ namespace cpprob{
     }
 
     template<class Func>
-    std::unordered_map<int, std::vector<double>>
+    std::vector<std::vector<double>>
         expectation(
             const Func& f,
-            size_t n = 10000,
-            const std::function<std::unordered_map<int, std::vector<double>>(std::unordered_map<int, std::vector<double>>)>& q
-            = [](std::unordered_map<int, std::vector<double>> x){return x;}){
+            size_t n = 100000,
+            const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>& q
+            = [](std::vector<std::vector<double>> x){return x;}){
 
         Core core;
-        double sum_w;
-        std::unordered_map<int, std::vector<double>> ret, aux;
+        double sum_w = 0;
+        std::vector<std::vector<double>> ret, aux;
+
+        Core::_id.clear();
 
         for(size_t i = 0; i < n; ++i){
             core = eval(f);
             sum_w += core._w;
             aux = q(core._x);
 
-            for(auto& elem : aux){
+            if(aux.size() > ret.size())
+                ret.resize(aux.size());
+
+            for(size_t i = 0; i < aux.size(); ++i){
+                if(aux[i].empty()) continue;
                 // Multiply each element sampled x_i of the trace by the weight of the trace
-                std::transform(elem.second.begin(),
-                               elem.second.end(),
-                               elem.second.begin(),
+                std::transform(aux[i].begin(),
+                               aux[i].end(),
+                               aux[i].begin(),
                                [&](double a){ return core._w * a; });
-                auto it = ret.insert(std::make_pair(elem.first, elem.second));
-                // If it wasn't inserted then we already had it in the unordered_map
+                // Put in ret[i] the biggest of the two vectors
+                if(aux[i].size() > ret[i].size())
+                    std::swap(aux[i], ret[i]);
+
                 // Add the vectors
-                if(!it.second){
-                    bool swap = elem.second.size() > it.first->second.size();
-                    if(swap) std::swap(elem.second, it.first->second);
-                    std::transform(it.first->second.begin(),
-                                   it.first->second.end(),
-                                   elem.second.begin(),
-                                   it.first->second.begin(),
-                                   std::plus<double>());
-                }
+                std::transform(aux[i].begin(),
+                               aux[i].end(),
+                               ret[i].begin(),
+                               ret[i].begin(),
+                               std::plus<double>());
             }
         }
+
         // Normalise (Compute E_\pi)
         for(auto& elem : ret)
-            std::transform(elem.second.begin(),
-                           elem.second.end(),
-                           elem.second.begin(),
+            std::transform(elem.begin(),
+                           elem.end(),
+                           elem.begin(),
                            [sum_w](double e){ return e/sum_w; });
+
         return ret;
     }
 }
