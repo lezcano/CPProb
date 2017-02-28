@@ -33,25 +33,25 @@ expectation(const Func& f,
             const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>& q
                 = [](std::vector<std::vector<double>> x) {return x;});
 
-template<bool Testing>
+template<bool Training>
 class Core{
 public:
 
     template<template <class ...> class Distr, class ...Params>
     typename Distr<Params ...>::result_type sample(const Distr<Params ...>& distr) {
-        return sample_impl(distr, false);
+        return sample_impl(distr);
     }
 
     template<template <class ...> class Distr, class ...Params>
     void observe(const Distr<Params ...>& distr, double x) {
-        if (Testing) {
-            sample_impl(distr, true);
-            return;
-        }
         using std::log;
         auto prob = pdf(math_distr(distr), x);
-        w_ += log(prob);
         y_.emplace_back(prob);
+
+        if (Training)
+            sample_impl(distr);
+        else
+            w_ += log(prob);
     }
 
     std::vector<std::pair<double, int>> x_addr() const {
@@ -67,14 +67,14 @@ private:
 
 
     template<template <class ...> class Distr, class ...Params>
-    typename Distr<Params ...>::result_type sample_impl(const Distr<Params ...>& distr, bool from_observe) {
-        std::string addr = get_addr(from_observe);
+    typename Distr<Params ...>::result_type sample_impl(const Distr<Params ...>& distr) {
+        std::string addr = get_addr();
 
         // TODO(Lezcano) Not parallelizable right now, ids_ is static
         auto id = Core::ids_.emplace(addr, static_cast<int>(Core::ids_.size())).first->second;
 
         typename Distr<Params ...>::result_type x;
-        if (Testing) {
+        if (Training) {
             static boost::random::mt19937 rng{seeded_rng()};
             static boost::random::variate_generator<boost::random::mt19937, Distr<Params ...>> next_val{rng, distr};
             x = next_val();
@@ -103,7 +103,7 @@ private:
         return x;
     }
 
-    std::string get_addr(bool from_observe) const {
+    std::string get_addr() const {
         constexpr int buf_size = 1000;
         static void *buffer[buf_size];
         char **strings;
@@ -111,8 +111,10 @@ private:
         size_t nptrs = backtrace(buffer, buf_size);
 
         // We will not store the call to get_traces or the call to sample
-        // If we came from an observe statement we discard 3 (observe -> sample -> get_addr)
-        const size_t str_discarded = from_observe ? 3 : 2;
+        // We discard either observe -> sample_impl -> get_addr
+        //            or     sample  -> sample_impl -> get_addr
+        // TODO(Lezcano) check that the compiler does not optimize sample away
+        constexpr size_t str_discarded = 3;
         std::vector<std::string> trace;
 
         strings = backtrace_symbols(buffer, nptrs);
