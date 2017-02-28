@@ -54,6 +54,15 @@ public:
         y_.emplace_back(prob);
     }
 
+    std::vector<std::pair<double, int>> x_addr() const {
+        return x_addr_;
+    }
+
+    std::vector<double> y() const {
+        return y_;
+    }
+
+
 private:
 
 
@@ -94,18 +103,6 @@ private:
         return x;
     }
 
-
-
-    template<class Func>
-    friend std::vector<std::vector<double>>
-    expectation(const Func&,
-                size_t,
-                const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>&);
-
-    template<typename Func>
-    friend Core<false> eval(Func f);
-
-
     std::string get_addr(bool from_observe) const {
         constexpr int buf_size = 1000;
         static void *buffer[buf_size];
@@ -138,14 +135,6 @@ private:
         return std::accumulate(trace.begin(), trace.end(), std::string(""));
     }
 
-    std::vector<std::pair<double, int>> x_addr() const {
-        return x_addr_;
-    }
-
-    std::vector<double> y() const {
-        return y_;
-    }
-
     // Idea from
     // http://codereview.stackexchange.com/questions/109260/seed-stdmt19937-from-stdrandom-device/109266#109266
     template<class T = boost::random::mt19937, std::size_t N = T::state_size>
@@ -156,6 +145,16 @@ private:
         std::seed_seq seeds(random_data.begin(), random_data.end());
         return T{seeds};
     }
+
+    template<class Func>
+    friend std::vector<std::vector<double>>
+    expectation(const Func&,
+                size_t,
+                const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>&);
+
+    template<typename Func>
+    friend Core<false> eval(Func f);
+
 
     double w_ = 0;
     std::vector<std::vector<double>> x_;
