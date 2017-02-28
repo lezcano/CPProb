@@ -70,6 +70,7 @@ private:
             static boost::random::variate_generator<boost::random::mt19937, Distr<Params ...>> next_val{rng, distr};
             x = next_val();
         } else {
+            // TODO(Lezcano) Use proposal distribution to sample given the parameters from the NN
             static boost::random::mt19937 rng{seeded_rng()};
             static boost::random::variate_generator<
                 boost::random::mt19937,
@@ -78,6 +79,8 @@ private:
             // TODO(Lezcano) Use last_x_ and id to compute x
             x = next_val();
             last_x_ = x;
+
+            // TODO(Lezcano) Accumulate log(p/q) where q is the proposal distribution
         }
 
 
