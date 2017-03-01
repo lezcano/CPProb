@@ -93,7 +93,7 @@ private:
         }
 
 
-        if (id >= x_.size())
+        if (id >= static_cast<int>(x_.size()))
             x_.resize(id + 1);
 
         x_[id].emplace_back(static_cast<double>(x));

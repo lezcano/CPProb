@@ -20,14 +20,24 @@ else()
     set(STD_CXX c++14)
 endif()
 
-set(CPP_GLOBAL_ALL_COMPILE_OPTIONS -std=${STD_CXX} -Wall -pedantic)
-set(CPP_GLOBAL_DEBUG_COMPILE_OPTIONS -O0 -g3 -Wextra -Werror -fsanitize=undefined -fsanitize=address -fsanitize=thread -fsanitize=memory)
-set(CPP_GLOABL_RELEASE_COMPILE_OPTIONS -O3 -g0)
+set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -pedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g -Wextra -Werror")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,memory")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fext-numeric-literals")
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+
+message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
+message("CMAKE CXX COMPILER is ${CMAKE_CXX_COMPILER_ID}")
 
 
 ##############################################################################
