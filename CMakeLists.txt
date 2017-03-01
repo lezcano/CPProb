@@ -20,8 +20,8 @@ else()
     set(STD_CXX c++14)
 endif()
 
-set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -pedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
