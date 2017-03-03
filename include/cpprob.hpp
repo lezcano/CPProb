@@ -68,6 +68,8 @@ private:
 
     template<template <class ...> class Distr, class ...Params>
     typename Distr<Params ...>::result_type sample_impl(const Distr<Params ...>& distr) {
+        ++time_index_;
+
         std::string addr = get_addr();
 
         // TODO(Lezcano) Not parallelizable right now, ids_ is static
@@ -158,6 +160,7 @@ private:
     friend Core<false> eval(Func f);
 
 
+    int time_index_ = 0;
     double w_ = 0;
     std::vector<std::vector<double>> x_;
     static std::unordered_map<std::string, int> ids_;
@@ -182,6 +185,13 @@ Core<false> eval(Func f) {
 template<class Func>
 std::pair<std::vector<std::pair<double, int>>, std::vector<double>>
 train(const Func& f, int n = 10000) {
+    //zmq::context_t context (1);
+    //zmq::socket_t socket (context, ZMQ_REP);
+    //socket.bind("tcp://*:5555");
+
+    //zmq::message_t request;
+    //socket.recv(&request);
+
     Core<true> c;
     for (int i = 0; i < n; ++i)
         f(c);

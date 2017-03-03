@@ -2,8 +2,6 @@
 
 > Library to perform probabilistic inference in C++14.
 
-## Disclaimer: The library is in a very early development stage! It may contain bugs
-
 ## Overview
 
 This repository contains a proof of concept of a library to allow probabilistic programming in C++14.
