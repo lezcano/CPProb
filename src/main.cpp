@@ -16,11 +16,11 @@
 
 #include "cpprob.hpp"
 
-void f(cpprob::Core<false>& c) {
+template<class RealType = double>
+void f(cpprob::Core& c) {
     using boost::random::beta_distribution;
     using boost::random::bernoulli_distribution;
     using boost::random::binomial_distribution;
-    using RealType = double;
 
     static const beta_distribution<RealType> beta{1, 1};
     auto x = c.sample(beta);
@@ -29,9 +29,9 @@ void f(cpprob::Core<false>& c) {
     c.observe(ber, 1.0);
 }
 
-void g(cpprob::Core<false>& c) {
+template<class RealType = double>
+void g(cpprob::Core& c) {
     using boost::random::normal_distribution;
-    using RealType = double;
 
     constexpr auto n = 6;
     static const normal_distribution<RealType> normal{0, 10};
@@ -52,6 +52,42 @@ void g(cpprob::Core<false>& c) {
     }
 }
 
+void mean_normal(cpprob::Core& c) {
+    using boost::random::normal_distribution;
+    static const normal_distribution<> normal{0, 1};
+    const double y1 = 0.2, y2 = 0.2;
+    auto mean = c.sample(normal);
+
+    c.observe(normal_distribution<>{mean, 1}, y1);
+    c.observe(normal_distribution<>{mean, 1}, y2);
+}
+
+/*
+template<typename T>
+std::vector<T>& operator*=(std::vector<T>& v, double a)
+{
+    std::transform(v.begin(),
+                   v.end(),
+                   v.begin(),
+                   [a](double elem){ return elem * a; });
+    return v;
+}
+
+template<typename T>
+std::vector<double>& operator+=(std::vector<double>& v1, const std::vector<double>& v2)
+{
+    if(v2.size() > v1.size())
+        v1.resize(v2.size());
+
+    std::transform(v2.begin(),
+                   v2.end(),
+                   v1.begin(),
+                   v1.begin(),
+                   std::plus<double>());
+    return v1;
+}
+*/
+
 template<typename T>
 std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
     out << "[ ";
@@ -60,7 +96,6 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
     out << "]";
     return out;
 }
-
 
 template<typename T, typename U>
 std::ostream& operator<< (std::ostream& out, const std::unordered_map<T, U>& v) {
@@ -72,7 +107,9 @@ std::ostream& operator<< (std::ostream& out, const std::unordered_map<T, U>& v) 
 }
 
 int main() {
-    std::cout << std::setprecision(10);
-    std::cout << "Expectation example 1:\n" << cpprob::expectation(&f) << std::endl;
-    std::cout << "Expectation example 2:\n" << cpprob::expectation(&g) << std::endl;
+    train(&mean_normal, "tcp://*:5556");
+    //std::cout << std::setprecision(10);
+    //std::cout << "Expectation example means:\n" << cpprob::expectation(&mean_normal) << std::endl;
+    //std::cout << "Expectation example 1:\n" << cpprob::expectation(&f<>) << std::endl;
+    //std::cout << "Expectation example 2:\n" << cpprob::expectation(&g<>) << std::endl;
 }
