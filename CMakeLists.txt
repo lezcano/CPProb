@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 2.8.6)
 ##############################################################################
 # Project Name
 ##############################################################################
-set(PROJECT_NAME CPProb)
-set(PROJECT_LIB ${PROJECT_NAME}_lib)
+set(PROJECT_NAME cpprob)
 
 project(${PROJECT_NAME})
 
@@ -38,12 +37,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-
-
-message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
-message("CMAKE CXX COMPILER is ${CMAKE_CXX_COMPILER_ID}")
-
-
 ## load in pkg-config support
 find_package(PkgConfig)
 ## use pkg-config to get hints for 0mq locations
@@ -65,7 +58,7 @@ find_library(ZeroMQ_LIBRARY
 ##############################################################################
 # Setup include paths. More include paths can be added in subdirectories.
 ##############################################################################
-find_package(Boost 1.62)
+find_package(Boost 1.62 COMPONENTS program_options REQUIRED)
 MESSAGE(Boost_FOUND)
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
