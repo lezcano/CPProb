@@ -13,197 +13,102 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 
 #include <zmq.hpp>
 #include <msgpack.hpp>
 
+#include "trace.hpp"
+
 namespace cpprob {
 
-template<typename T>
-std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
-    out << "[ ";
-    for (const auto& elem : v)
-        out << elem << " ";
-    out << "]";
-    return out;
-}
+template<template <class ...> class Distr, class ...Params>
+void observe(Distr<Params ...>& distr, double x);
 
-class Core;
+template<template <class ...> class Distr, class ...Params>
+typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr);
 
-template<typename Func>
-Core eval(Func f, bool training, zmq::socket_t* socket=nullptr);
+void set_socket(zmq::socket_t*);
+void reset_trace();
+Trace get_trace();
+void set_training(const bool);
+void reset_ids();
+
+void send_observe_init(std::vector<double>&& data);
+
 
 template<class Func>
-std::vector<std::vector<double>>
-expectation(const Func& f,
-            std::vector<double> data,
-            size_t n = 100000,
-            const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>& q
-                = [](std::vector<std::vector<double>> x) {return x;});
+void compile(const Func& f, const std::string& tcp_addr = "tcp://*:5556") {
+    //  Prepare our context and socket
+    zmq::context_t context (1);
+    zmq::socket_t socket (context, ZMQ_REP);
+    socket.bind (tcp_addr);
 
-class Sample{
-public:
-    Sample(int time_index,
-           int sample_instance,
-           double value,
-           const std::string& proposal_name,
-           const std::string& sample_address);
+    // Setup variables
+    set_training(true);
+    reset_ids();
 
-    void pack(msgpack::packer<msgpack::sbuffer>& pk) const;
+    zmq::message_t request;
 
-private:
-    // TODO(Lezcano) Have a static counter in this class instead of in Core
-    int time_index_;
-    int sample_instance_;
-    double value_;
-    std::string proposal_name_;
-    std::string sample_address_;
-};
+    //  Wait for next request from client
+    //  TODO(Lezcano) look at this code and clean
+    while(true){
+        socket.recv (&request);
+        auto rpl = std::string(static_cast<char*>(request.data()), request.size());
+        msgpack::object obj = msgpack::unpack(rpl.data(), rpl.size()).get();
+        auto pkg = obj.as<std::map<std::string, msgpack::object>>();
+        int batch_size = 0;
+        if(pkg["command"].as<std::string>() == "new-batch"){
+            batch_size = pkg["command-param"].as<int>();
+        }
+        else{
+            std::cout << "Invalid command " << pkg["command"].as<std::string>() << std::endl;
+        }
 
-class Core{
-public:
+        msgpack::sbuffer sbuf;
+        msgpack::packer<msgpack::sbuffer> pk(&sbuf);
+        // Array of batch_size sample and observe list
+        pk.pack_array(batch_size);
 
-    Core(bool training, zmq::socket_t* socket = nullptr);
+        for (int i = 0; i < batch_size; ++i){
+            reset_trace();
+            f();
+            auto t = get_trace();
+            t.pack(pk);
+        }
 
-    template<template <class ...> class Distr, class ...Params>
-    typename Distr<Params ...>::result_type sample(const Distr<Params ...>& distr);
-
-    template<template <class ...> class Distr, class ...Params>
-    void observe(const Distr<Params ...>& distr, double x);
-
-    void pack(msgpack::packer<msgpack::sbuffer>& pk);
-
-
-private:
-
-    template<template <class ...> class Distr, class ...Params>
-    typename Distr<Params ...>::result_type sample_distr(const Distr<Params ...>& distr);
-
-    template<template <class ...> class Distr, class ...Params>
-    typename Distr<Params ...>::result_type sample_impl(const Distr<Params ...>& distr, const bool from_observe);
-
-    template<class Func>
-    friend std::vector<std::vector<double>>
-    expectation(const Func&,
-                std::vector<double>,
-                size_t,
-                const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>&);
-
-    template<typename Func>
-    friend Core eval(Func f, bool training, zmq::socket_t* socket);
-
-    int time_index_ = 1;
-    double w_ = 0;
-    std::vector<std::vector<double>> x_;
-    static std::unordered_map<std::string, int> ids_;
-
-    std::vector<std::pair<double, int>> x_addr_;
-    std::vector<double> y_;
-
-    std::vector<Sample> samples_;
-    std::vector<double> observes_;
-
-    bool training_;
-    zmq::socket_t* socket_ = nullptr;
-
-    int prev_sample_instance_ = 0;
-    double prev_x_ = 0;
-    std::string prev_addr_ = "";
-};
-
-
-
-template<typename Func>
-Core eval(Func f, bool training, zmq::socket_t* socket) {
-    Core c = Core{training, socket};
-    f(c);
-    c.w_ = std::exp(c.w_);
-    return c;
+        zmq::message_t reply (sbuf.size());
+        memcpy (reply.data(), sbuf.data(), sbuf.size());
+        socket.send (reply);
+    }
 }
 
-// Default parameters declared in forward declaration
-//
-template<class Func>
-std::vector<std::vector<double>> expectation(
-        const Func& f,
-        std::vector<double> data,
-        size_t n,
-        const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>& q){
-    Core core{false};
-    double sum_w = 0;
-    std::vector<std::vector<double>> ret, aux;
 
+template<class Func>
+std::vector<std::vector<double>> inference(const Func& f, std::vector<double> data, size_t n = 100000){
     zmq::context_t context (1);
     zmq::socket_t socket (context, ZMQ_REQ);
     socket.connect ("tcp://localhost:6668");
 
-    msgpack::sbuffer sbuf;
-    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
+    // Setup variables
+    set_socket(&socket);
+    set_training(false);
+    reset_ids();
 
-    pk.pack_map(2);
-        pk.pack(std::string("command"));
-        pk.pack(std::string("observe-init"));
+    send_observe_init(std::move(data));
 
-        pk.pack(std::string("command-param"));
-        pk.pack_map(2);
-            pk.pack(std::string("shape"));
-            pk.pack_array(1);
-                pk.pack(data.size());
-
-            pk.pack(std::string("data"));
-            pk.pack(data);
-
-    zmq::message_t request (sbuf.size()), reply;
-    memcpy (request.data(), sbuf.data(), sbuf.size());
-    socket.send (request);
-
-    // TODO (Lezcano) This answer is unnecessary
-    socket.recv (&reply);
-    auto rpl = std::string(static_cast<char*>(reply.data()), reply.size());
-
-    std::string answer = msgpack::unpack(rpl.data(), rpl.size()).get().as<std::string>();
-    if(answer != "observe-received")
-        std::cout << "Invalid command " << answer << std::endl;
-
-    Core::ids_.clear();
-
+    double sum_w = 0;
+    Trace ret;
     for (size_t i = 0; i < n; ++i) {
-        core = eval(f, false, &socket);
-        sum_w += core.w_;
-        aux = q(core.x_);
-
-        if (aux.size() > ret.size())
-            ret.resize(aux.size());
-
-        // Add new trace weighted with its weight
-        for (size_t i = 0; i < aux.size(); ++i) {
-            if (aux[i].empty()) continue;
-            // Multiply each element sampled x_i of the trace by the weight of the trace
-            std::transform(aux[i].begin(),
-                           aux[i].end(),
-                           aux[i].begin(),
-                           [&](double a){ return core.w_ * a; });
-            // Put in ret[i] the biggest of the two vectors
-            if (aux[i].size() > ret[i].size())
-                std::swap(aux[i], ret[i]);
-
-            // Add the vectors
-            std::transform(aux[i].begin(),
-                           aux[i].end(),
-                           ret[i].begin(),
-                           ret[i].begin(),
-                           std::plus<double>());
-        }
+        reset_trace();
+        f();
+        auto t = get_trace();
+        auto w = std::exp(t.log_w());
+        sum_w += w;
+        ret += w*t;
     }
-
-    // Normalise (Compute E_\pi)
-    for (auto& elem : ret)
-        std::transform(elem.begin(),
-                       elem.end(),
-                       elem.begin(),
-                       [sum_w](double e){ return e/sum_w; });
-
-    return ret;
+    ret /= sum_w;
+    return ret.x();
 }
 }  // namespace cpprob
 #endif  // INCLUDE_CPPROB_HPP_

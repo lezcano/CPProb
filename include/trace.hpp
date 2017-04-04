@@ -1,63 +1,89 @@
+#ifndef INCLUDE_TRACE_HPP_
+#define INCLUDE_TRACE_HPP_
 
-class Trace{
+#include <vector>
+#include <ostream>
+#include <string>
+
+#include <msgpack.hpp>
+
+namespace cpprob{
+class Sample{
+public:
+    Sample(int time_index,
+           int sample_instance,
+           double value,
+           const std::string& proposal_name,
+           const std::string& sample_address);
+
+    void pack(msgpack::packer<msgpack::sbuffer>& pk) const;
+
+private:
+    int time_index_;
+    int sample_instance_;
+    double value_;
+    std::string proposal_name_;
+    std::string sample_address_;
+};
+
+class Trace {
 public:
 
-    Core(bool training, zmq::socket_t* socket = nullptr);
+    double log_w() const;
+
+    std::vector<std::vector<double>> x() const;
+
+    void pack(msgpack::packer<msgpack::sbuffer> &pk);
+
+    Trace& operator+=(const Trace &);
+    Trace& operator*=(double);
+    Trace& operator/=(double);
 
 private:
 
-    template<class Func>
-    friend std::vector<std::vector<double>>
-    expectation(const Func&,
-                std::vector<double>,
-                size_t,
-                const std::function<std::vector<std::vector<double>>(std::vector<std::vector<double>>)>&);
+    template<template<class ...> class Distr, class ...Params>
+    friend void observe(Distr<Params ...> &distr, double x);
 
-    template<typename Func>
-    friend Core eval(Func f, bool training, zmq::socket_t* socket);
+    template<template<class ...> class Distr, class ...Params>
+    friend typename Distr<Params ...>::result_type
+    sample_impl(Distr<Params ...> &distr, const bool from_observe);
+
+    friend std::ostream &operator<<(std::ostream &out, const Trace &v);
 
     int time_index_ = 1;
-    double w_ = 0;
+    double log_w_ = 0;
     std::vector<std::vector<double>> x_;
-    static std::unordered_map<std::string, int> ids_;
 
     std::vector<std::pair<double, int>> x_addr_;
     std::vector<double> y_;
 
     std::vector<Sample> samples_;
     std::vector<double> observes_;
-
-    bool training_;
-    zmq::socket_t* socket_ = nullptr;
-
-    int prev_sample_instance_ = 0;
-    double prev_x_ = 0;
-    std::string prev_addr_ = "";
 };
 
+Trace operator+(const Trace &, const Trace &);
+Trace operator*(double, const Trace &);
+Trace operator*(const Trace &, double);
 
-class PrevSampleInference{
-public:
-    SampleInferencePrev(const SampleInference& s) :
-        prev_sample_address{s.sample_address},
-        prev_sample_instance{s.sample_instance}; {}
+class PrevSampleInference;
 
-    SampleInferencePrev& operator=(const SampleInference& s){
-        prev_sample_address = s.sample_address;
-        prev_sample_instance = s.sample_instance;
-    }
-private:
-    std::string prev_sample_address;
-    int prev_sample_instance;
-    double prev_value;
-}
-
-class SampleInference{
-public:
-
-private:
+struct SampleInference {
     std::string sample_address;
     int sample_instance;
     std::string proposal_name;
-    friend class SampleInferencePrev;
+
+    friend class PrevSampleInference;
+};
+
+struct PrevSampleInference {
+    PrevSampleInference() = default;
+    PrevSampleInference &operator=(const PrevSampleInference &) = default;
+    PrevSampleInference(const SampleInference &s);
+    PrevSampleInference &operator=(const SampleInference &s);
+
+    std::string prev_sample_address = "";
+    int prev_sample_instance = 0;
+    double prev_sample_value = 0;
+};
 }
+#endif  // INCLUDE_TRACE_HPP_
