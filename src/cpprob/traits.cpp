@@ -1,4 +1,4 @@
-#include "traits.hpp"
+#include "cpprob/traits.hpp"
 
 namespace cpprob{
 

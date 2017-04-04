@@ -2,8 +2,8 @@
 
 #include <boost/program_options.hpp>
 
-#include "models.hpp"
-#include "cpprob.hpp"
+#include "models/models.hpp"
+#include "cpprob/cpprob.hpp"
 
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
@@ -17,12 +17,10 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    std::string mode;
-
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/inference"), "Compile or Inference mode");
+      ("mode,m", po::value<std::string>()->required()->value_name("compile/inference"), "Compile or Inference mode");
 
     po::variables_map vm;
     try{
@@ -42,8 +40,11 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    auto mode = vm["mode"].as<std::string>();
+
     if (mode == "compile"){
-        cpprob::compile(&mean_normal, "tcp://*:5556");
+        std::string tcp_addr = "tcp://*:5556";
+        cpprob::compile(&mean_normal, tcp_addr);
     }
     else if (mode == "inference"){
         std::cout << "Expectation example means:\n" << cpprob::inference(&mean_normal, {0.2, 0.2}) << std::endl;

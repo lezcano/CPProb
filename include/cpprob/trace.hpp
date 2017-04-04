@@ -33,7 +33,7 @@ public:
 
     std::vector<std::vector<double>> x() const;
 
-    void pack(msgpack::packer<msgpack::sbuffer> &pk);
+    void pack(msgpack::packer<msgpack::sbuffer> &pk) const;
 
     Trace& operator+=(const Trace &);
     Trace& operator*=(double);

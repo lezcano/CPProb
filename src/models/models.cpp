@@ -1,10 +1,10 @@
-#include "models.hpp"
+#include "models/models.hpp"
 
-#include <boost/random/beta_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
-#include <boost/random/bernoulli_distribution.hpp>
+//#include <boost/random/beta_distribution.hpp>
+//#include <boost/random/bernoulli_distribution.hpp>
 
-#include "cpprob.hpp"
+#include "cpprob/cpprob.hpp"
 
 /*
 void f() {

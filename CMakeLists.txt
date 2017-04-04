@@ -22,8 +22,8 @@ endif()
 # -isystem
 # http://stackoverflow.com/questions/25320100/suppress-warnings-from-boost-includes
 set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -Wextra -pedantic -isystem -lzmq")
-set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

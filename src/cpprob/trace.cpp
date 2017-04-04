@@ -1,5 +1,5 @@
 #include <msgpack.hpp>
-#include "trace.hpp"
+#include "cpprob/trace.hpp"
 
 namespace cpprob{
 
@@ -7,7 +7,7 @@ double Trace::log_w() const{ return log_w_; }
 
 std::vector<std::vector<double>> Trace::x() const{ return x_; }
 
-void Trace::pack(msgpack::packer<msgpack::sbuffer>& pk){
+void Trace::pack(msgpack::packer<msgpack::sbuffer>& pk) const {
     pk.pack_map(2);
         pk.pack(std::string("samples"));
             pk.pack_array(samples_.size());
