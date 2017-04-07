@@ -17,10 +17,16 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
+    std::string mode, tcp_addr;
+    int n_samples;
+
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
-      ("mode,m", po::value<std::string>()->required()->value_name("compile/inference"), "Compile or Inference mode");
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/inference")->default_value("compile"), "Compile or Inference mode")
+      ("n_samples,n", po::value<int>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference")
+      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default 127.0.0.1 and port 5555 for compile, 6666 for inference.")
+      ;
 
     po::variables_map vm;
     try{
@@ -40,14 +46,17 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto mode = vm["mode"].as<std::string>();
+    auto f_inference = [](const int y1 = 0, const int y2 = 0){return mean_normal(y1, y2);};
 
     if (mode == "compile"){
-        std::string tcp_addr = "tcp://*:5556";
-        cpprob::compile(&mean_normal, tcp_addr);
+        if (tcp_addr.empty())
+            tcp_addr = "tcp://*:5555";
+        cpprob::compile(f_inference, tcp_addr);
     }
     else if (mode == "inference"){
-        std::cout << "Expectation example means:\n" << cpprob::inference(&mean_normal, {0.2, 0.2}) << std::endl;
+        if (tcp_addr.empty())
+            tcp_addr = "tcp://localhost:6666";
+        std::cout << "Expectation example means:\n" << cpprob::inference(f_inference, tcp_addr, n_samples, 0.2, 0.2) << std::endl;
     }
     else{
         std::cout << "Incorrect mode.\n\n";

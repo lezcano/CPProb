@@ -40,11 +40,10 @@ void g() {
     }
 }
 
-void mean_normal() {
+void mean_normal(const int y1, const int y2) {
     using boost::random::normal_distribution;
 
     static normal_distribution<> normal{0, 1};
-    const double y1 = 0.2, y2 = 0.2;
     auto mean = cpprob::sample(normal);
 
     auto obs_distr = normal_distribution<double>{mean, 1};

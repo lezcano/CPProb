@@ -27,7 +27,7 @@ void set_training(const bool);
 void reset_ids();
 
 template<class Func>
-void compile(const Func& f, const std::string& tcp_addr = "tcp://*:5556") {
+void compile(const Func& f, const std::string& tcp_addr) {
     connect_server(tcp_addr);
     set_training(true);
 
@@ -44,23 +44,28 @@ void compile(const Func& f, const std::string& tcp_addr = "tcp://*:5556") {
 }
 
 
-template<class Func>
+template<class T, class... Args>
+std::vector<T> embed_observe(Args&&... args){
+    return std::vector<T>{args...};
+}
+
+template<class Func, class... Args>
 std::vector<std::vector<double>> inference(
         const Func& f,
-        std::vector<double> data,
-        const std::string& tcp_addr = "tcp://localhost:6668",
-        size_t n = 100000){
+        const std::string& tcp_addr,
+        size_t n,
+        Args&&... args){
 
     connect_client(tcp_addr);
     set_training(false);
 
-    send_observe_init(std::move(data));
+    send_observe_init(embed_observe<double>(args...));
 
     double sum_w = 0;
     Trace ret;
     for (size_t i = 0; i < n; ++i) {
         reset_trace();
-        f();
+        f(args...);
         auto t = get_trace();
         auto w = std::exp(t.log_w());
         sum_w += w;
