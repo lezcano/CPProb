@@ -7,7 +7,14 @@
 #include <iostream>
 #include <vector>
 
+#include <boost/random/random_device.hpp>
+
 namespace cpprob{
+
+boost::random::mt19937& get_rng(){
+    static boost::random::mt19937 rng{seeded_rng()};
+    return rng;
+}
 
 std::string get_addr(){
     constexpr int buf_size = 1000;
@@ -59,4 +66,3 @@ std::string get_addr(){
 }
 
 }  // namespace cpprob
-

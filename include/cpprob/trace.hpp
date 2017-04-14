@@ -5,6 +5,7 @@
 #include <ostream>
 #include <string>
 
+#include "cpprob/trace.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
@@ -69,5 +70,5 @@ private:
 Trace operator+(const Trace &, const Trace &);
 Trace operator*(double, const Trace &);
 Trace operator*(const Trace &, double);
-}
+}  // namespace cpprob
 #endif  // INCLUDE_TRACE_HPP_

@@ -20,9 +20,8 @@ struct proposal {};
 
 template<>
 struct proposal<boost::random::normal_distribution> {
+    //static const auto type_enum = infcomp::ProposalDistribution::ProposalDistribution_NormalProposal;
     static const infcomp::ProposalDistribution type_enum;
-
-    //static const auto type_enum {infcomp::ProposalDistribution::ProposalDistribution_NormalProposal};
 
     template<class ...Params>
     static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
