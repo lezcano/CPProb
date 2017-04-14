@@ -1,8 +1,6 @@
 #include "cpprob/traits.hpp"
 
-namespace cpprob{
+namespace cpprob {
 
-template<>
-constexpr char distr_name<boost::random::normal_distribution>::value[];
-
-}
+const infcomp::ProposalDistribution proposal<boost::random::normal_distribution>::type_enum {infcomp::ProposalDistribution::ProposalDistribution_NormalProposal};
+}  // end namespace cpprob

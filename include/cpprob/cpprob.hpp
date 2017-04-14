@@ -28,18 +28,18 @@ void reset_ids();
 
 template<class Func>
 void compile(const Func& f, const std::string& tcp_addr) {
-    connect_server(tcp_addr);
+    Compilation::connect_server(tcp_addr);
     set_training(true);
 
     while(true){
-        auto batch_size = get_batch_size();
+        auto batch_size = Compilation::get_batch_size();
 
         for (int i = 0; i < batch_size; ++i){
             reset_trace();
             f();
-            add_trace(get_trace(), i);
+            Compilation::add_trace(get_trace());
         }
-        send_batch();
+        Compilation::send_batch();
     }
 }
 
@@ -56,10 +56,10 @@ std::vector<std::vector<double>> inference(
         size_t n,
         Args&&... args){
 
-    connect_client(tcp_addr);
+    Inference::connect_client(tcp_addr);
     set_training(false);
 
-    send_observe_init(embed_observe<double>(args...));
+    Inference::send_observe_init(embed_observe<double>(args...));
 
     double sum_w = 0;
     Trace ret;

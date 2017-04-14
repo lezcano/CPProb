@@ -20,14 +20,14 @@ Trace t;
 bool training;
 boost::random::mt19937 rng{seeded_rng()};
 std::unordered_map<std::string, int> ids;
-PrevSampleInference prev_sample;
-SampleInference curr_sample;
+Sample prev_sample;
+Sample curr_sample;
 
 
 void reset_trace(){
     t = Trace();
-    prev_sample = PrevSampleInference();
-    curr_sample = SampleInference();
+    prev_sample = Sample();
+    curr_sample = Sample();
 }
 
 Trace get_trace(){ return t; }
@@ -55,23 +55,28 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
             t.observes_.emplace_back(x);
         }
         else{
-            // Lua starts with 1
-            t.samples_.emplace_back(Sample{t.time_index_, static_cast<int>(t.x_[id].size()) + 1, x, distr_name<Distr>::value, addr});
+            int sample_instance = t.x_[id].size() + 1;
+
+            t.samples_.emplace_back(Sample{addr, sample_instance, proposal<Distr>::type_enum,
+                                           proposal<Distr>::request(Compilation::buff, distr),
+                                           t.time_index_, x});
         }
     }
     else {
+        static flatbuffers::FlatBufferBuilder foo;
         // Lua starts with 1
         int sample_instance = t.x_[id].size() + 1;
-        curr_sample = SampleInference{addr, sample_instance, distr_name<Distr>::value};
+        curr_sample = Sample{addr, sample_instance, proposal<Distr>::type_enum,
+                             proposal<Distr>::request(foo, distr)};
 
-        auto params = get_params(curr_sample, prev_sample);
+        auto proposal = Inference::get_proposal<Distr>(curr_sample, prev_sample);
 
-        // TODO(Lezcano) Use last_x_ and id to compute x
-        // x = sample_distr(posterior_distr(params));
+        x = proposal(rng);
         prev_sample = curr_sample;
-        prev_sample.prev_sample_value = std::exchange(x, distr(rng));
+        prev_sample.set_value(std::exchange(x, distr(rng)));
 
-        // TODO(Lezcano) Accumulate log(p/q) where q is the proposal distribution
+        // Accumulate log(p/q) where q is the proposal distribution
+        t.log_w_ += boost::math::pdf(math_distr(distr), x) - boost::math::pdf(math_distr(proposal), x);
     }
 
     t.x_[id].emplace_back(static_cast<double>(x));

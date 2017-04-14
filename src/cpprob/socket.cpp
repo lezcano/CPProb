@@ -3,136 +3,86 @@
 #include <iostream>
 #include <string>
 
-#include <zmq.hpp>
-#include <msgpack.hpp>
 
 #include "cpprob/trace.hpp"
+#include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob {
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////          Inference            ////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-zmq::context_t context (1);
-zmq::socket_t client (context, ZMQ_REQ);
-
-void connect_client(const std::string& tcp_addr){
-    client.connect (tcp_addr);
-}
-
-void send_observe_init(std::vector<double>&& data){
-    msgpack::sbuffer sbuf;
-    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-
-    pk.pack_map(2);
-        pk.pack(std::string("command"));
-        pk.pack(std::string("observe-init"));
-
-        pk.pack(std::string("command-param"));
-        pk.pack_map(2);
-            pk.pack(std::string("shape"));
-            pk.pack_array(1);
-                pk.pack(data.size());
-
-            pk.pack(std::string("data"));
-            pk.pack(data);
-
-    zmq::message_t request (sbuf.size()), reply;
-    memcpy (request.data(), sbuf.data(), sbuf.size());
-    client.send (request);
-
-    // TODO (Lezcano) This answer is unnecessary
-    client.recv (&reply);
-    auto rpl = std::string(static_cast<char*>(reply.data()), reply.size());
-
-    std::string answer = msgpack::unpack(rpl.data(), rpl.size()).get().as<std::string>();
-    if(answer != "observe-received")
-        std::cout << "Invalid command " << answer << std::endl;
-}
-
-std::vector<double> get_params(const SampleInference& curr_sample, const PrevSampleInference& prev_sample){
-    msgpack::sbuffer sbuf;
-    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-
-    pk.pack_map(2);
-    pk.pack(std::string("command"));
-    pk.pack(std::string("proposal-params"));
-
-    pk.pack(std::string("command-param"));
-    pk.pack_map(6);
-
-    pk.pack(std::string("sample-address"));
-    pk.pack(curr_sample.sample_address);
-
-    pk.pack(std::string("sample-instance"));
-    pk.pack(curr_sample.sample_instance);
-
-    pk.pack(std::string("proposal-name"));
-    pk.pack(std::string(curr_sample.proposal_name));
-
-    pk.pack(std::string("prev-sample-address"));
-    pk.pack(prev_sample.prev_sample_address);
-
-    pk.pack(std::string("prev-sample-instance"));
-    pk.pack(prev_sample.prev_sample_instance);
-
-    pk.pack(std::string("prev-sample-value"));
-    pk.pack(prev_sample.prev_sample_value);
-
-
-    zmq::message_t request (sbuf.size());
-    memcpy (request.data(), sbuf.data(), sbuf.size());
-    client.send(request);
-
-    return receive<std::vector<double>>(client);
-}
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-zmq::socket_t server (context, ZMQ_REP);
-int batch_size = 0;
-msgpack::sbuffer sbuf;
+flatbuffers::FlatBufferBuilder Compilation::buff;
 
-void connect_server(const std::string& tcp_addr){
+zmq::context_t context (1);
+zmq::socket_t server (context, ZMQ_REP);
+std::vector<flatbuffers::Offset<infcomp::Trace>> vec;
+
+void Compilation::connect_server(const std::string& tcp_addr){
     server.bind (tcp_addr);
 }
 
-void add_trace(const Trace& t, int num){
-    static msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-    if (num == 0){
-        pk.pack_array(batch_size);
-    }
-    t.pack(pk);
-}
-
-int get_batch_size(){
+int Compilation::get_batch_size(){
     zmq::message_t request;
-
     server.recv (&request);
-    // oh is necessary!!
-    auto oh = msgpack::unpack(static_cast<char*>(request.data()), request.size());
-    msgpack::object obj = oh.get();
-    auto pkg = obj.as<std::map<std::string, msgpack::object>>();
-    auto command = pkg["command"].as<std::string>();
-    if (command == "new-batch"){
-        batch_size = pkg["command-param"].as<int>();
-        return batch_size;
-    }
-    else{
-        std::cout << "Invalid command " << pkg["command"].as<std::string>() << std::endl;
-        return 0;
-    }
+
+    auto reply = flatbuffers::GetRoot<infcomp::TracesFromPriorRequest>(request.data());
+    vec.reserve(reply->num_traces());
+    return reply->num_traces();
 }
 
-void send_batch(){
-    zmq::message_t reply (sbuf.size());
-    memcpy (reply.data(), sbuf.data(), sbuf.size());
+void Compilation::add_trace(const Trace& t){
+    vec.emplace_back(t.pack(Compilation::buff));;
+}
+
+void Compilation::send_batch(){
+    auto traces = infcomp::CreateTracesFromPriorReplyDirect(buff, &vec);
+    infcomp::CreateMessage(
+            Compilation::buff,
+            infcomp::MessageBody::MessageBody_TracesFromPriorReply,
+            traces.Union());
+    zmq::message_t reply (Compilation::buff.GetSize());
+    memcpy (reply.data(), Compilation::buff.GetBufferPointer(), Compilation::buff.GetSize());
     server.send (reply);
-    sbuf.clear();
+    Compilation::buff.Clear();
+    vec.clear();
+}
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////          Inference            ////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+zmq::socket_t Inference::client (context, ZMQ_REQ);
+
+void Inference::connect_client(const std::string& tcp_addr){
+    Inference::client.connect (tcp_addr);
 }
 
+void Inference::send_observe_init(std::vector<double>&& data){
+    static flatbuffers::FlatBufferBuilder buff;
+
+    const auto shape = std::vector<int>{static_cast<int>(data.size())};
+    auto observe_init = infcomp::CreateObservesInitRequest(
+            buff,
+            infcomp::CreateNDArrayDirect(buff, &data, &shape));
+
+    infcomp::CreateMessage(
+            buff,
+            infcomp::MessageBody::MessageBody_ObservesInitRequest,
+            observe_init.Union());
+
+    zmq::message_t request (buff.GetSize());
+    memcpy (request.data(), buff.GetBufferPointer(), buff.GetSize());
+    Inference::client.send (request);
+    buff.Clear();
+
+    // TODO (Lezcano) Is this answer is unnecessary?
+    static flatbuffers::FlatBufferBuilder builder_reply;
+    zmq::message_t reply;
+    Inference::client.recv (&reply);
+
+    auto reply_msg = flatbuffers::GetRoot<infcomp::ObservesInitReply>(reply.data());
+    if(!reply_msg->success())
+        std::cerr << "Invalid command " << std::endl;
+}
 }  // namespace cpprob

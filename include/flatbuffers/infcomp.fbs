@@ -1,0 +1,91 @@
+namespace infcomp;
+
+union MessageBody { TracesFromPriorRequest, ObservesInitRequest, ProposalRequest, TracesFromPriorReply, ObservesInitReply, ProposalReply }
+
+table Message {
+    body:MessageBody;
+}
+
+root_type Message;
+
+union ProposalDistribution { CategoricalProposal, DiscreteProposal, FlipProposal, NormalProposal, UniformDiscreteProposal }
+
+table NDArray {
+    data:[double];
+    shape:[int];
+}
+
+table CategoricalProposal {
+    // extra params
+    size:int;
+
+    // proposal params
+    probabilities:NDArray;
+}
+
+table DiscreteProposal {
+    // extra params
+    size:int;
+
+    // proposal params
+    probabilities:NDArray;
+}
+
+table FlipProposal {
+    // proposal params
+    probability:double;
+}
+
+table NormalProposal {
+    // proposal params
+    mean:double;
+    std:double;
+}
+
+table UniformDiscreteProposal {
+    // extra params
+    min:int;
+    max:int;
+
+    // proposal params
+    probabilities:NDArray;
+}
+
+table Sample {
+    time:int;
+    address:string;
+    instance:int;
+    proposal:ProposalDistribution;
+    value:NDArray;
+}
+
+table Trace {
+    observes:NDArray;
+    samples:[Sample];
+}
+
+table TracesFromPriorRequest {
+    num_traces:int;
+}
+
+table TracesFromPriorReply {
+    traces:[Trace];
+}
+
+table ObservesInitRequest {
+    observes:NDArray;
+}
+
+table ObservesInitReply {
+    success:bool;
+}
+
+table ProposalRequest {
+    current_sample:Sample;
+    previous_sample:Sample;
+}
+
+table ProposalReply {
+    success:bool;
+    proposal:ProposalDistribution;
+}

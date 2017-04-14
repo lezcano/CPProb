@@ -1,5 +1,7 @@
-#include <msgpack.hpp>
+#include <cpprob/traits.hpp>
 #include "cpprob/trace.hpp"
+
+#include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
 
@@ -7,20 +9,17 @@ double Trace::log_w() const{ return log_w_; }
 
 std::vector<std::vector<double>> Trace::x() const{ return x_; }
 
-void Trace::pack(msgpack::packer<msgpack::sbuffer>& pk) const {
-    pk.pack_map(2);
-        pk.pack(std::string("samples"));
-            pk.pack_array(samples_.size());
-            for(const auto& s : samples_)
-                s.pack(pk);
+flatbuffers::Offset<infcomp::Trace> Trace::pack(flatbuffers::FlatBufferBuilder& buff) const{
+    std::vector<flatbuffers::Offset<infcomp::Sample>> vec_sample(samples_.size());
+    std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
+        [&](const Sample& s){return s.pack(buff);});
 
-        pk.pack(std::string("observes"));
-        pk.pack_map(2);
-            pk.pack(std::string("shape"));
-                pk.pack_array(1);
-                pk.pack(observes_.size());
-            pk.pack(std::string("data"));
-            pk.pack(observes_);
+    return infcomp::CreateTraceDirect(
+            buff,
+            infcomp::CreateNDArray(buff,
+                buff.CreateVector<double>(observes_),
+                buff.CreateVector<int32_t>(std::vector<int32_t>{static_cast<int32_t>(observes_.size())})),
+            &vec_sample);
 }
 
 Trace& Trace::operator+= (const Trace& rhs){
@@ -79,40 +78,31 @@ std::ostream &operator<<(std::ostream &out, const Trace &v) {
     return out;
 }
 
-Sample::Sample(int time_index,
-               int sample_instance,
-               double value,
-               const std::string& proposal_name,
-               const std::string& sample_address) :
-        time_index_{time_index},
+Sample::Sample(const std::string& sample_address,
+           int sample_instance,
+           const infcomp::ProposalDistribution& proposal_type,
+           const flatbuffers::Offset<void>& proposal,
+           int time_index,
+           double value) :
+        sample_address_{sample_address},
         sample_instance_{sample_instance},
-        value_{value},
-        proposal_name_{proposal_name},
-        sample_address_{sample_address}{}
+        proposal_type_{proposal_type},
+        proposal_{proposal},
+        time_index_{time_index},
+        value_{value}{}
 
-void Sample::pack(msgpack::packer<msgpack::sbuffer>& pk) const {
-    pk.pack_map(5);
-    pk.pack(std::string("time-index"));
-    pk.pack(time_index_);
-    pk.pack(std::string("proposal-name"));
-    pk.pack(proposal_name_);
-    pk.pack(std::string("value"));
-    pk.pack(value_);
-    pk.pack(std::string("sample-instance"));
-    pk.pack(sample_instance_);
-    pk.pack(std::string("sample-address"));
-    pk.pack(sample_address_);
+void Sample::set_value(double value){ value_ = value; }
+
+flatbuffers::Offset<infcomp::Sample> Sample::pack(flatbuffers::FlatBufferBuilder& buff) const{
+    return infcomp::CreateSample(
+        buff,
+        time_index_,
+        buff.CreateString(sample_address_),
+        sample_instance_,
+        proposal_type_,
+        proposal_,
+        infcomp::CreateNDArray(buff,
+            buff.CreateVector<double>(std::vector<double>(value_)),
+            buff.CreateVector<int32_t>(std::vector<int32_t>{1})));
 }
-
-
-PrevSampleInference::PrevSampleInference(const SampleInference& s) :
-        prev_sample_address{s.sample_address},
-        prev_sample_instance{s.sample_instance}{}
-
-PrevSampleInference& PrevSampleInference::operator=(const SampleInference& s){
-    prev_sample_address = s.sample_address;
-    prev_sample_instance = s.sample_instance;
-    return *this;
-}
-
 }

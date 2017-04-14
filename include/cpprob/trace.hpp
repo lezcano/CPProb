@@ -5,35 +5,40 @@
 #include <ostream>
 #include <string>
 
-#include <msgpack.hpp>
+#include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
 class Sample{
 public:
-    Sample(int time_index,
-           int sample_instance,
-           double value,
-           const std::string& proposal_name,
-           const std::string& sample_address);
+    Sample() = default;
 
-    void pack(msgpack::packer<msgpack::sbuffer>& pk) const;
+    Sample(const std::string& sample_address,
+           int sample_instance,
+           const infcomp::ProposalDistribution& proposal_type,
+           const flatbuffers::Offset<void>& proposal,
+           int time_index=0,
+           double value=0);
+
+    void set_value(double value);
+
+    flatbuffers::Offset<infcomp::Sample> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
 private:
-    int time_index_;
-    int sample_instance_;
-    double value_;
-    std::string proposal_name_;
     std::string sample_address_;
+    int sample_instance_;
+    infcomp::ProposalDistribution proposal_type_;
+    flatbuffers::Offset<void> proposal_;
+    int time_index_;
+    double value_;
 };
 
 class Trace {
 public:
-
     double log_w() const;
 
     std::vector<std::vector<double>> x() const;
 
-    void pack(msgpack::packer<msgpack::sbuffer> &pk) const;
+    flatbuffers::Offset<infcomp::Trace> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
     Trace& operator+=(const Trace &);
     Trace& operator*=(double);
@@ -64,26 +69,5 @@ private:
 Trace operator+(const Trace &, const Trace &);
 Trace operator*(double, const Trace &);
 Trace operator*(const Trace &, double);
-
-class PrevSampleInference;
-
-struct SampleInference {
-    std::string sample_address;
-    int sample_instance;
-    std::string proposal_name;
-
-    friend class PrevSampleInference;
-};
-
-struct PrevSampleInference {
-    PrevSampleInference() = default;
-    PrevSampleInference &operator=(const PrevSampleInference &) = default;
-    PrevSampleInference(const SampleInference &s);
-    PrevSampleInference &operator=(const SampleInference &s);
-
-    std::string prev_sample_address = "";
-    int prev_sample_instance = 0;
-    double prev_sample_value = 0;
-};
 }
 #endif  // INCLUDE_TRACE_HPP_

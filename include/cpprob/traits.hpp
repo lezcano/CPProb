@@ -4,28 +4,40 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/normal.hpp>
 
+#include "flatbuffers/infcomp_generated.h"
+
 namespace cpprob {
+
 
 template<class RealType = double>
 boost::math::normal_distribution<RealType>
-    math_distr(const boost::random::normal_distribution<RealType>& d) {
+math_distr(const boost::random::normal_distribution<RealType>& d) {
     return boost::math::normal_distribution<RealType>{d.mean(), d.sigma()};
 }
 
-
 template<template <class ...> class Distr>
-struct distr_name {};
+struct proposal {};
 
 template<>
-struct distr_name<boost::random::normal_distribution> {
-    static constexpr char value[] = "normal";
+struct proposal<boost::random::normal_distribution> {
+    static const infcomp::ProposalDistribution type_enum;
+
+    //static const auto type_enum {infcomp::ProposalDistribution::ProposalDistribution_NormalProposal};
+
+    template<class ...Params>
+    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
+            const boost::random::normal_distribution<Params...>&) {
+        return infcomp::CreateNormalProposal(fbb).Union();
+    }
+
+    template<class RealType = double>
+    static boost::random::normal_distribution<RealType>
+    get_distr(const infcomp::ProposalReply * msg) {
+        auto param = static_cast<const infcomp::NormalProposal*>(msg->proposal());
+        return boost::random::normal_distribution<RealType>(param->mean(), param->std());
+    }
 };
 
-template<class RealType = double>
-boost::random::normal_distribution<RealType>
-    posterior_distr(const std::vector<RealType>& param) {
-    return boost::random::normal_distribution<RealType>{param[0], param[1]};
-}
 
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_
