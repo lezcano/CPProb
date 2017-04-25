@@ -11,6 +11,7 @@
 #include "cpprob/traits.hpp"
 #include "cpprob/state.hpp"
 #include "cpprob/socket.hpp"
+#include "cpprob/ndarray.hpp"
 
 namespace cpprob {
 template<template <class ...> class Distr, class ...Params>
@@ -31,8 +32,8 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
         else{
             int sample_instance = State::t.x_[id].size() + 1;
 
-            State::t.samples_.emplace_back(Sample{addr, sample_instance, proposal<Distr>::type_enum,
-                                           proposal<Distr>::request(Compilation::buff, distr),
+            State::t.samples_.emplace_back(Sample{addr, sample_instance, proposal<Distr, Params...>::type_enum,
+                                           proposal<Distr, Params...>::request(Compilation::buff, distr),
                                            State::t.time_index_, x});
         }
     }
@@ -40,22 +41,21 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
         static flatbuffers::FlatBufferBuilder foo;
         // Lua starts with 1
         int sample_instance = State::t.x_[id].size() + 1;
-        State::curr_sample = Sample{addr, sample_instance, proposal<Distr>::type_enum,
-                             proposal<Distr>::request(foo, distr)};
+        State::curr_sample = Sample{addr, sample_instance, proposal<Distr, Params...>::type_enum,
+                             proposal<Distr, Params...>::request(foo, distr)};
 
-        auto proposal = Inference::get_proposal<Distr>(State::curr_sample, State::prev_sample);
+        auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
 
         x = proposal(get_rng());
         State::prev_sample = State::curr_sample;
         State::prev_sample.set_value(std::exchange(x, distr(get_rng())));
 
-        // Accumulate log(p/q) where q is the proposal distribution
-        State::t.log_w_ += boost::math::pdf(math_distr(distr), x) - boost::math::pdf(math_distr(proposal), x);
+        State::t.log_w_ += pdf(distr, x) - pdf(proposal, x);
     }
 
-    State::t.x_[id].emplace_back(static_cast<double>(x));
+    State::t.x_[id].emplace_back(x);
 
-    State::t.x_addr_.emplace_back(static_cast<double>(x), id);
+    State::t.x_addr_.emplace_back(x, id);
     ++State::t.time_index_;
 
     return x;
@@ -67,13 +67,13 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr) {
 }
 
 template<template <class ...> class Distr, class ...Params>
-void observe(Distr<Params ...>& distr, double x) {
+void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x) {
     if (State::training){
         sample_impl(distr, true);
     }
     else{
         using std::log;
-        auto prob = pdf(math_distr(distr), x);
+        auto prob = cpprob::pdf(distr, x);
         State::t.y_.emplace_back(prob);
         State::t.log_w_ += log(prob);
     }
@@ -99,11 +99,11 @@ void compile(const Func& f, const std::string& tcp_addr) {
 
 template<class T, class... Args>
 std::vector<T> embed_observe(Args&&... args){
-    return std::vector<T>{args...};
+    return std::vector<T>{static_cast<double>(args)...};
 }
 
 template<class Func, class... Args>
-std::vector<std::vector<double>> inference(
+std::vector<std::vector<NDArray<double>>> inference(
         const Func& f,
         const std::string& tcp_addr,
         size_t n,

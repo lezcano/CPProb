@@ -3,10 +3,11 @@
 
 #include <type_traits>                          // std::enable_if_t
 #include <random>                               // std::random_device
-#include <boost/random/mersenne_twister.hpp>    // boost::random::mt19937
-#include <boost/random/random_device.hpp>
 #include <array>                                // std:: array
 #include <functional>                           // std::ref
+
+#include <boost/random/mersenne_twister.hpp>    // boost::random::mt19937
+#include <boost/random/random_device.hpp>
 
 namespace cpprob {
 

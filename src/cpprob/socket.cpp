@@ -40,7 +40,7 @@ void Compilation::send_batch(){
     auto traces = infcomp::CreateTracesFromPriorReplyDirect(buff, &vec);
     infcomp::CreateMessage(
             Compilation::buff,
-            infcomp::MessageBody::MessageBody_TracesFromPriorReply,
+            infcomp::MessageBody::TracesFromPriorReply,
             traces.Union());
     zmq::message_t reply (Compilation::buff.GetSize());
     memcpy (reply.data(), Compilation::buff.GetBufferPointer(), Compilation::buff.GetSize());
@@ -68,7 +68,7 @@ void Inference::send_observe_init(std::vector<double>&& data){
 
     infcomp::CreateMessage(
             buff,
-            infcomp::MessageBody::MessageBody_ObservesInitRequest,
+            infcomp::MessageBody::ObservesInitRequest,
             observe_init.Union());
 
     zmq::message_t request (buff.GetSize());

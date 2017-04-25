@@ -4,39 +4,133 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/normal.hpp>
 
+#include <boost/random/uniform_smallint.hpp>
+
+#include <boost/math/constants/constants.hpp>
+
+#include "distr/min_max_discrete.hpp"
+#include "distr/vmf.hpp"
+
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob {
+namespace detail {
 
-
-template<class RealType = double>
-boost::math::normal_distribution<RealType>
-math_distr(const boost::random::normal_distribution<RealType>& d) {
-    return boost::math::normal_distribution<RealType>{d.mean(), d.sigma()};
+template<typename IntType = int, typename WeightType = double>
+min_max_discrete_distribution<IntType, WeightType>
+get_min_max_discrete(const infcomp::ProposalReply* msg)
+{
+    auto param = static_cast<const infcomp::UniformDiscrete*>(msg->distribution());
+    flatbuffers::Vector<double>::iterator probs_ptr = param->proposal_probabilities()->data()->begin();
+    return min_max_discrete_distribution<IntType, WeightType>(param->prior_min(),
+                                                              param->prior_min() + param->prior_size() - 1,
+                                                              probs_ptr, probs_ptr+param->prior_size());
 }
 
-template<template <class ...> class Distr>
-struct proposal {};
+} // end namespace detail
 
-template<>
-struct proposal<boost::random::normal_distribution> {
-    //static const auto type_enum = infcomp::ProposalDistribution::ProposalDistribution_NormalProposal;
-    static const infcomp::ProposalDistribution type_enum;
+template <class RealType>
+RealType pdf(const boost::random::normal_distribution<RealType>& distr,
+             const typename boost::random::normal_distribution<RealType>::result_type & x)
+{
+    using namespace boost::math;
+    return pdf(normal_distribution<RealType>{distr.mean(), distr.sigma()}, x);
+}
 
-    template<class ...Params>
+template <class IntType>
+double pdf(const boost::random::uniform_smallint<IntType>& distr,
+           const typename boost::random::uniform_smallint<IntType>::result_type & x)
+{
+    return 1.0/(distr.max() - distr.min() + 1.0);
+}
+
+template<typename IntType, typename WeightType>
+WeightType pdf(const min_max_discrete_distribution<IntType, WeightType>& dist,
+               const typename min_max_discrete_distribution<IntType, WeightType>::result_type & x)
+{
+    if (x < dist.min() || x > dist.max()) return 0;
+    return dist.probabilities()[static_cast<std::size_t>(x-dist.min())];
+}
+
+template<class RealType>
+RealType pdf(const vmf_distribution<RealType>& distr,
+             const typename vmf_distribution<RealType>::result_type & x)
+{
+    if (distr.kappa() == 0){
+        return 1.0/(4.0 * boost::math::constants::pi<RealType>());
+    }
+    return 0;
+
+}
+
+template<template <class ...> class Distr, class ...Params>
+struct proposal { };
+
+template<class RealType>
+struct proposal<boost::random::normal_distribution, RealType> {
+    static constexpr auto type_enum = infcomp::Distribution::Normal;
+
     static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-            const boost::random::normal_distribution<Params...>&) {
-        return infcomp::CreateNormalProposal(fbb).Union();
+            const boost::random::normal_distribution<RealType>&)
+    {
+        return infcomp::CreateNormal(fbb).Union();
     }
 
-    template<class RealType = double>
     static boost::random::normal_distribution<RealType>
-    get_distr(const infcomp::ProposalReply * msg) {
-        auto param = static_cast<const infcomp::NormalProposal*>(msg->proposal());
-        return boost::random::normal_distribution<RealType>(param->mean(), param->std());
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        auto param = static_cast<const infcomp::Normal*>(msg->distribution());
+        return boost::random::normal_distribution<RealType>(param->proposal_mean(), param->proposal_std());
     }
 };
 
+
+template<class IntType>
+struct proposal<boost::random::uniform_smallint, IntType> {
+    static constexpr auto type_enum = infcomp::Distribution::UniformDiscrete;
+
+    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
+                                             const boost::random::uniform_smallint<IntType>&)
+    {
+        return infcomp::CreateDiscrete(fbb).Union();
+    }
+
+    template<class RealType = double>
+    static min_max_discrete_distribution<IntType, RealType>
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        return detail::get_min_max_discrete<IntType, RealType>(msg);
+    }
+};
+
+template<class RealType>
+struct proposal<vmf_distribution, RealType> {
+    static constexpr auto type_enum = infcomp::Distribution::VMF;
+
+    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
+                                             const vmf_distribution<RealType>&)
+    {
+        return infcomp::CreateDiscrete(fbb).Union();
+    }
+
+    static vmf_distribution<RealType>
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        auto distr = static_cast<const infcomp::VMF*>(msg->distribution());
+        flatbuffers::Vector<double>::iterator mu_ptr = distr->proposal_mu()->data()->begin();
+        auto dim = distr->proposal_mu()->data()->size();
+        return vmf_distribution<RealType>(mu_ptr, mu_ptr + dim, distr->proposal_kappa());
+    }
+};
+
+template<class RealType>
+constexpr infcomp::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
+
+template<class RealType>
+constexpr infcomp::Distribution proposal<vmf_distribution, RealType>::type_enum;
+
+template<class IntType>
+constexpr infcomp::Distribution proposal<boost::random::uniform_smallint, IntType>::type_enum;
 
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_

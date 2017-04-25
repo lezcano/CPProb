@@ -28,8 +28,8 @@ private:
     template<template<class ...> class Distr, class ...Params>
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> &distr, const bool from_observe);
 
-    template<template<class ...> class Distr, class ...Params>
-    friend void observe(Distr<Params ...> &distr, double x);
+    template<template <class ...> class Distr, class ...Params>
+    friend void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x);
 };
 }  // namespace cpprob
 

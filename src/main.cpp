@@ -46,17 +46,17 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f_inference = [](const int y1 = 0, const int y2 = 0){return mean_normal(y1, y2);};
+    auto all_distr = [](const int y1 = 0, const int y2 = 0){return cpprob::models::all_distr(y1, y2);};
 
     if (mode == "compile"){
         if (tcp_addr.empty())
             tcp_addr = "tcp://*:5555";
-        cpprob::compile(f_inference, tcp_addr);
+        cpprob::compile(all_distr, tcp_addr);
     }
     else if (mode == "inference"){
         if (tcp_addr.empty())
             tcp_addr = "tcp://localhost:6666";
-        std::cout << "Expectation example means:\n" << cpprob::inference(f_inference, tcp_addr, n_samples, 0.2, 0.2) << std::endl;
+        std::cout << "Expectation example means:\n" << cpprob::inference(all_distr, tcp_addr, n_samples, 3, 4) << std::endl;
     }
     else{
         std::cout << "Incorrect mode.\n\n";

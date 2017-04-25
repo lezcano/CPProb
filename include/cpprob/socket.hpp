@@ -39,13 +39,13 @@ public:
     static void connect_client(const std::string& tcp_addr);
     static void send_observe_init(std::vector<double>&& data);
 
-    template<template <class ...> class Distr>
+    template<template <class ...> class Distr, class ...Params>
     static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
         static flatbuffers::FlatBufferBuilder buff;
 
         infcomp::CreateMessage(
                 buff,
-                infcomp::MessageBody::MessageBody_ProposalRequest,
+                infcomp::MessageBody::ProposalRequest,
                 infcomp::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
 
         zmq::message_t request (buff.GetSize());
@@ -57,13 +57,11 @@ public:
         client.recv (&reply);
         auto msg_rep = static_cast<const infcomp::ProposalReply *>
         (flatbuffers::GetRoot<infcomp::Message>(reply.data())->body());
-        return proposal<Distr>::get_distr(msg_rep);
+        return proposal<Distr, Params...>::get_distr(msg_rep);
     }
 
 private:
     static zmq::socket_t client;
 };
-
-
 }       // namespace cpprob
 #endif  // INCLUDE_SOCKET_HPP_

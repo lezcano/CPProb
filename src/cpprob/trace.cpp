@@ -7,18 +7,19 @@ namespace cpprob{
 
 double Trace::log_w() const{ return log_w_; }
 
-std::vector<std::vector<double>> Trace::x() const{ return x_; }
+std::vector<std::vector<NDArray<double>>> Trace::x() const{ return x_; }
 
 flatbuffers::Offset<infcomp::Trace> Trace::pack(flatbuffers::FlatBufferBuilder& buff) const{
     std::vector<flatbuffers::Offset<infcomp::Sample>> vec_sample(samples_.size());
     std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
         [&](const Sample& s){return s.pack(buff);});
 
+    // TODO(Lezcano) We are currently just packing the first element of observes_!!!
     return infcomp::CreateTraceDirect(
             buff,
             infcomp::CreateNDArray(buff,
-                buff.CreateVector<double>(observes_),
-                buff.CreateVector<int32_t>(std::vector<int32_t>{static_cast<int32_t>(observes_.size())})),
+                buff.CreateVector<double>(observes_[0].values()),
+                buff.CreateVector<int32_t>(observes_[0].shape())),
             &vec_sample);
 }
 
@@ -37,26 +38,22 @@ Trace& Trace::operator+= (const Trace& rhs){
                        rhs.x_[i].end(),
                        this->x_[i].begin(),
                        this->x_[i].begin(),
-                       std::plus<double>());
+                       std::plus<NDArray<double>>());
     }
     return *this;
 }
 
 Trace& Trace::operator*= (double rhs){
     for (auto& v : this->x_)
-        std::transform(v.begin(),
-                       v.end(),
-                       v.begin(),
-                       [rhs](double a){ return rhs * a; });
+        for (auto& e : v)
+            e *= rhs;
     return *this;
 }
 
 Trace& Trace::operator/= (double rhs){
     for (auto& v : this->x_)
-        std::transform(v.begin(),
-                       v.end(),
-                       v.begin(),
-                       [rhs](double a){ return a / rhs; });
+        for (auto& e : v)
+            e /= rhs;
     return *this;
 }
 
@@ -64,26 +61,12 @@ Trace operator+ (const Trace& lhs, const Trace& rhs){ return Trace(lhs) += rhs; 
 Trace operator* (const double lhs, const Trace& rhs){ return Trace(rhs) *= lhs; }
 Trace operator* (const Trace& lhs, const double rhs){ return Trace(lhs) *= rhs; }
 
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-    out << "[ ";
-    for (const auto &elem : v)
-        out << elem << " ";
-    out << "]";
-    return out;
-}
-
-std::ostream &operator<<(std::ostream &out, const Trace &v) {
-    out << v.x_;
-    return out;
-}
-
 Sample::Sample(const std::string& sample_address,
            int sample_instance,
-           const infcomp::ProposalDistribution& proposal_type,
+           const infcomp::Distribution & proposal_type,
            const flatbuffers::Offset<void>& proposal,
            int time_index,
-           double value) :
+           NDArray<double> value) :
         sample_address_{sample_address},
         sample_instance_{sample_instance},
         proposal_type_{proposal_type},
@@ -91,7 +74,7 @@ Sample::Sample(const std::string& sample_address,
         time_index_{time_index},
         value_{value}{}
 
-void Sample::set_value(double value){ value_ = value; }
+void Sample::set_value(NDArray<double> value){ value_ = value; }
 
 flatbuffers::Offset<infcomp::Sample> Sample::pack(flatbuffers::FlatBufferBuilder& buff) const{
     return infcomp::CreateSample(
@@ -102,7 +85,7 @@ flatbuffers::Offset<infcomp::Sample> Sample::pack(flatbuffers::FlatBufferBuilder
         proposal_type_,
         proposal_,
         infcomp::CreateNDArray(buff,
-            buff.CreateVector<double>(std::vector<double>(value_)),
-            buff.CreateVector<int32_t>(std::vector<int32_t>{1})));
+            buff.CreateVector<double>(value_.values()),
+            buff.CreateVector<int32_t>(value_.shape())));
 }
 }
