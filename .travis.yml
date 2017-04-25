@@ -7,6 +7,10 @@ addons:
   apt:
     packages:
       - g++-6
+      - libgtest-dev
+      - libzmq3-dev
+      - flatbuffers
+...	...
     sources: &sources
       - ubuntu-toolchain-r-test
 
