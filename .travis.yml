@@ -9,8 +9,6 @@ addons:
       - g++-6
       - libgtest-dev
       - libzmq3-dev
-      - flatbuffers
-...	...
     sources: &sources
       - ubuntu-toolchain-r-test
 
@@ -21,7 +19,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.62.0
-    - ${TRAVIS_BUILD_DIR}/deps/gtest-1.8.0
+    - ${TRAVIS_BUILD_DIR}/deps/flatbuffers-1.6.0
 
 matrix:
   include:
@@ -33,27 +31,27 @@ matrix:
     ##########################################################################
     # Clang 3.6
     - os: linux
-      env: LLVM_VERSION=3.6.2 BOOST_VERSION=default
+      env: LLVM_VERSION=3.6.2 BOOST_VERSION=default FLATBUFFERS_VERSION=default
       compiler: clang
 
     # Clang 3.7
     - os: linux
-      env: LLVM_VERSION=3.7.1 BOOST_VERSION=default
+      env: LLVM_VERSION=3.7.1 BOOST_VERSION=default FLATBUFFERS_VERSION=default
       compiler: clang
 
     # Clang 3.8
     - os: linux
-      env: LLVM_VERSION=3.8.0 BOOST_VERSION=default
+      env: LLVM_VERSION=3.8.0 BOOST_VERSION=default FLATBUFFERS_VERSION=default
       compiler: clang
 
     # Clang 3.9
     - os: linux
-      env: LLVM_VERSION=3.9.0 BOOST_VERSION=default
+      env: LLVM_VERSION=3.9.0 BOOST_VERSION=default FLATBUFFERS_VERSION=default
       compiler: clang
 
     # GCC 6
     - os: linux
-      env: COMPILER=g++-6     BOOST_VERSION=default
+      env: COMPILER=g++-6     BOOST_VERSION=default FLATBUFFERS_VERSION=default
       compiler: gcc
 
 
@@ -70,6 +68,7 @@ install:
   ############################################################################
   - if [[ "${LLVM_VERSION}" == "default" ]]; then LLVM_VERSION=3.9.0; fi
   - if [[ "${BOOST_VERSION}" == "default" ]]; then BOOST_VERSION=1.62.0; fi
+  - if [[ "${FLATBUFFERS_VERSION}" == "default" ]]; then FLATBUFFERS_VERSION=1.6.0; fi
 
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
@@ -109,6 +108,27 @@ install:
       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
+    fi
+
+
+  ############################################################################
+  # Install flatbuffers
+  ############################################################################
+  - |
+    if [[ "${FLATBUFFERS_VERSION}" != "" ]]; then
+        FLATBUFFERS_DIR=${DEPS_DIR}/flatbuffers-${FLATBUFFERS_VERSION}
+        if [[ -z "$(ls -A ${FLATBUFFERS_DIR})" ]]; then
+          if [[ "${FLATBUFFERS_VERSION}" == "trunk" ]]; then
+            FLATBUFFERS_URL="https://github.com/google/flatbuffers.git"
+            travis_retry git clone --depth 1 --recursive --quiet ${FLATBUFFERS_URL} ${FLATBUFFERS_DIR} || exit 1
+            (cd ${FLATBUFFERS_DIR} && cmake - G "Unix Makefiles" && make)
+          else
+            FLATBUFFERS_URL="https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VERSION}.tar.gz"
+            mkdir -p ${FLATBUFFERS_DIR}
+            { travis_retry wget --quiet -O - ${FLATBUFFERS_URL} | tar --strip-components=1 -zxvf -C ${FLATBUFFERS_DIR}; } || exit 1
+          fi
+        fi
+        export PATH="${FLATBUFFERS_DIR}/include"
     fi
 
   ############################################################################
