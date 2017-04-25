@@ -20,6 +20,7 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.62.0
     - ${TRAVIS_BUILD_DIR}/deps/flatbuffers-1.6.0
+    - ${TRAVIS_BUILD_DIR}/deps/gtest-1.8.0
 
 matrix:
   include:
@@ -148,8 +149,18 @@ install:
           { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
         fi
       fi
-      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR}"
+      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR} - DBoost_USE_STATIC_LIBS=ON"
     fi
+  ############################################################################
+  # Install gtest
+  ############################################################################
+  - GTEST_DIR=${DEPS_DIR}/gtest-1.8.0
+  - |
+    if [[ -z "$(ls -A ${GTEST_DIR})" ]]; then
+      (cd ${GTEST_DIR} && cmake /usr/src/gtest/ && make)
+    fi
+  - export PATH="${GTEST_DIR}/include:${PATH}"
+  - CMAKE_OPTIONS+=" -DGTEST_INCLUDE_DIR=${GTEST_DIR}"
 
 before_script:
   ############################################################################
@@ -161,3 +172,4 @@ before_script:
 script:
   - cd ${TRAVIS_BUILD_DIR}/build
   - cmake --build .
+  - ctest -VV .
