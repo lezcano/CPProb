@@ -125,7 +125,7 @@ install:
           else
             FLATBUFFERS_URL="https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VERSION}.tar.gz"
             mkdir -p ${FLATBUFFERS_DIR}
-            { travis_retry wget --quiet -O - ${FLATBUFFERS_URL} | tar --strip-components=1 -zxvf -C ${FLATBUFFERS_DIR}; } || exit 1
+            { travis_retry wget --quiet -O - ${FLATBUFFERS_URL} | tar --strip-components=1 -xz -C ${FLATBUFFERS_DIR}; } || exit 1
           fi
         fi
         export PATH="${FLATBUFFERS_DIR}/include"
