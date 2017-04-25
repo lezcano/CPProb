@@ -157,7 +157,7 @@ install:
   - GTEST_DIR=${DEPS_DIR}/gtest-1.8.0
   - |
     if [[ -z "$(ls -A ${GTEST_DIR})" ]]; then
-      (cd ${GTEST_DIR} && cmake /usr/src/gtest/ && make)
+      (cd ${GTEST_DIR} && cmake /usr/src/gtest/ -DGTEST_USE_OWN_TR1_TUPLE=1  && make)
     fi
   - export PATH="${GTEST_DIR}/include:${PATH}"
   - CMAKE_OPTIONS+=" -DGTEST_INCLUDE_DIR=${GTEST_DIR}"
