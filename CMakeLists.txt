@@ -67,3 +67,11 @@ endif()
 
 include_directories(include)
 add_subdirectory(src)
+
+##############################################################################
+# Setup testing
+##############################################################################
+enable_testing()
+find_package(GTest REQUIRED)
+add_subdirectory(tests)
+

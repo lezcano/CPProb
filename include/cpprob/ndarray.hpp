@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <stdexcept>
 #include <iostream>
+#include <numeric>
+#include <functional>
 
 #include "cpprob/detail/vector_io.hpp"
 
@@ -23,9 +25,10 @@ public:
     NDArray(U a) : NDArray(T(a)) {};
 
     template<class U>
-    NDArray(const std::vector <U> &v)  : values_(init(v))
+    NDArray(const std::vector <U> &v)
     {
-        shape_.insert(shape_.begin(), v.size());
+        compute_shape(v, 0);
+        values_ = flatten(v, 0);
     }
 
     NDArray& operator+=(const NDArray & rhs)
@@ -93,36 +96,54 @@ public:
     }
 
 private:
+    template<class U,
+            class = std::enable_if_t <std::is_constructible<T, U>::value>>
+    void compute_shape(const std::vector <U> &v, int i)
+    {
+        if (shape_.size() <= i)
+            shape_.emplace_back(v.size());
+        else
+            if (shape_[i] < v.size())
+                shape_[i] = v.size();
+    }
+
+    // i is the dimension that we are processing
+    template<class U>
+    void compute_shape(const std::vector<std::vector<U>> & v, int i)
+    {
+        if (shape_.size() <= i)
+            shape_.emplace_back(v.size());
+        else if (v.size() > shape_[i])
+            shape_[i] = v.size();
+        for (const auto& e : v)
+            compute_shape(e, i+1);
+    }
 
     template<class U,
             class = std::enable_if_t <std::is_constructible<T, U>::value>>
-    std::vector <T> init(const std::vector <U> &v)
+    std::vector <T> flatten(const std::vector <U> &v, int)
     {
-        return v;
+        auto ret = v;
+        ret.resize(shape_.back());
+        return std::vector<T>(std::make_move_iterator(ret.begin()), std::make_move_iterator(ret.end()));
     }
 
     template<class U>
-    std::vector <U> init(const std::vector <std::vector<U>> &v)
+    auto flatten(const std::vector <std::vector<U>> &v, int i)
     {
-        std::vector <std::vector<U>> aux;
+        auto size_tensor_i = std::accumulate(shape_.begin()+i, shape_.end(), 1, std::multiplies<int>());
+
+        decltype(flatten(v.front(), i+1)) ret;
         for (const auto &e : v) {
-            aux.emplace_back(init(e));
+            auto init_e = flatten(e, i+1);
+            ret.insert(ret.end(), std::make_move_iterator(init_e.begin()), std::make_move_iterator(init_e.end()));
         }
-        auto max_size = (*std::max_element(aux.begin(), aux.end(),
-                                           [](std::vector <U> v1, std::vector <U> v2) {
-                                               return v1.size() < v2.size();
-                                           })).size();
-        std::vector <U> ret;
-        for (auto &e : aux) {
-            e.resize(max_size);
-            ret.insert(ret.end(), std::make_move_iterator(e.begin()), std::make_move_iterator(e.end()));
-        }
-        shape_.insert(shape_.begin(), max_size);
+        ret.resize(size_tensor_i);
+        return ret;
     }
 
-    // The order is important!!
-    std::vector <int> shape_;
     std::vector <T> values_;
+    std::vector <int> shape_;
 };
 } // end namespace cpprob
 #endif //INCLUDE_NDARRAY_HPP
