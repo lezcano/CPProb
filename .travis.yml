@@ -147,7 +147,7 @@ install:
           { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
         fi
       fi
-      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR} - DBoost_USE_STATIC_LIBS=ON"
+      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR} -DBoost_USE_STATIC_LIBS=ON"
     fi
 
 before_script:
