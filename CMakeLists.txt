@@ -24,7 +24,6 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
-
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,memory")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -38,22 +37,51 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-## load in pkg-config support
-find_package(PkgConfig)
-## use pkg-config to get hints for 0mq locations
-pkg_check_modules(PC_ZeroMQ QUIET zmq)
+if (CMAKE_VERSION VERSION_LESS 3.2)
+    set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
+else()
+    set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+endif()
 
-## use the hint from above to find where 'zmq.hpp' is located
-find_path(ZeroMQ_INCLUDE_DIR
-        NAMES zmq.hpp
-        PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
-        )
+##############################################################################
+# Download and configure ZeroMQ
+##############################################################################
 
-## use the hint from about to find the location of libzmq
-find_library(ZeroMQ_LIBRARY
-        NAMES zmq
-        PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-        )
+find_package(ZeroMQ)
+
+if(NOT ZeroMQ_FOUND)
+    # Download and unpack googletest at configure time
+    configure_file(cmake/ZeroMQ.cmake.in zeromq-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/zeromq-download )
+    if(result)
+      message(FATAL_ERROR "CMake step for zeromq failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/zeromq-download )
+    if(result)
+      message(FATAL_ERROR "Build step for zeromq failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker
+    # settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+
+    set(ZeroMQ_INSTALL ${CMAKE_BINARY_DIR}/ZeroMQ-install)
+    set(ZeroMQ_FOUND TRUE)
+    set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INSTALL}/include)
+
+    if(MSVC)
+        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL}/lib/libzmq-${CMAKE_VS_PLATFORM_TOOLSET}*.lib")
+    else()
+        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL}/lib/libzmq-*.a")
+    endif()
+    set(ZeroMQ_LIBRARY_DIR ${ZeroMQ_INSTALL}/lib)
+    set(ZeroMQ_EXTERNAL TRUE)
+endif()
 
 ##############################################################################
 # Download and configure GTest
@@ -63,7 +91,7 @@ find_package(GTest)
 
 if(NOT GTEST_FOUND)
     # Download and unpack googletest at configure time
-    configure_file(cmake/gtest.txt.in googletest-download/CMakeLists.txt)
+    configure_file(cmake/gtest.cmake.in googletest-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
@@ -112,4 +140,3 @@ add_subdirectory(src)
 ##############################################################################
 enable_testing()
 add_subdirectory(tests)
-
