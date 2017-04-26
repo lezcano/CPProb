@@ -19,17 +19,8 @@ else()
     set(STD_CXX c++14)
 endif()
 
-# -isystem
-# http://stackoverflow.com/questions/25320100/suppress-warnings-from-boost-includes
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,memory")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fext-numeric-literals")
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -64,11 +55,6 @@ if(NOT ZeroMQ_FOUND)
     if(result)
       message(FATAL_ERROR "Build step for zeromq failed: ${result}")
     endif()
-
-    # Prevent overriding the parent project's compiler/linker
-    # settings on Windows
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
 
     set(ZeroMQ_INSTALL ${CMAKE_BINARY_DIR}/ZeroMQ-install)
     set(ZeroMQ_FOUND TRUE)
@@ -122,14 +108,46 @@ if(NOT GTEST_FOUND)
     endif()
 endif()
 
+##############################################################################
+# Download and configure Flatbuffers
+##############################################################################
+
+find_package(FlatBuffers)
+
+if(NOT FLATBUFFERS_FOUND)
+    message(STATUS "FLATBUFFERS not found, using binary directory.")
+
+    # Download and unpack googletest at configure time
+    configure_file(cmake/flatbuffers.cmake.in flatbuffers-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/flatbuffers-download )
+    if(result)
+      message(FATAL_ERROR "CMake step for flatbuffers failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/flatbuffers-download )
+    if(result)
+      message(FATAL_ERROR "Build step for flatbuffers failed: ${result}")
+    endif()
+
+    set(FLATBUFFERS_INSTALL "${CMAKE_BINARY_DIR}/flatbuffers-src")
+    set(FLATBUFFERS_FOUND TRUE)
+    set(FLATBUFFERS_INCLUDE_DIR "${FLATBUFFERS_INSTALL}/include")
+
+    include_directories("${FLATBUFFERS_INSTALL}/include")
+endif()
 
 ##############################################################################
 # Setup include paths. More include paths can be added in subdirectories.
 ##############################################################################
-find_package(Boost 1.62 COMPONENTS program_options REQUIRED)
-MESSAGE(Boost_FOUND)
-if (Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
+set(BOOST_REQUESTED_VERSION 1.61)
+find_package(Boost REQUIRED COMPONENTS program_options)
+MESSAGE(BOOST_FOUND)
+if (BOOST_FOUND)
+    MESSAGE(${BOOST_INCLUDE_DIRS})
+    include_directories(${BOOST_INCLUDE_DIRS})
 endif()
 
 include_directories(include)

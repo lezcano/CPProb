@@ -110,46 +110,6 @@ install:
     fi
 
 
-  ############################################################################
-  # Install flatbuffers
-  ############################################################################
-  - |
-    if [[ "${FLATBUFFERS_VERSION}" != "" ]]; then
-      FLATBUFFERS_DIR=${DEPS_DIR}/flatbuffers-${FLATBUFFERS_VERSION}
-      if [[ -z "$(ls -A ${FLATBUFFERS_DIR})" ]]; then
-        if [[ "${FLATBUFFERS_VERSION}" == "trunk" ]]; then
-          FLATBUFFERS_URL="https://github.com/google/flatbuffers.git"
-          travis_retry git clone --depth 1 --recursive --quiet ${FLATBUFFERS_URL} ${FLATBUFFERS_DIR} || exit 1
-          (cd ${FLATBUFFERS_DIR} && cmake - G "Unix Makefiles" && make)
-        else
-          FLATBUFFERS_URL="https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VERSION}.tar.gz"
-          mkdir -p ${FLATBUFFERS_DIR}
-          { travis_retry wget --quiet -O - ${FLATBUFFERS_URL} | tar --strip-components=1 -xz -C ${FLATBUFFERS_DIR}; } || exit 1
-        fi
-      fi
-      export PATH="${FLATBUFFERS_DIR}/include:${PATH}"
-    fi
-
-  ############################################################################
-  # Install Boost headers
-  ############################################################################
-  - |
-    if [[ "${BOOST_VERSION}" != "" ]]; then
-      BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
-      if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
-        if [[ "${BOOST_VERSION}" == "trunk" ]]; then
-          BOOST_URL="http://github.com/boostorg/boost.git"
-          travis_retry git clone --depth 1 --recursive --quiet ${BOOST_URL} ${BOOST_DIR} || exit 1
-          (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 headers)
-        else
-          BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
-          mkdir -p ${BOOST_DIR}
-          { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-        fi
-      fi
-      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR} -DBoost_USE_STATIC_LIBS=ON"
-    fi
-
 before_script:
   ############################################################################
   # Go back to the root of the project and setup the build directory
