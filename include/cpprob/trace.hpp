@@ -5,12 +5,13 @@
 #include <iostream>
 #include <string>
 
+#include <boost/any.hpp>
+
 #include "cpprob/trace.hpp"
 #include "cpprob/ndarray.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
-
 
 class Sample{
 public:
@@ -19,21 +20,23 @@ public:
     Sample(const std::string& sample_address,
            int sample_instance,
            const infcomp::Distribution& proposal_type,
-           const flatbuffers::Offset<void>& proposal,
-           int time_index=0,
-           NDArray<double> value=0);
+           const boost::any& proposal,
+           int time_index = 0,
+           NDArray<double> value = 0);
 
-    void set_value(NDArray<double> value);
+    void set_value(const NDArray<double>& value);
 
     flatbuffers::Offset<infcomp::Sample> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
 private:
-    std::string sample_address_;
-    int sample_instance_;
+    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder& buff) const;
+
+    std::string sample_address_{};
+    int sample_instance_{0};
     infcomp::Distribution proposal_type_;
-    flatbuffers::Offset<void> proposal_;
-    int time_index_;
-    NDArray<double> value_;
+    boost::any proposal_param_;
+    int time_index_{0};
+    NDArray<double> value_{0};
 };
 
 class Trace {
@@ -64,12 +67,7 @@ public:
 
 private:
 
-    template<template <class ...> class Distr, class ...Params>
-    friend void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x);
-
-    template<template<class ...> class Distr, class ...Params>
-    friend typename Distr<Params ...>::result_type
-    sample_impl(Distr<Params ...> &distr, const bool from_observe);
+    friend class State;
 
     int time_index_ = 1;
     double log_w_ = 0;

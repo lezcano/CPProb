@@ -24,9 +24,8 @@ public:
     static void send_batch();
 private:
     static flatbuffers::FlatBufferBuilder buff;
-
-    template<template <class ...> class Distr, class ...Params>
-    friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, const bool from_observe);
+    static zmq::socket_t server;
+    static std::vector<flatbuffers::Offset<infcomp::Trace>> vec;
 
 };
 
@@ -43,10 +42,12 @@ public:
     static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
         static flatbuffers::FlatBufferBuilder buff;
 
-        infcomp::CreateMessage(
+        auto msg = infcomp::CreateMessage(
                 buff,
                 infcomp::MessageBody::ProposalRequest,
                 infcomp::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
+
+        buff.Finish(msg);
 
         zmq::message_t request (buff.GetSize());
         memcpy (request.data(), buff.GetBufferPointer(), buff.GetSize());
@@ -55,9 +56,10 @@ public:
 
         zmq::message_t reply;
         client.recv (&reply);
-        auto msg_rep = static_cast<const infcomp::ProposalReply *>
-        (flatbuffers::GetRoot<infcomp::Message>(reply.data())->body());
-        return proposal<Distr, Params...>::get_distr(msg_rep);
+
+        auto message = infcomp::GetMessage(reply.data());
+        auto reply_msg = static_cast<const infcomp::ProposalReply*>(message->body());
+        return proposal<Distr, Params...>::get_distr(reply_msg);
     }
 
 private:

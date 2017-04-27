@@ -18,45 +18,33 @@ template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, const bool from_observe) {
     typename Distr<Params ...>::result_type x;
     std::string addr = get_addr();
-    auto id = State::ids.emplace(addr, static_cast<int>(State::ids.size())).first->second;
-
-    if (id >= static_cast<int>(State::t.x_.size()))
-        State::t.x_.resize(id + 1);
+    auto id = State::register_addr(addr);
 
     if (State::training) {
         x = distr(get_rng());
 
         if(from_observe){
-            State::t.observes_.emplace_back(x);
+            State::add_observe_to_batch(x);
         }
         else{
-            int sample_instance = State::t.x_[id].size() + 1;
-
-            State::t.samples_.emplace_back(Sample{addr, sample_instance, proposal<Distr, Params...>::type_enum,
-                                           proposal<Distr, Params...>::request(Compilation::buff, distr),
-                                           State::t.time_index_, x});
+            State::add_sample_to_batch(Sample{addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum,
+                                     default_type_param(distr), State::time_index(), x});
         }
     }
     else {
-        static flatbuffers::FlatBufferBuilder foo;
-        // Lua starts with 1
-        int sample_instance = State::t.x_[id].size() + 1;
-        State::curr_sample = Sample{addr, sample_instance, proposal<Distr, Params...>::type_enum,
-                             proposal<Distr, Params...>::request(foo, distr)};
+        State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_type_param(distr));
 
         auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
 
         x = proposal(get_rng());
-        State::prev_sample = State::curr_sample;
-        State::prev_sample.set_value(std::exchange(x, distr(get_rng())));
+        State::curr_sample.set_value(x);
+        State::prev_sample = std::move(State::curr_sample);
 
-        State::t.log_w_ += pdf(distr, x) - pdf(proposal, x);
+        State::increment_cum_log_prob(pdf(distr, x) - pdf(proposal, x));
     }
 
-    State::t.x_[id].emplace_back(x);
-
-    State::t.x_addr_.emplace_back(x, id);
-    ++State::t.time_index_;
+    State::add_sample_to_trace(x, id);
+    State::increment_time();
 
     return x;
 }
@@ -74,8 +62,8 @@ void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x
     else{
         using std::log;
         auto prob = cpprob::pdf(distr, x);
-        State::t.y_.emplace_back(prob);
-        State::t.log_w_ += log(prob);
+        State::add_observe_to_trace(prob);
+        State::increment_cum_log_prob(prob);
     }
 }
 
@@ -122,7 +110,8 @@ std::vector<std::vector<NDArray<double>>> inference(
         auto t = State::get_trace();
         auto w = std::exp(t.log_w());
         sum_w += w;
-        ret += w*t;
+        auto a = w*t;
+        ret += a;
     }
     ret /= sum_w;
     return ret.x();

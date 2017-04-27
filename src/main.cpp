@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/inference")->default_value("compile"), "Compile or Inference mode")
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer")->default_value("compile"), "Compile or Inference mode")
       ("n_samples,n", po::value<int>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default 127.0.0.1 and port 5555 for compile, 6666 for inference.")
       ;
@@ -46,14 +46,14 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto all_distr = [](const int y1 = 0, const int y2 = 0){return cpprob::models::all_distr(y1, y2);};
+    auto all_distr = [](const int y1 = 3, const int y2 = 4){return cpprob::models::mean_normal(y1, y2);};
 
     if (mode == "compile"){
         if (tcp_addr.empty())
             tcp_addr = "tcp://*:5555";
         cpprob::compile(all_distr, tcp_addr);
     }
-    else if (mode == "inference"){
+    else if (mode == "infer"){
         if (tcp_addr.empty())
             tcp_addr = "tcp://localhost:6666";
         std::cout << "Expectation example means:\n" << cpprob::inference(all_distr, tcp_addr, n_samples, 3, 4) << std::endl;

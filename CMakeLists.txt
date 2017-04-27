@@ -142,12 +142,30 @@ endif()
 ##############################################################################
 # Setup include paths. More include paths can be added in subdirectories.
 ##############################################################################
-set(BOOST_REQUESTED_VERSION 1.61)
 find_package(Boost REQUIRED COMPONENTS program_options)
-MESSAGE(BOOST_FOUND)
-if (BOOST_FOUND)
-    MESSAGE(${BOOST_INCLUDE_DIRS})
-    include_directories(${BOOST_INCLUDE_DIRS})
+if (NOT Boost_FOUND)
+    message(STATUS "Boost not found, using binary directory.")
+
+    # Download and unpack googletest at configure time
+    configure_file(cmake/boost.cmake.in boost-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost-download )
+    if(result)
+      message(FATAL_ERROR "CMake step for boost failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost-download )
+    if(result)
+      message(FATAL_ERROR "Build step for boost failed: ${result}")
+    endif()
+
+    set(Boost_INSTALL "${CMAKE_BINARY_DIR}/boost-src")
+    set(Boost_FOUND TRUE)
+    set(Boost_INCLUDE_DIRS "${Boost_ROOT}/include")
+
+    include_directories("${Boost_ROOT}/include")
 endif()
 
 include_directories(include)

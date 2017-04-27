@@ -63,6 +63,29 @@ RealType pdf(const vmf_distribution<RealType>& distr,
 
 }
 
+
+template <class RealType>
+boost::normal_distribution<>::param_type default_type_param(const boost::random::normal_distribution<RealType>& distr)
+{
+    return boost::normal_distribution<>::param_type(static_cast<double>(distr.mean()),
+                                                    static_cast<double>(distr.sigma()));
+}
+
+template <class IntType>
+boost::uniform_smallint<>::param_type default_type_param(const boost::random::uniform_smallint<IntType>& distr)
+{
+    return boost::uniform_smallint<>::param_type(static_cast<int>(distr.a()),
+                                                 static_cast<int>(distr.b()));
+}
+
+template<class RealType>
+vmf_distribution<>::param_type default_type_param(const vmf_distribution<RealType>& distr)
+{
+    auto mu = distr.mu();
+    std::vector<double> mu_double(mu.begin(), mu.end());
+    return vmf_distribution<>::param_type(mu_double, distr.kappa());
+}
+
 template<template <class ...> class Distr, class ...Params>
 struct proposal { };
 
@@ -71,9 +94,9 @@ struct proposal<boost::random::normal_distribution, RealType> {
     static constexpr auto type_enum = infcomp::Distribution::Normal;
 
     static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-            const boost::random::normal_distribution<RealType>&)
+            const boost::random::normal_distribution<RealType>& distr)
     {
-        return infcomp::CreateNormal(fbb).Union();
+        return infcomp::CreateNormal(fbb, distr.mean(), distr.sigma()).Union();
     }
 
     static boost::random::normal_distribution<RealType>
@@ -90,9 +113,10 @@ struct proposal<boost::random::uniform_smallint, IntType> {
     static constexpr auto type_enum = infcomp::Distribution::UniformDiscrete;
 
     static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-                                             const boost::random::uniform_smallint<IntType>&)
+                                             const boost::random::uniform_smallint<IntType>& distr)
     {
-        return infcomp::CreateDiscrete(fbb).Union();
+        auto size = distr.max() - distr.min() + 1;
+        return infcomp::CreateDiscrete(fbb, distr.min(), size).Union();
     }
 
     template<class RealType = double>
@@ -110,7 +134,8 @@ struct proposal<vmf_distribution, RealType> {
     static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
                                              const vmf_distribution<RealType>&)
     {
-        return infcomp::CreateDiscrete(fbb).Union();
+        throw 1;
+        //return infcomp::Create(fbb).Union();
     }
 
     static vmf_distribution<RealType>

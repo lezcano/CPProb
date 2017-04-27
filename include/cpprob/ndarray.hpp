@@ -33,6 +33,12 @@ public:
 
     NDArray& operator+=(const NDArray & rhs)
     {
+        if (this->shape().empty()){
+            *this = rhs;
+            return *this;
+        }
+        if (rhs.shape_.empty())
+            return *this;
         if (this->shape() != rhs.shape())
             throw std::domain_error("The tensors do not have the same shape");
 

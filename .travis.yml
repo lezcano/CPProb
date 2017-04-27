@@ -17,8 +17,6 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.62.0
-    - ${TRAVIS_BUILD_DIR}/deps/flatbuffers-1.6.0
 
 matrix:
   include:
@@ -30,27 +28,27 @@ matrix:
     ##########################################################################
     # Clang 3.6
     - os: linux
-      env: LLVM_VERSION=3.6.2 BOOST_VERSION=default FLATBUFFERS_VERSION=default
+      env: LLVM_VERSION=3.6.2
       compiler: clang
 
     # Clang 3.7
     - os: linux
-      env: LLVM_VERSION=3.7.1 BOOST_VERSION=default FLATBUFFERS_VERSION=default
+      env: LLVM_VERSION=3.7.1
       compiler: clang
 
     # Clang 3.8
     - os: linux
-      env: LLVM_VERSION=3.8.0 BOOST_VERSION=default FLATBUFFERS_VERSION=default
+      env: LLVM_VERSION=3.8.0
       compiler: clang
 
     # Clang 3.9
     - os: linux
-      env: LLVM_VERSION=3.9.0 BOOST_VERSION=default FLATBUFFERS_VERSION=default
+      env: LLVM_VERSION=3.9.0
       compiler: clang
 
     # GCC 6
     - os: linux
-      env: COMPILER=g++-6     BOOST_VERSION=default FLATBUFFERS_VERSION=default
+      env: COMPILER=g++-6
       compiler: gcc
 
 
@@ -66,8 +64,6 @@ install:
   # Setup default versions and override compiler if needed
   ############################################################################
   - if [[ "${LLVM_VERSION}" == "default" ]]; then LLVM_VERSION=3.9.0; fi
-  - if [[ "${BOOST_VERSION}" == "default" ]]; then BOOST_VERSION=1.62.0; fi
-  - if [[ "${FLATBUFFERS_VERSION}" == "default" ]]; then FLATBUFFERS_VERSION=1.6.0; fi
 
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
@@ -108,7 +104,6 @@ install:
       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
     fi
-
 
 before_script:
   ############################################################################
