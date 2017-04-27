@@ -2,6 +2,7 @@
 #define CPPROB_STATE_HPP
 
 #include <unordered_map>
+#include <string>
 
 #include "cpprob/trace.hpp"
 
@@ -20,19 +21,20 @@ public:
 private:
     static Trace t;
     static bool training;
-    static std::unordered_map<std::string, int> ids;
+    static std::unordered_map<std::string, int> ids_sample;
+    static std::unordered_map<std::string, int> ids_predict;
     static Sample prev_sample;
     static Sample curr_sample;
 
+
+    static int register_addr_sample(const std::string& addr);
+    static void add_sample(const Sample& s);
     static int sample_instance(int id);
 
-    static int register_addr(const std::string& addr);
+    static void add_observe(const NDArray<double>& x);
 
-    static void add_sample_to_batch(const Sample& s);
-    static void add_observe_to_batch(const NDArray<double>& n);
-
-    static void add_sample_to_trace(const NDArray<double>& x, int id);
-    static void add_observe_to_trace(double prob);
+    static int register_addr_predict(const std::string& addr);
+    static void add_predict(const std::string& addr, const NDArray<double>& x);
 
     static int time_index();
     static void increment_time();
@@ -44,6 +46,8 @@ private:
 
     template<template <class ...> class Distr, class ...Params>
     friend void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x);
+
+    friend void predict(const NDArray<double>& x);
 };
 }  // namespace cpprob
 

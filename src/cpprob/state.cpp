@@ -9,7 +9,8 @@ namespace cpprob {
 
 Trace State::t;
 bool State::training;
-std::unordered_map<std::string, int> State::ids;
+std::unordered_map<std::string, int> State::ids_sample;
+std::unordered_map<std::string, int> State::ids_predict;
 Sample State::prev_sample;
 Sample State::curr_sample;
 
@@ -34,44 +35,49 @@ void State::set_training(const bool t)
 
 void State::reset_ids()
 {
-    ids.clear();
+    ids_predict.clear();
+    ids_sample.clear();
 }
 
 int State::sample_instance(int id)
 {
-    // Lua starts with 1
-    return State::t.x_[id].size() + 1;
+    return State::t.sample_instance_[id];
 }
 
-int State::register_addr(const std::string& addr)
+int State::register_addr_sample(const std::string& addr)
 {
-    auto id = State::ids.emplace(addr, static_cast<int>(State::ids.size())).first->second;
-    // Might not be the first execution and maybe ids is already populated and we have to increase
-    // the size of x_ by more than one
-    if (id >= static_cast<int>(State::t.x_.size()))
-        State::t.x_.resize(id + 1);
+    auto id = State::ids_sample.emplace(addr, static_cast<int>(State::ids_sample.size())).first->second;
+    if (static_cast<int>(State::t.sample_instance_.size()) <= id){
+        State::t.sample_instance_.resize(id + 1);
+    }
+    // First id is 1
+    // To change to zero change to post increment
+    ++State::t.sample_instance_[id];
     return id;
 }
 
-void State::add_sample_to_batch(const Sample& s)
+void State::add_sample(const Sample& s)
 {
     State::t.samples_.emplace_back(s);
 }
 
-void State::add_observe_to_batch(const NDArray<double>& n)
+void State::add_observe(const NDArray<double>& x)
 {
-    State::t.observes_.emplace_back(n);
+    State::t.observes_.emplace_back(x);
 }
 
-void State::add_sample_to_trace(const NDArray<double>& x, int id)
+int State::register_addr_predict(const std::string& addr)
 {
-    State::t.x_[id].emplace_back(x);
-    State::t.x_addr_.emplace_back(x, id);
+    return State::ids_predict.emplace(addr, static_cast<int>(State::ids_predict.size())).first->second;
 }
 
-void State::add_observe_to_trace(double prob)
+void State::add_predict(const std::string& addr, const NDArray<double>& x)
 {
-    State::t.y_.emplace_back(prob);
+    auto id = register_addr_predict(addr);
+    if (State::t.predict_.size() >= id)
+        State::t.predict_.resize(id + 1);
+    State::t.predict_[id].emplace_back(x);
+    State::t.predict_addr_.emplace_back(id, x);
 }
 
 int State::time_index()

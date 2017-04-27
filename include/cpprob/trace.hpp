@@ -43,7 +43,7 @@ class Trace {
 public:
     double log_w() const;
 
-    std::vector<std::vector<NDArray<double>>> x() const;
+    std::vector<std::vector<NDArray<double>>> predict() const;
 
     flatbuffers::Offset<infcomp::Trace> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
@@ -59,9 +59,7 @@ public:
     friend std::basic_ostream< CharT, Traits > &
     operator<<(std::basic_ostream< CharT, Traits > & os, const Trace & t)
     {
-        detail::print_vector(os, t.x_);
-        os << os.widen(' ');
-        detail::print_vector(os, t.y_);
+        detail::print_vector(os, t.predict_);
         return os;
     }
 
@@ -71,10 +69,11 @@ private:
 
     int time_index_ = 1;
     double log_w_ = 0;
-    std::vector<std::vector<NDArray<double>>> x_;
 
-    std::vector<std::pair<NDArray<double>, int>> x_addr_;
-    std::vector<double> y_;
+    std::vector<std::vector<NDArray<double>>> predict_;
+    std::vector<std::pair<int, NDArray<double>>> predict_addr_;
+
+    std::vector<int> sample_instance_;
 
     std::vector<Sample> samples_;
     std::vector<NDArray<double>> observes_;

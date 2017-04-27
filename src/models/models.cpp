@@ -37,22 +37,26 @@ void g() {
 
     const auto slope = cpprob::sample(normal);
     const auto bias = cpprob::sample(normal);
+    cpprob::predict(slope);
+    cpprob::predict(bias);
+
     for (size_t i = 0; i < n; ++i) {
         auto obs_distr = normal_distribution<double>{slope * arr[i].first + bias, 1};
         cpprob::observe(obs_distr, arr[i].second);
     }
 }
 
-void mean_normal(const int y1, const int y2) {
+void mean_normal(const int y1) {
     using boost::random::normal_distribution;
 
     static normal_distribution<> normal{0, 1};
-    auto mean = cpprob::sample(normal);
 
-    auto obs_distr = normal_distribution<double>{mean, 1};
+    auto mean = cpprob::sample(normal);
+    cpprob::predict(mean);
+
+    auto obs_distr = normal_distribution<double>{mean, 0.1};
 
     cpprob::observe(obs_distr, y1);
-    cpprob::observe(obs_distr, y2);
 }
 
 void all_distr(const int y1, const int y2) {
@@ -60,11 +64,14 @@ void all_distr(const int y1, const int y2) {
     using boost::random::uniform_smallint;
     using cpprob::vmf_distribution;
     uniform_smallint<> discrete {2, 7};
-    normal_distribution<> normal1{0,static_cast<double>(cpprob::sample(discrete))};
+    auto dis = cpprob::sample(discrete);
+    cpprob::predict(dis);
+    normal_distribution<> normal1{0,static_cast<double>(dis)};
     normal_distribution<> normal2{cpprob::sample(normal1),static_cast<double>(cpprob::sample(discrete))};
     vmf_distribution<> vmf({1,2,3,4}, 3);
 
     auto x = cpprob::sample(vmf);
+    cpprob::predict(x);
 
     cpprob::observe(vmf, x);
     cpprob::observe(normal2, y1);

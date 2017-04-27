@@ -39,15 +39,17 @@ std::string get_addr(){
     std::string s;
     do {
         if (i == 4){
-            std::cerr << "sample_impl not found." << std::endl;
+            std::cerr << "sample_impl or predict not found." << std::endl;
             exit(EXIT_FAILURE);
         }
         s = std::string(strings[i]);
         ++i;
-    } while (s.find("sample_impl") == std::string::npos);
+    } while (s.find("sample_impl") == std::string::npos && s.find("predict") == std::string::npos);
     s = std::string(strings[i]);
     if (s.find("cpprob") != std::string::npos &&
-        (s.find("sample") != std::string::npos || s.find("observe") != std::string::npos)){
+        (s.find("sample") != std::string::npos ||
+         s.find("observe") != std::string::npos ||
+         s.find("predict") != std::string::npos)){
         ++i;
     }
 

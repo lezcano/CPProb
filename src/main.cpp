@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto all_distr = [](const int y1 = 3, const int y2 = 4){return cpprob::models::mean_normal(y1, y2);};
+    auto all_distr = [](const int y1 = 0){return cpprob::models::mean_normal(y1);};
 
     if (mode == "compile"){
         if (tcp_addr.empty())
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     else if (mode == "infer"){
         if (tcp_addr.empty())
             tcp_addr = "tcp://localhost:6666";
-        std::cout << "Expectation example means:\n" << cpprob::inference(all_distr, tcp_addr, n_samples, 3, 4) << std::endl;
+        std::cout << "Expectation example means:\n" << cpprob::inference(all_distr, tcp_addr, n_samples, 0) << std::endl;
     }
     else{
         std::cout << "Incorrect mode.\n\n";

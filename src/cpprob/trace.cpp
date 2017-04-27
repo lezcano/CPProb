@@ -11,7 +11,7 @@ namespace cpprob{
 
 double Trace::log_w() const{ return log_w_; }
 
-std::vector<std::vector<NDArray<double>>> Trace::x() const{ return x_; }
+std::vector<std::vector<NDArray<double>>> Trace::predict() const{ return predict_; }
 
 flatbuffers::Offset<infcomp::Trace> Trace::pack(flatbuffers::FlatBufferBuilder& buff) const{
     std::vector<flatbuffers::Offset<infcomp::Sample>> vec_sample(samples_.size());
@@ -28,34 +28,34 @@ flatbuffers::Offset<infcomp::Trace> Trace::pack(flatbuffers::FlatBufferBuilder& 
 }
 
 Trace& Trace::operator+= (const Trace& rhs){
-    if (rhs.x_.size() > this->x_.size())
-        this->x_.resize(rhs.x_.size());
+    if (rhs.predict_.size() > this->predict_.size())
+        this->predict_.resize(rhs.predict_.size());
 
-    for (std::size_t i = 0; i < rhs.x_.size(); ++i){
-        if (rhs.x_[i].empty()) continue;
+    for (std::size_t i = 0; i < rhs.predict_.size(); ++i){
+        if (rhs.predict_[i].empty()) continue;
 
-        if (rhs.x_[i].size() > this->x_[i].size())
-            this->x_[i].resize(rhs.x_[i].size());
+        if (rhs.predict_[i].size() > this->predict_[i].size())
+            this->predict_[i].resize(rhs.predict_[i].size());
 
         // Add the vectors
-        std::transform(rhs.x_[i].begin(),
-                       rhs.x_[i].end(),
-                       this->x_[i].begin(),
-                       this->x_[i].begin(),
+        std::transform(rhs.predict_[i].begin(),
+                       rhs.predict_[i].end(),
+                       this->predict_[i].begin(),
+                       this->predict_[i].begin(),
                        std::plus<NDArray<double>>());
     }
     return *this;
 }
 
 Trace& Trace::operator*= (double rhs){
-    for (auto& v : this->x_)
+    for (auto& v : this->predict_)
         for (auto& e : v)
             e *= rhs;
     return *this;
 }
 
 Trace& Trace::operator/= (double rhs){
-    for (auto& v : this->x_)
+    for (auto& v : this->predict_)
         for (auto& e : v)
             e /= rhs;
     return *this;
