@@ -117,7 +117,7 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
         return 0;
     }
     else{
-        std::runtime_error("Distribution " +
+        throw std::runtime_error("Distribution " +
                            std::to_string(static_cast<std::underlying_type_t<infcomp::Distribution>>(type)) +
                           "not implemented.");
     }

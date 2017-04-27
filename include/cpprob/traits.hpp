@@ -39,7 +39,7 @@ RealType pdf(const boost::random::normal_distribution<RealType>& distr,
 
 template <class IntType>
 double pdf(const boost::random::uniform_smallint<IntType>& distr,
-           const typename boost::random::uniform_smallint<IntType>::result_type & x)
+           const typename boost::random::uniform_smallint<IntType>::result_type &)
 {
     return 1.0/(distr.max() - distr.min() + 1.0);
 }
@@ -93,12 +93,6 @@ template<class RealType>
 struct proposal<boost::random::normal_distribution, RealType> {
     static constexpr auto type_enum = infcomp::Distribution::Normal;
 
-    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-            const boost::random::normal_distribution<RealType>& distr)
-    {
-        return infcomp::CreateNormal(fbb, distr.mean(), distr.sigma()).Union();
-    }
-
     static boost::random::normal_distribution<RealType>
     get_distr(const infcomp::ProposalReply* msg)
     {
@@ -112,13 +106,6 @@ template<class IntType>
 struct proposal<boost::random::uniform_smallint, IntType> {
     static constexpr auto type_enum = infcomp::Distribution::UniformDiscrete;
 
-    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-                                             const boost::random::uniform_smallint<IntType>& distr)
-    {
-        auto size = distr.max() - distr.min() + 1;
-        return infcomp::CreateDiscrete(fbb, distr.min(), size).Union();
-    }
-
     template<class RealType = double>
     static min_max_discrete_distribution<IntType, RealType>
     get_distr(const infcomp::ProposalReply* msg)
@@ -130,13 +117,6 @@ struct proposal<boost::random::uniform_smallint, IntType> {
 template<class RealType>
 struct proposal<vmf_distribution, RealType> {
     static constexpr auto type_enum = infcomp::Distribution::VMF;
-
-    static flatbuffers::Offset<void> request(flatbuffers::FlatBufferBuilder& fbb,
-                                             const vmf_distribution<RealType>&)
-    {
-        throw 1;
-        //return infcomp::Create(fbb).Union();
-    }
 
     static vmf_distribution<RealType>
     get_distr(const infcomp::ProposalReply* msg)

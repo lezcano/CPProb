@@ -83,7 +83,6 @@ void Inference::send_observe_init(std::vector<double>&& data){
     buff.Clear();
 
     // TODO (Lezcano) Is this answer is unnecessary?
-    static flatbuffers::FlatBufferBuilder builder_reply;
     zmq::message_t reply;
     Inference::client.recv (&reply);
 

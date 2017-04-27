@@ -106,20 +106,19 @@ private:
             class = std::enable_if_t <std::is_constructible<T, U>::value>>
     void compute_shape(const std::vector <U> &v, int i)
     {
-        if (shape_.size() <= i)
+        if (static_cast<int>(shape_.size()) <= i)
             shape_.emplace_back(v.size());
-        else
-            if (shape_[i] < v.size())
-                shape_[i] = v.size();
+        else if (shape_[i] < static_cast<int>(v.size()))
+            shape_[i] = v.size();
     }
 
     // i is the dimension that we are processing
     template<class U>
     void compute_shape(const std::vector<std::vector<U>> & v, int i)
     {
-        if (shape_.size() <= i)
+        if (static_cast<int>(shape_.size()) <= i)
             shape_.emplace_back(v.size());
-        else if (v.size() > shape_[i])
+        else if (static_cast<int>(v.size()) > shape_[i])
             shape_[i] = v.size();
         for (const auto& e : v)
             compute_shape(e, i+1);

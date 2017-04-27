@@ -19,6 +19,7 @@ else()
     set(STD_CXX c++14)
 endif()
 
+set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -Wextra -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
