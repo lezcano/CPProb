@@ -6,6 +6,11 @@
 
 #include <boost/random/uniform_smallint.hpp>
 
+#include <boost/random/poisson_distribution.hpp>
+#include <boost/math/distributions/poisson.hpp>
+
+#include <boost/random/uniform_real_distribution.hpp>
+
 #include <boost/math/constants/constants.hpp>
 
 #include "distr/min_max_discrete.hpp"
@@ -44,7 +49,7 @@ double pdf(const boost::random::uniform_smallint<IntType>& distr,
     return 1.0/(distr.max() - distr.min() + 1.0);
 }
 
-template<typename IntType, typename WeightType>
+template<class IntType, class WeightType>
 WeightType pdf(const min_max_discrete_distribution<IntType, WeightType>& dist,
                const typename min_max_discrete_distribution<IntType, WeightType>::result_type & x)
 {
@@ -63,19 +68,33 @@ RealType pdf(const vmf_distribution<RealType>& distr,
 
 }
 
+template<typename IntType, class RealType>
+IntType pdf(const boost::random::poisson_distribution<IntType, RealType>& distr,
+             const typename boost::random::poisson_distribution<IntType, RealType>::result_type & x)
+{
+    using namespace boost::math;
+    return pdf(poisson_distribution<RealType>(distr.mean()), x);
+}
+
+template<typename RealType = double>
+RealType pdf(const boost::random::uniform_real_distribution<RealType>& distr,
+            const typename boost::random::uniform_real_distribution<RealType>::result_type &)
+{
+    return 1/(distr.b()-distr.a());
+}
 
 template <class RealType>
-boost::normal_distribution<>::param_type default_type_param(const boost::random::normal_distribution<RealType>& distr)
+boost::random::normal_distribution<>::param_type default_type_param(const boost::random::normal_distribution<RealType>& distr)
 {
-    return boost::normal_distribution<>::param_type(static_cast<double>(distr.mean()),
-                                                    static_cast<double>(distr.sigma()));
+    return boost::random::normal_distribution<>::param_type(static_cast<double>(distr.mean()),
+                                                            static_cast<double>(distr.sigma()));
 }
 
 template <class IntType>
-boost::uniform_smallint<>::param_type default_type_param(const boost::random::uniform_smallint<IntType>& distr)
+boost::random::uniform_smallint<>::param_type default_type_param(const boost::random::uniform_smallint<IntType>& distr)
 {
-    return boost::uniform_smallint<>::param_type(static_cast<int>(distr.a()),
-                                                 static_cast<int>(distr.b()));
+    return boost::random::uniform_smallint<>::param_type(static_cast<int>(distr.a()),
+                                                         static_cast<int>(distr.b()));
 }
 
 template<class RealType>
@@ -84,6 +103,18 @@ vmf_distribution<>::param_type default_type_param(const vmf_distribution<RealTyp
     auto mu = distr.mu();
     std::vector<double> mu_double(mu.begin(), mu.end());
     return vmf_distribution<>::param_type(mu_double, distr.kappa());
+}
+
+template<class IntType, class RealType>
+boost::random::poisson_distribution<>::param_type default_type_param(const boost::random::poisson_distribution<IntType, RealType>& distr)
+{
+    return boost::random::poisson_distribution<>::param_type(static_cast<double>(distr.mean()));
+}
+
+template<class RealType>
+boost::random::uniform_real_distribution<>::param_type default_type_param(const boost::random::uniform_real_distribution<RealType>& distr)
+{
+    return boost::random::uniform_real_distribution<>::param_type(static_cast<double>(distr.a()), static_cast<double>(distr.b()));
 }
 
 template<template <class ...> class Distr, class ...Params>
@@ -129,6 +160,30 @@ struct proposal<vmf_distribution, RealType> {
 };
 
 template<class RealType>
+struct proposal<boost::random::uniform_real_distribution, RealType> {
+    static constexpr auto type_enum = infcomp::Distribution::UniformContinuous;
+
+    static boost::random::uniform_real_distribution<RealType>
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        auto distr = static_cast<const infcomp::UniformContinuous*>(msg->distribution());
+        return boost::random::uniform_real_distribution<RealType>(distr->prior_min(), distr->prior_max());
+    }
+};
+
+template<class IntType, class RealType>
+struct proposal<boost::random::poisson_distribution, IntType, RealType> {
+    static constexpr auto type_enum = infcomp::Distribution::Poisson;
+
+    static boost::random::poisson_distribution<IntType, RealType>
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        auto distr = static_cast<const infcomp::Poisson*>(msg->distribution());
+        return boost::random::poisson_distribution<IntType, RealType>(distr->proposal_lambda());
+    }
+};
+
+template<class RealType>
 constexpr infcomp::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
 
 template<class RealType>
@@ -137,5 +192,10 @@ constexpr infcomp::Distribution proposal<vmf_distribution, RealType>::type_enum;
 template<class IntType>
 constexpr infcomp::Distribution proposal<boost::random::uniform_smallint, IntType>::type_enum;
 
+template<class RealType>
+constexpr infcomp::Distribution proposal<boost::random::uniform_real_distribution, RealType>::type_enum;
+
+template<class IntType, class RealType>
+constexpr infcomp::Distribution proposal<boost::random::poisson_distribution, IntType, RealType>::type_enum;
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_

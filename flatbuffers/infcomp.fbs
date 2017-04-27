@@ -8,7 +8,7 @@ table Message {
 
 root_type Message;
 
-union Distribution { Categorical, Discrete, Flip, Normal, UniformDiscrete, VMF}
+union Distribution { Categorical, Discrete, Flip, Normal, UniformDiscrete, VMF, Poisson, UniformContinuous}
 
 table NDArray {
     data:[double];
@@ -48,6 +48,17 @@ table VMF {
 
     proposal_mu:NDArray;
     proposal_kappa:double;
+}
+
+table Poisson {
+    prior_lambda:double;
+
+    proposal_lambda:double;
+}
+
+table UniformContinuous {
+    prior_min:int;
+    prior_max:int;
 }
 
 

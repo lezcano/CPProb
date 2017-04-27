@@ -97,11 +97,11 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
 {
     auto type = this->proposal_type_;
     if (type == infcomp::Distribution::Normal){
-        auto param = boost::any_cast<boost::normal_distribution<>::param_type>(proposal_param_);
+        auto param = boost::any_cast<boost::random::normal_distribution<>::param_type>(proposal_param_);
         return infcomp::CreateNormal(buff, param.mean(), param.sigma()).Union();
     }
     else if (type == infcomp::Distribution::UniformDiscrete){
-        auto param = boost::any_cast<boost::uniform_smallint<>::param_type>(proposal_param_);
+        auto param = boost::any_cast<boost::random::uniform_smallint<>::param_type>(proposal_param_);
         return infcomp::CreateUniformDiscrete(buff,param.a(), param.b()-param.a()+1).Union();
     }
     else if (type == infcomp::Distribution::VMF){
@@ -112,6 +112,15 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
                                                          buff.CreateVector<double>(mu.values()),
                                                          buff.CreateVector<int32_t>(mu.shape())),
                                   param.kappa()).Union();
+    }
+    else if (type == infcomp::Distribution::Poisson){
+        auto param = boost::any_cast<boost::random::poisson_distribution<>::param_type>(proposal_param_);
+        return infcomp::CreatePoisson(buff, param.mean()).Union();
+
+    }
+    else if (type == infcomp::Distribution::UniformContinuous){
+        auto param = boost::any_cast<boost::random::uniform_real_distribution<>::param_type>(proposal_param_);
+        return infcomp::CreateUniformContinuous(buff, param.a(), param.b()).Union();
     }
     else if (type == infcomp::Distribution::NONE){
         return 0;

@@ -24,6 +24,10 @@ struct UniformDiscrete;
 
 struct VMF;
 
+struct Poisson;
+
+struct UniformContinuous;
+
 struct Sample;
 
 struct Trace;
@@ -110,8 +114,10 @@ enum class Distribution : uint8_t {
   Normal = 4,
   UniformDiscrete = 5,
   VMF = 6,
+  Poisson = 7,
+  UniformContinuous = 8,
   MIN = NONE,
-  MAX = VMF
+  MAX = UniformContinuous
 };
 
 inline const char **EnumNamesDistribution() {
@@ -123,6 +129,8 @@ inline const char **EnumNamesDistribution() {
     "Normal",
     "UniformDiscrete",
     "VMF",
+    "Poisson",
+    "UniformContinuous",
     nullptr
   };
   return names;
@@ -159,6 +167,14 @@ template<> struct DistributionTraits<UniformDiscrete> {
 
 template<> struct DistributionTraits<VMF> {
   static const Distribution enum_value = Distribution::VMF;
+};
+
+template<> struct DistributionTraits<Poisson> {
+  static const Distribution enum_value = Distribution::Poisson;
+};
+
+template<> struct DistributionTraits<UniformContinuous> {
+  static const Distribution enum_value = Distribution::UniformContinuous;
 };
 
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
@@ -619,6 +635,106 @@ inline flatbuffers::Offset<VMF> CreateVMF(
   builder_.add_prior_kappa(prior_kappa);
   builder_.add_proposal_mu(proposal_mu);
   builder_.add_prior_mu(prior_mu);
+  return builder_.Finish();
+}
+
+struct Poisson FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_LAMBDA = 4,
+    VT_PROPOSAL_LAMBDA = 6
+  };
+  double prior_lambda() const {
+    return GetField<double>(VT_PRIOR_LAMBDA, 0.0);
+  }
+  double proposal_lambda() const {
+    return GetField<double>(VT_PROPOSAL_LAMBDA, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_LAMBDA) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_LAMBDA) &&
+           verifier.EndTable();
+  }
+};
+
+struct PoissonBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_lambda(double prior_lambda) {
+    fbb_.AddElement<double>(Poisson::VT_PRIOR_LAMBDA, prior_lambda, 0.0);
+  }
+  void add_proposal_lambda(double proposal_lambda) {
+    fbb_.AddElement<double>(Poisson::VT_PROPOSAL_LAMBDA, proposal_lambda, 0.0);
+  }
+  PoissonBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  PoissonBuilder &operator=(const PoissonBuilder &);
+  flatbuffers::Offset<Poisson> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<Poisson>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Poisson> CreatePoisson(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_lambda = 0.0,
+    double proposal_lambda = 0.0) {
+  PoissonBuilder builder_(_fbb);
+  builder_.add_proposal_lambda(proposal_lambda);
+  builder_.add_prior_lambda(prior_lambda);
+  return builder_.Finish();
+}
+
+struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MIN = 4,
+    VT_PRIOR_MAX = 6
+  };
+  int32_t prior_min() const {
+    return GetField<int32_t>(VT_PRIOR_MIN, 0);
+  }
+  int32_t prior_max() const {
+    return GetField<int32_t>(VT_PRIOR_MAX, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_PRIOR_MIN) &&
+           VerifyField<int32_t>(verifier, VT_PRIOR_MAX) &&
+           verifier.EndTable();
+  }
+};
+
+struct UniformContinuousBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_min(int32_t prior_min) {
+    fbb_.AddElement<int32_t>(UniformContinuous::VT_PRIOR_MIN, prior_min, 0);
+  }
+  void add_prior_max(int32_t prior_max) {
+    fbb_.AddElement<int32_t>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0);
+  }
+  UniformContinuousBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  UniformContinuousBuilder &operator=(const UniformContinuousBuilder &);
+  flatbuffers::Offset<UniformContinuous> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<UniformContinuous>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t prior_min = 0,
+    int32_t prior_max = 0) {
+  UniformContinuousBuilder builder_(_fbb);
+  builder_.add_prior_max(prior_max);
+  builder_.add_prior_min(prior_min);
   return builder_.Finish();
 }
 
@@ -1151,6 +1267,14 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
     }
     case Distribution::VMF: {
       auto ptr = reinterpret_cast<const VMF *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::Poisson: {
+      auto ptr = reinterpret_cast<const Poisson *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::UniformContinuous: {
+      auto ptr = reinterpret_cast<const UniformContinuous *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

@@ -62,6 +62,9 @@ void mean_normal(const int y1) {
 void all_distr(const int y1, const int y2) {
     using boost::random::normal_distribution;
     using boost::random::uniform_smallint;
+    using boost::random::uniform_real_distribution;
+    using boost::random::poisson_distribution;
+
     using cpprob::vmf_distribution;
     uniform_smallint<> discrete {2, 7};
     auto dis = cpprob::sample(discrete);
@@ -70,9 +73,18 @@ void all_distr(const int y1, const int y2) {
     normal_distribution<> normal2{cpprob::sample(normal1),static_cast<double>(cpprob::sample(discrete))};
     vmf_distribution<> vmf({1,2,3,4}, 3);
 
+    auto poiss = poisson_distribution<>(0.8);
+    auto poiss_val = cpprob::sample(poiss);
+    cpprob::predict(poiss_val);
+
+    auto rand_unif = uniform_real_distribution<>(2, 9.5);
+    auto rand_unif_val = cpprob::sample(rand_unif);
+    cpprob::predict(rand_unif_val);
+
     auto x = cpprob::sample(vmf);
     cpprob::predict(x);
 
+    cpprob::observe(rand_unif, rand_unif_val);
     cpprob::observe(vmf, x);
     cpprob::observe(normal2, y1);
     cpprob::observe(discrete, y2);
