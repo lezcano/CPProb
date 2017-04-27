@@ -100,12 +100,11 @@ std::vector<std::vector<NDArray<double>>> inference(
     Inference::connect_client(tcp_addr);
     State::set_training(false);
 
-    Inference::send_observe_init(embed_observe<double>(args...));
-
     double sum_w = 0;
     Trace ret;
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
+        Inference::send_observe_init(embed_observe<double>(args...));
         f(args...);
         auto t = State::get_trace();
         auto w = std::exp(t.log_w());

@@ -27,6 +27,14 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,memory")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fext-numeric-literals")
+endif()
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 if (CMAKE_VERSION VERSION_LESS 3.2)

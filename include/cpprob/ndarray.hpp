@@ -22,7 +22,7 @@ public:
 
     template<class U,
             class = std::enable_if_t <std::is_constructible<T, U>::value>>
-    NDArray(U a) : NDArray(T(a)) {};
+    NDArray(U a) : NDArray(T(a)) {}
 
     template<class U>
     NDArray(const std::vector <U> &v)
