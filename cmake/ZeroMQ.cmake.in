@@ -1,21 +1,10 @@
 cmake_minimum_required(VERSION 2.8.2)
 
-project(googletest-download)
+project(zeromq-download NONE)
 
 # ZeroMQ will use pthreads if it's available in the system, so we must link with it
 find_package(Threads)
 include(ExternalProject)
-
-# we build ZeroMQ statically, but want to link it into the caffe shared library
-# this requires position-independent code
-if (UNIX)
-    set(ZeroMQ_EXTRA_COMPILER_FLAGS "-fPIC")
-endif()
-
-set(ZeroMQ_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${ZeroMQ_EXTRA_COMPILER_FLAGS})
-set(ZeroMQ_C_FLAGS ${CMAKE_C_FLAGS} ${ZeroMQ_EXTRA_COMPILER_FLAGS})
-
-set(ZeroMQ_INSTALL "${CMAKE_BINARY_DIR}/zeromq-install")
 
 ExternalProject_Add(ZeroMQ
   GIT_REPOSITORY "https://github.com/zeromq/libZMQ.git"
@@ -24,7 +13,7 @@ ExternalProject_Add(ZeroMQ
   BINARY_DIR     "${CMAKE_BINARY_DIR}/zeromq-build"
   UPDATE_COMMAND ""
   INSTALL_DIR    "${CMAKE_BINARY_DIR}/zeromq-install"
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
              -DBUILD_SHARED_LIBS=OFF
              -DBUILD_STATIC_LIBS=ON
              -DBUILD_PACKAGING=OFF
@@ -32,6 +21,6 @@ ExternalProject_Add(ZeroMQ
              -DBUILD_NC_TESTS=OFF
              -BUILD_CONFIG_TESTS=OFF
              -DINSTALL_HEADERS=ON
-             -DCMAKE_C_FLAGS=${ZeroMQ_C_FLAGS}
-             -DCMAKE_CXX_FLAGS=${ZeroMQ_CXX_FLAGS}
+             -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS} -fPIC"
+             -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fPIC"
   )

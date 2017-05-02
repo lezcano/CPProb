@@ -12,7 +12,7 @@
 namespace cpprob{
 
 boost::random::mt19937& get_rng(){
-    static boost::random::mt19937 rng{seeded_rng()};
+    static boost::random::mt19937 rng{detail::seeded_rng()};
     return rng;
 }
 

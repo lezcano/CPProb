@@ -74,7 +74,7 @@ int State::register_addr_predict(const std::string& addr)
 void State::add_predict(const std::string& addr, const NDArray<double>& x)
 {
     auto id = register_addr_predict(addr);
-    if (State::t.predict_.size() >= id)
+    if (static_cast<int>(State::t.predict_.size()) >= id)
         State::t.predict_.resize(id + 1);
     State::t.predict_[id].emplace_back(x);
     State::t.predict_addr_.emplace_back(id, x);

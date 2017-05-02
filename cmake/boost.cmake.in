@@ -2,17 +2,11 @@ cmake_minimum_required(VERSION 2.8.2)
 
 project(boost-download NONE)
 
-set(Boost_REQUESTED_VERSION "1.62.0")
-set(Boost_REQUESTED_VERSION_UNDESCORE "1_62_0")
-#string(REPLACE "." "_" Boost_REQUESTED_VERSION_UNDERSCORE ${Boost_REQUESTED_VERSION})
-
 include(ExternalProject)
 ExternalProject_Add(boost
-  URL               "https://downloads.sourceforge.net/project/boost/boost/${Boost_REQUESTED_VERSION}/boost_${Boost_REQUESTED_VERSION_UNDERSCORE}.zip"
-  INSTALL_DIR       "${Boost_ROOT}"
-  SOURCE_DIR        "${CMAKE_BINARY_DIR}/boost-src"
-  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${Boost_ROOT}
-  BUILD_COMMAND     ./b2 ${Boost_MAYBE_STATIC} --prefix=${Boost_ROOT} ${Boost_COMPONENTS_FOR_BUILD} install
+  URL               "https://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.zip"
+  CONFIGURE_COMMAND ./bootstrap.sh --prefix="${CMAKE_BINARY_DIR}/boost"
+  BUILD_COMMAND     ./b2 ${Boost_MAYBE_STATIC} --prefix="${CMAKE_BINARY_DIR}/boost" "${Boost_COMPONENTS_FOR_BUILD}" install
   BUILD_IN_SOURCE   true
   INSTALL_COMMAND   ""
   TEST_COMMAND      ""

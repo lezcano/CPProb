@@ -22,27 +22,20 @@ void f() {
 namespace cpprob {
 namespace models {
 
-void g() {
+//-m infer -n 100 -o [(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)]
+void least_sqr(std::vector<std::pair<double, double>> points) {
     using boost::random::normal_distribution;
 
-    constexpr auto n = 6;
     static normal_distribution<double> normal{0, 10};
-    static const std::array<std::pair<double, double>, n> arr
-            = {{{1.0, 2.1},
-                       {2.0, 3.9},
-                       {3.0, 5.3},
-                       {4.0, 7.7},
-                       {5.0, 10.2},
-                       {6.0, 12.9}}};
 
     const auto slope = cpprob::sample(normal);
     const auto bias = cpprob::sample(normal);
     cpprob::predict(slope);
     cpprob::predict(bias);
 
-    for (size_t i = 0; i < n; ++i) {
-        auto obs_distr = normal_distribution<double>{slope * arr[i].first + bias, 1};
-        cpprob::observe(obs_distr, arr[i].second);
+    for (auto& point : points) {
+        auto obs_distr = normal_distribution<double>{slope * point.first + bias, 1};
+        cpprob::observe(obs_distr, point.second);
     }
 }
 

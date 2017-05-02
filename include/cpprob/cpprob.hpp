@@ -15,6 +15,56 @@
 #include "cpprob/ndarray.hpp"
 
 namespace cpprob {
+namespace detail {
+
+template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+std::vector<T> to_vec(U value)
+{
+    return std::vector<T>({static_cast<T>(value)});
+}
+
+template<class T, class U, class V>
+std::vector<T> to_vec(const std::pair<U, V>& pair);
+
+template<class T, class U>
+std::vector<T> to_vec(const std::vector<U>& v)
+{
+    std::vector<T> ret;
+    for(const auto& elem : v) {
+        auto aux = to_vec<T>(elem);
+        ret.insert(ret.end(), aux.begin(), aux.end());
+
+    }
+    return ret;
+}
+
+template<class T, class U, class V>
+std::vector<T> to_vec(const std::pair<U, V>& pair)
+{
+    auto ret = to_vec<T>(pair.first);
+    auto aux = to_vec<T>(pair.second);
+
+    ret.insert(ret.end(), aux.begin(), aux.end());
+    return ret;
+}
+
+template<class T, class... Args, size_t... Indices>
+std::vector<T> to_vec_tuple(const std::tuple<Args...>& tup, std::index_sequence<Indices...>)
+{
+    std::vector<T> ret;
+    auto append_ret = [&](std::vector<T>&& other) { ret.insert(ret.end(), std::make_move_iterator(other.begin()),
+                                                                      std::make_move_iterator(other.end())); };
+    (void)std::initializer_list<int>{ (append_ret(to_vec<T>(std::get<Indices>(tup))), 0)... };
+    return ret;
+}
+
+template<class T, class... Args>
+std::vector<T> to_vec(const std::tuple<Args...>& args){
+    return detail::to_vec_tuple<T, Args...>(args, std::make_index_sequence<sizeof...(Args)>());
+}
+
+}
+
 template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, const bool from_observe) {
     typename Distr<Params ...>::result_type x;
@@ -78,7 +128,7 @@ void compile(const Func& f, const std::string& tcp_addr) {
 
         for (int i = 0; i < batch_size; ++i){
             State::reset_trace();
-            f();
+            call_f_default_params(f);
             Compilation::add_trace(State::get_trace());
         }
         Compilation::send_batch();
@@ -86,17 +136,12 @@ void compile(const Func& f, const std::string& tcp_addr) {
 }
 
 
-template<class T, class... Args>
-std::vector<T> embed_observe(Args&&... args){
-    return std::vector<T>{static_cast<double>(args)...};
-}
-
 template<class Func, class... Args>
 std::vector<std::vector<NDArray<double>>> inference(
         const Func& f,
         const std::string& tcp_addr,
         size_t n,
-        Args&&... args){
+        std::tuple<Args...> args){
 
     Inference::connect_client(tcp_addr);
     State::set_training(false);
@@ -105,8 +150,8 @@ std::vector<std::vector<NDArray<double>>> inference(
     Trace ret;
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
-        Inference::send_observe_init(embed_observe<double>(args...));
-        f(args...);
+        Inference::send_observe_init(detail::to_vec<double>(args));
+        call_f_tuple(f, args);
         auto t = State::get_trace();
         auto w = std::exp(t.log_w());
         sum_w += w;
