@@ -200,7 +200,7 @@ if (NOT Boost_FOUND)
       message(FATAL_ERROR "Build step for boost failed: ${result}")
     endif()
 
-    set(Boost_ROOT "${CMAKE_BINARY_DIR}/boost")
+    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/boost")
     find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 endif()
 
