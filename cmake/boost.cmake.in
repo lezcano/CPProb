@@ -5,7 +5,7 @@ project(boost-download NONE)
 include(ExternalProject)
 ExternalProject_Add(boost
   URL               "https://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.zip"
-  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR}/boost
+  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR_ESCAPED}/boost
   BUILD_COMMAND     ./b2 ${BOOST_COMPONENTS_FLAGS} ${BOOST_BUILD_TYPE} install
   BUILD_IN_SOURCE   true
   INSTALL_COMMAND   ""

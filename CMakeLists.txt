@@ -43,6 +43,13 @@ else()
     set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
 endif()
 
+FUNCTION(ESCAPE out var)
+   string(REPLACE " " "\\ " aux ${var})
+   SET(${out} "${aux}" PARENT_SCOPE)
+ENDFUNCTION()
+
+ESCAPE(CMAKE_BINARY_DIR_ESCAPED ${CMAKE_BINARY_DIR})
+
 ##############################################################################
 # Download and configure ZeroMQ
 ##############################################################################
@@ -50,31 +57,32 @@ endif()
 find_package(ZeroMQ)
 
 if(NOT ZeroMQ_FOUND)
-    # Download and unpack googletest at configure time
+    set(ZeroMQ_DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/zeromq-download)
+    set(ZeroMQ_INSTALL_DIR ${CMAKE_BINARY_DIR}/zeromq-install)
+
     configure_file(cmake/ZeroMQ.cmake.in zeromq-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/zeromq-download )
+      WORKING_DIRECTORY ${ZeroMQ_DOWNLOAD_DIR} )
     if(result)
       message(FATAL_ERROR "CMake step for zeromq failed: ${result}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/zeromq-download )
+      WORKING_DIRECTORY ${ZeroMQ_DOWNLOAD_DIR} )
     if(result)
       message(FATAL_ERROR "Build step for zeromq failed: ${result}")
     endif()
 
-    set(ZeroMQ_INSTALL ${CMAKE_BINARY_DIR}/ZeroMQ-install)
     set(ZeroMQ_FOUND TRUE)
-    set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INSTALL}/include)
+    set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INSTALL_DIR}/include)
 
     if(MSVC)
-        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL}/lib/libzmq-${CMAKE_VS_PLATFORM_TOOLSET}*.lib")
+        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL_DIR}/lib/libzmq-${CMAKE_VS_PLATFORM_TOOLSET}*.lib")
     else()
-        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL}/lib/libzmq-*.a")
+        FILE(GLOB_RECURSE ZeroMQ_LIBRARY "${ZeroMQ_INSTALL_DIR}/lib/libzmq-*.a")
     endif()
-    set(ZeroMQ_LIBRARY_DIR ${ZeroMQ_INSTALL}/lib)
+    set(ZeroMQ_LIBRARY_DIR ${ZeroMQ_INSTALL_DIR}/lib)
     set(ZeroMQ_EXTERNAL TRUE)
 endif()
 
@@ -86,16 +94,18 @@ find_package(GTest)
 
 if(NOT GTEST_FOUND)
     # Download and unpack googletest at configure time
-    configure_file(cmake/gtest.cmake.in googletest-download/CMakeLists.txt)
+    set(GTEST_DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/googletest-download)
+
+    configure_file(cmake/gtest.cmake.in "${GTEST_DOWNLOAD_DIR}/CMakeLists.txt")
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+      WORKING_DIRECTORY ${GTEST_DOWNLOAD_DIR} )
     if(result)
       message(FATAL_ERROR "CMake step for googletest failed: ${result}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+      WORKING_DIRECTORY ${GTEST_DOWNLOAD_DIR} )
     if(result)
       message(FATAL_ERROR "Build step for googletest failed: ${result}")
     endif()
@@ -121,23 +131,24 @@ endif()
 # Download and configure Flatbuffers
 ##############################################################################
 
-#find_package(FlatBuffers)
+find_package(FlatBuffers)
 
 if(NOT FLATBUFFERS_FOUND)
     message(STATUS "FLATBUFFERS not found, using binary directory.")
 
-    # Download and unpack googletest at configure time
-    SET(FLATBUFFERS_ROOT "${CMAKE_BINARY_DIR}/flatbuffers")
-    configure_file(cmake/flatbuffers.cmake.in "${FLATBUFFERS_ROOT}/CMakeLists.txt")
+    SET(FLATBUFFERS_ROOT "${CMAKE_BINARY_DIR}/flatbuffers-src")
+    SET(FLATBUFFERS_DOWNLOAD "${CMAKE_BINARY_DIR}/flatbuffers-download")
+
+    configure_file(cmake/flatbuffers.cmake.in "${FLATBUFFERS_DOWNLOAD}/CMakeLists.txt")
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${FLATBUFFERS_ROOT})
+      WORKING_DIRECTORY "${FLATBUFFERS_DOWNLOAD}")
     if(result)
       message(FATAL_ERROR "CMake step for flatbuffers failed: ${result}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${FLATBUFFERS_ROOT})
+      WORKING_DIRECTORY "${FLATBUFFERS_DOWNLOAD}")
     if(result)
       message(FATAL_ERROR "Build step for flatbuffers failed: ${result}")
     endif()

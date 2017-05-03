@@ -9,10 +9,10 @@ include(ExternalProject)
 ExternalProject_Add(ZeroMQ
   GIT_REPOSITORY "https://github.com/zeromq/libZMQ.git"
   GIT_TAG        master
-  SOURCE_DIR     "${CMAKE_BINARY_DIR}/zeromq-src"
-  BINARY_DIR     "${CMAKE_BINARY_DIR}/zeromq-build"
+  SOURCE_DIR     "${CMAKE_BINARY_DIR_ESCAPED}/zeromq-src"
+  BINARY_DIR     "${CMAKE_BINARY_DIR_ESCAPED}/zeromq-build"
   UPDATE_COMMAND ""
-  INSTALL_DIR    "${CMAKE_BINARY_DIR}/zeromq-install"
+  INSTALL_DIR    "${CMAKE_BINARY_DIR_ESCAPED}/zeromq-install"
   CMAKE_ARGS -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
              -DBUILD_SHARED_LIBS=OFF
              -DBUILD_STATIC_LIBS=ON
