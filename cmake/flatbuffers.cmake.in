@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION 2.8.2)
 project(flatbuffers-download NONE)
 
 include(ExternalProject)
-ExternalProject_Add(flatbuffers
+ExternalProject_Add(flatubffers
   GIT_REPOSITORY    https://github.com/google/flatbuffers.git
   GIT_TAG           master
-  SOURCE_DIR        "${CMAKE_BINARY_DIR}/flatbuffers-src"
-  BINARY_DIR        "${CMAKE_BINARY_DIR}/flatbuffers-build"
-  CONFIGURE_COMMAND "-G \"Unix Makefiles\""
+  SOURCE_DIR        "${CMAKE_BINARY_DIR}/flatbuffers"
   BUILD_COMMAND     ""
   INSTALL_COMMAND   ""
   TEST_COMMAND      ""

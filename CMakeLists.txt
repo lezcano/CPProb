@@ -121,31 +121,31 @@ endif()
 # Download and configure Flatbuffers
 ##############################################################################
 
-find_package(FlatBuffers)
+#find_package(FlatBuffers)
 
 if(NOT FLATBUFFERS_FOUND)
     message(STATUS "FLATBUFFERS not found, using binary directory.")
 
     # Download and unpack googletest at configure time
-    configure_file(cmake/flatbuffers.cmake.in flatbuffers-download/CMakeLists.txt)
+    SET(FLATBUFFERS_ROOT "${CMAKE_BINARY_DIR}/flatbuffers")
+    configure_file(cmake/flatbuffers.cmake.in "${FLATBUFFERS_ROOT}/CMakeLists.txt")
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/flatbuffers-download )
+      WORKING_DIRECTORY ${FLATBUFFERS_ROOT})
     if(result)
       message(FATAL_ERROR "CMake step for flatbuffers failed: ${result}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/flatbuffers-download )
+      WORKING_DIRECTORY ${FLATBUFFERS_ROOT})
     if(result)
       message(FATAL_ERROR "Build step for flatbuffers failed: ${result}")
     endif()
 
-    set(FLATBUFFERS_INSTALL "${CMAKE_BINARY_DIR}/flatbuffers-src")
     set(FLATBUFFERS_FOUND TRUE)
-    set(FLATBUFFERS_INCLUDE_DIR "${FLATBUFFERS_INSTALL}/include")
+    set(FLATBUFFERS_INCLUDE_DIR "${FLATBUFFERS_ROOT}/include")
 
-    include_directories("${FLATBUFFERS_INSTALL}/include")
+    include_directories(${FLATBUFFERS_INCLUDE_DIR})
 endif()
 
 ##############################################################################
@@ -156,6 +156,23 @@ set(Boost_COMPONENTS_FOR_BUILD program_options serialization)
 find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
     message(STATUS "Boost not found, using binary directory.")
+
+    string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_LOWER)
+    if( CMAKE_BUILD_TYPE_LOWER STREQUAL "release")
+        set(BOOST_BUILD_TYPE release)
+    else()
+        set(BOOST_BUILD_TYPE debug)
+    endif()
+
+    FUNCTION(PREPEND var prefix)
+       SET(listVar "")
+       FOREACH(f ${ARGN})
+          LIST(APPEND listVar "${prefix}${f}")
+       ENDFOREACH(f)
+       SET(${var} "${listVar}" PARENT_SCOPE)
+    ENDFUNCTION(PREPEND)
+
+    PREPEND(BOOST_COMPONENTS_FLAGS "--with-" ${Boost_COMPONENTS_FOR_BUILD})
 
     # Download and unpack boost at configure time
     configure_file(cmake/boost.cmake.in boost-download/CMakeLists.txt)
@@ -172,8 +189,7 @@ if (NOT Boost_FOUND)
       message(FATAL_ERROR "Build step for boost failed: ${result}")
     endif()
 
-    set(Boost_INSTALL "${CMAKE_BINARY_DIR}/boost-src")
-    set(BOOST_ROOT ${Boost_INSTALL})
+    set(Boost_ROOT "${CMAKE_BINARY_DIR}/boost")
     find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 endif()
 
