@@ -164,7 +164,7 @@ endif()
 ##############################################################################
 
 set(Boost_COMPONENTS_FOR_BUILD program_options serialization)
-find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
+#find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
     message(STATUS "Boost not found, using binary directory.")
 
@@ -201,7 +201,7 @@ if (NOT Boost_FOUND)
     endif()
 
     set(BOOST_ROOT "${CMAKE_BINARY_DIR}/boost")
-    find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
+    find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 endif()
 
 include_directories(include)
