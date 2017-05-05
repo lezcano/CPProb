@@ -20,7 +20,7 @@ public:
     Sample(const std::string& sample_address,
            int sample_instance,
            const infcomp::Distribution& proposal_type,
-           const boost::any& proposal,
+           const boost::any& proposal_distr,
            int time_index = 0,
            NDArray<double> value = 0);
 
@@ -29,12 +29,15 @@ public:
     flatbuffers::Offset<infcomp::Sample> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
 private:
-    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder& buff) const;
+
+    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder& buff,
+                                         const boost::any& distr,
+                                         infcomp::Distribution type) const;
 
     std::string sample_address_{};
     int sample_instance_{0};
     infcomp::Distribution proposal_type_;
-    boost::any proposal_param_;
+    boost::any proposal_distr_;
     int time_index_{0};
     NDArray<double> value_{0};
 };

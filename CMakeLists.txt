@@ -164,7 +164,7 @@ endif()
 ##############################################################################
 
 set(Boost_COMPONENTS_FOR_BUILD program_options serialization)
-#find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
+find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
     message(STATUS "Boost not found, using binary directory.")
 
@@ -186,22 +186,27 @@ if (NOT Boost_FOUND)
     PREPEND(BOOST_COMPONENTS_FLAGS "--with-" ${Boost_COMPONENTS_FOR_BUILD})
 
     # Download and unpack boost at configure time
-    configure_file(cmake/boost.cmake.in boost-download/CMakeLists.txt)
+    configure_file(cmake/boost.cmake.in boost/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost-download )
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost )
     if(result)
       message(FATAL_ERROR "CMake step for boost failed: ${result}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
       RESULT_VARIABLE result
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost-download )
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/boost )
     if(result)
       message(FATAL_ERROR "Build step for boost failed: ${result}")
     endif()
 
     set(BOOST_ROOT "${CMAKE_BINARY_DIR}/boost")
+    set(BOOST_INCLUDEDIR "${CMAKE_BINARY_DIR}/boost/include")
+    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/boost/lib")
+    set(Boost_NO_SYSTEM_PATHS ON)
     find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
+    MESSAGE(WARNING ${Boost_INCLUDE_DIRS})
+    MESSAGE(WARNING ${Boost_FOUND})
 endif()
 
 include_directories(include)

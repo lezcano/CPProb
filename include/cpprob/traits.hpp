@@ -16,6 +16,10 @@
 #include "distr/min_max_discrete.hpp"
 #include "distr/vmf.hpp"
 
+
+#include <boost/function_types/parameter_types.hpp>
+#include <boost/function_types/function_arity.hpp>
+
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob {
@@ -84,41 +88,53 @@ RealType pdf(const boost::random::uniform_real_distribution<RealType>& distr,
 }
 
 template <class RealType>
-boost::random::normal_distribution<>::param_type default_type_param(const boost::random::normal_distribution<RealType>& distr)
+boost::random::normal_distribution<> default_distr(const boost::random::normal_distribution<RealType>& distr)
 {
-    return boost::random::normal_distribution<>::param_type(static_cast<double>(distr.mean()),
-                                                            static_cast<double>(distr.sigma()));
+    return boost::random::normal_distribution<>(static_cast<double>(distr.mean()),
+                                                static_cast<double>(distr.sigma()));
 }
 
 template <class IntType>
-boost::random::uniform_smallint<>::param_type default_type_param(const boost::random::uniform_smallint<IntType>& distr)
+boost::random::uniform_smallint<> default_distr(const boost::random::uniform_smallint<IntType>& distr)
 {
-    return boost::random::uniform_smallint<>::param_type(static_cast<int>(distr.a()),
-                                                         static_cast<int>(distr.b()));
+    return boost::random::uniform_smallint<>(static_cast<int>(distr.a()),
+                                             static_cast<int>(distr.b()));
 }
 
 template<class RealType>
-vmf_distribution<>::param_type default_type_param(const vmf_distribution<RealType>& distr)
+vmf_distribution<> default_distr(const vmf_distribution<RealType>& distr)
 {
     auto mu = distr.mu();
     std::vector<double> mu_double(mu.begin(), mu.end());
-    return vmf_distribution<>::param_type(mu_double, distr.kappa());
+    return vmf_distribution<>(mu_double, distr.kappa());
 }
 
 template<class IntType, class RealType>
-boost::random::poisson_distribution<>::param_type default_type_param(const boost::random::poisson_distribution<IntType, RealType>& distr)
+boost::random::poisson_distribution<> default_distr(const boost::random::poisson_distribution<IntType, RealType>& distr)
 {
-    return boost::random::poisson_distribution<>::param_type(static_cast<double>(distr.mean()));
+    return boost::random::poisson_distribution<>(static_cast<double>(distr.mean()));
 }
 
 template<class RealType>
-boost::random::uniform_real_distribution<>::param_type default_type_param(const boost::random::uniform_real_distribution<RealType>& distr)
+boost::random::uniform_real_distribution<> default_distr(const boost::random::uniform_real_distribution<RealType>& distr)
 {
-    return boost::random::uniform_real_distribution<>::param_type(static_cast<double>(distr.a()), static_cast<double>(distr.b()));
+    return boost::random::uniform_real_distribution<>(static_cast<double>(distr.a()), static_cast<double>(distr.b()));
 }
 
+
+template <class F, template <class ...> class C, class = std::make_index_sequence<boost::function_types::function_arity<F>::value>>
+struct parameter_types;
+
+template<class F, template <class ...> class C, size_t... Indices>
+struct parameter_types <F, C, std::index_sequence<Indices...>> {
+    using type = C<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type ...>;
+};
+
+template <class F, template <class ...> class C>
+using parameter_types_t = typename parameter_types<F, C>::type;
+
 template<template <class ...> class Distr, class ...Params>
-struct proposal { };
+struct proposal;
 
 template<class RealType>
 struct proposal<boost::random::normal_distribution, RealType> {

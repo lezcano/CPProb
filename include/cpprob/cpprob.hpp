@@ -79,11 +79,11 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
         }
         else{
             State::add_sample(Sample{addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum,
-                                     default_type_param(distr), State::time_index(), x});
+                                     default_distr(distr), State::time_index(), x});
         }
     }
     else {
-        State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_type_param(distr));
+        State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_distr(distr));
 
         auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
 
@@ -139,9 +139,9 @@ void compile(const Func& f, const std::string& tcp_addr) {
 template<class Func, class... Args>
 std::vector<std::vector<NDArray<double>>> inference(
         const Func& f,
+        const std::tuple<Args...>& args,
         const std::string& tcp_addr,
-        size_t n,
-        std::tuple<Args...> args){
+        size_t n){
 
     Inference::connect_client(tcp_addr);
     State::set_training(false);

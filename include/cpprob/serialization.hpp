@@ -1,174 +1,134 @@
 #ifndef INCLUDE_SERIALIZATION_HPP
 #define INCLUDE_SERIALIZATION_HPP
 
-#include <sstream>
 #include <tuple>
 #include <vector>
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/utility.hpp>
+#include <sstream>
+#include <fstream>
 
 #include "cpprob/detail/vector_io.hpp"
-
-#include <boost/function_types/parameter_types.hpp>
-#include <boost/function_types/function_arity.hpp>
-
 
 namespace cpprob {
 namespace detail {
 
+// Forward declarations
 template<class CharT, class Traits, class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
-static bool load(std::basic_istream<CharT, Traits> &is, T& v)
+void load(std::basic_istream<CharT, Traits> &is, T& v);
+template<class CharT, class Traits, class U, class V>
+void load(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair);
+template<class CharT, class Traits, class... T>
+void load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
+template<class CharT, class Traits, class T>
+void load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
+
+template<class CharT, class Traits, class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
+void load(std::basic_istream<CharT, Traits> &is, T& v)
 {
     is >> std::ws >> v;
-    return static_cast<bool>(is);
 }
 
-// Forward declaration
-template<class CharT, class Traits, class... T>
-bool load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
-
 template<class CharT, class Traits, class U, class V>
-bool load(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
+void load(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
 {
     std::tuple<U, V> tup;
-    bool ret = load(is, tup);
+    load(is, tup);
+    if (is.fail())
+        return;
     pair.first = std::move(std::get<0>(tup));
     pair.second = std::move(std::get<1>(tup));
-    return ret;
-
 }
 
 template<class CharT, class Traits, class... T, size_t... Indices>
-bool load_tuple_impl(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup, std::index_sequence<Indices...>)
+void load_tuple_impl(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup, std::index_sequence<Indices...>)
 {
-    bool result = true;
-    (void)std::initializer_list<int>{ (result = result && load(is, std::get<Indices>(tup)), 0)... };
-    return result;
+    (void)std::initializer_list<int>{ ((load(is, std::get<Indices>(tup)), is.fail()), 0)... };
 }
 
 template<class CharT, class Traits, class... T>
-bool load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
+void load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
     CharT ch;
     if (!(is >> ch)) {
-        return false;
+        return;
     }
     if (ch != is.widen('(')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
-        return false;
+        return;
     }
 
+    // load_tuple_impl will read exactly the number of elements of the tuple
+    // If the is.fail() is set it is because there was an error
     load_tuple_impl<CharT, Traits, T...>(is, tup, std::make_index_sequence<sizeof...(T)>());
-
-    if (is.fail()) {
-        return false;
-    }
+    if (is.fail())
+        return;
 
     if (!(is >> ch)) {
-        return false;
+        return;
     }
     if (ch != is.widen(')')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
     }
-
-    return static_cast<bool>(is);
 }
 
 template<class CharT, class Traits, class T>
-bool load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
+void load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
 {
     CharT ch;
     if (!(is >> ch)) {
-        return false;
+        return;
     }
     if (ch != is.widen('[')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
-        return false;
+        return;
     }
+
     do {
+        // Needed to be declared inside the loop, otherwise std::move
+        // could leave it in an invalid state
         T val;
-        if(!load(is, val))
+        load(is, val);
+        if(is.fail())
             break;
-        vec.push_back(val);
+        vec.emplace_back(std::move(val));
     } while (true);
 
-    if (is.fail()) {
-        return false;
-    }
-
+    // Remark: This accepts not properly specified vectors like
+    // [(1 2) (1 4] for std::vector<std::pair<int, int>> or [] for std::vector<std::vector<T>>
+    // but well...
+    is.clear();
     if (!(is >> ch)) {
-        return false;
+        return;
     }
     if (ch != is.widen(']')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
     }
-    return static_cast<bool>(is);
 }
 
 template<class... T, class CharT, class Traits, size_t... Indices>
-void parse_param_impl(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
+void parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
 {
     (void)std::initializer_list<int>{ (load(is, std::get<Indices>(tup)), 0)... };
 }
 
-
-template <class T>
-T load_csv_impl(boost::archive::text_iarchive& f)
-{
-    T ret;
-    f >> ret;
-    return ret;
-}
 } // end namespace detail
 
-
 template <class... T>
-std::tuple<T...> load_csv(const std::string& path)
+bool parse_file(const std::string& path, std::tuple<T...>& tup)
 {
     std::ifstream file(path);
-    boost::archive::text_iarchive boost_in(file);
-    return std::make_tuple(detail::load_csv_impl<T>(boost_in) ...);
+    detail::parse_stream(file, tup, std::make_index_sequence<sizeof...(T)>());
+    return !file.fail();
 }
 
 template <class... T>
-std::tuple<T...> parse_param(const std::string& param)
+bool parse_string(const std::string& param, std::tuple<T...>& tup)
 {
     std::istringstream iss(param);
-    std::tuple<T...> tup;
-    detail::parse_param_impl(iss, tup, std::make_index_sequence<sizeof...(T)>());
-    return tup;
-}
-
-namespace detail {
-template <class F, size_t... Indices>
-auto load_csv_f_impl(const std::string& path, std::index_sequence<Indices...>)
-{
-    return load_csv<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type ...>(path);
-}
-
-template <class F, size_t... Indices>
-auto parse_param_f_impl(const std::string& observes, std::index_sequence<Indices...>)
-{
-    return parse_param<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type ...>(observes);
-}
-
-} // namespace detail
-
-template <class F>
-auto load_csv_f(const std::string& path)
-{
-    return detail::load_csv_f_impl<F>(path, std::make_index_sequence<boost::function_types::function_arity<F>::value>());
-}
-
-template <class F>
-auto parse_param_f(const std::string& observes)
-{
-    return detail::parse_param_f_impl<F>(observes, std::make_index_sequence<boost::function_types::function_arity<F>::value>());
+    detail::parse_stream(iss, tup, std::make_index_sequence<sizeof...(T)>());
+    return !iss.fail();
 }
 
 } // end namespace cpprob

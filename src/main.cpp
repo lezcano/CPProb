@@ -1,4 +1,5 @@
 #include <iostream>
+#include <tuple>
 
 #include <boost/program_options.hpp>
 #include <boost/function_types/parameter_types.hpp>
@@ -6,6 +7,7 @@
 #include "cpprob/serialization.hpp"
 #include "models/models.hpp"
 #include "cpprob/cpprob.hpp"
+#include "cpprob/traits.hpp"
 
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
@@ -27,7 +29,7 @@ int main(int argc, char** argv) {
       ("help,h", "Print help messages")
       ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer")->default_value("compile"), "Compile or Inference mode.")
       ("n_samples,n", po::value<int>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference.")
-      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default 127.0.0.1 and port 5555 for compile, 6666 for inference.")
+      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default tcp://127.0.0.1:5555 for compile, tcp://127.0.0.1:6666 for inference.")
       ("observes,o", po::value<std::string>(&observes_str), "Values to observe. Used in Inference mode.")
       ("observes_file,f", po::value<std::string>(&observes_file), "File with the observed values in Serialized format. Used in Inference mode.")
       ;
@@ -54,27 +56,34 @@ int main(int argc, char** argv) {
 
     if (mode == "compile"){
         if (tcp_addr.empty())
-            tcp_addr = "tcp://*:5555";
+            tcp_addr = "tcp://127.0.0.1:5555";
         cpprob::compile(f, tcp_addr);
     }
     else if (mode == "infer"){
         if (tcp_addr.empty())
-            tcp_addr = "tcp://localhost:6666";
+            tcp_addr = "tcp://127.0.0.1:6666";
         // Check that exactly one of the options is set
         if (vm.count("observes") == vm.count("observes_file")) {
             std::cerr << "Exactly one of the options \"--observes\" or \"--observes_file\" has to be set" << std::endl;
             return -1;
         }
-        decltype(cpprob::load_csv_f<decltype(f)>(observes_file)) observes;
+        // The return type of parse_file_param_f and parse_string_param_f is the same
+        using tuple_params = cpprob::parameter_types_t<decltype(f), std::tuple>;
+        tuple_params observes;
+        bool ok;
         if (vm.count("observes_file"))
-            observes = cpprob::load_csv_f<decltype(f)>(observes_file);
+            ok = cpprob::parse_file(observes_file, observes);
         else
-            observes = cpprob::parse_param_f<decltype(f)>(observes_str);
-        std::cout << std::get<0>(observes).size() << std::endl;
-        std::cout << "Expectation example means:\n" << cpprob::inference(f, tcp_addr, n_samples, observes) << std::endl;
+            ok = cpprob::parse_string(observes_str, observes);
+        if (ok)
+            std::cout << "Expectation example means:\n" << cpprob::inference(f, observes, tcp_addr, n_samples) << std::endl;
+        else {
+            std::cerr << "Could not parse the arguments.\n"
+                      << "Use spaces to separate the arguments and elements of an aggregate type.\n";
+        }
     }
     else{
-        std::cerr << "Incorrect mode.\n\n";
-        std::cerr << desc << std::endl;
+        std::cerr << "Incorrect mode.\n\n"
+                  << desc << std::endl;
     }
 }

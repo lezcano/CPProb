@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include <msgpack.hpp>
 #include <zmq.hpp>
 
 #include "cpprob/traits.hpp"
