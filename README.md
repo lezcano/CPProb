@@ -13,9 +13,9 @@ All the dependancies are automatically managed by cmake. If cmake does not find
 a dependance, it will download and configure it automatically.
 
 The dependancies are the following:
-  * boost libraries
-  * flatbuffers
-  * zeromq
+  * [Boost]
+  * [FlatBuffers]
+  * [ZeroMQ]
 
 In general, you will need to specify a path to a modern C++14 complaint
 compiler using the `-DCMAKE_CXX_COMPILER` variable if the default compiler
@@ -91,4 +91,7 @@ python -m infcomp.infer
 
 <!-- Links -->
 [CMake]: http://www.cmake.org
+[Boost]: http://www.boost.org/
+[FlatBuffers]: https://google.github.io/flatbuffers/
+[ZeroMQ]: http://zeromq.org/
 
