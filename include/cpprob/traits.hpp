@@ -1,6 +1,9 @@
 #ifndef INCLUDE_TRAITS_HPP_
 #define INCLUDE_TRAITS_HPP_
 
+#include <numeric>
+#include <functional>
+
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/normal.hpp>
 
@@ -13,8 +16,9 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include "distr/min_max_discrete.hpp"
-#include "distr/vmf.hpp"
+#include "distributions/min_max_discrete.hpp"
+#include "distributions/vmf.hpp"
+#include "distributions/multivariate_normal.hpp"
 
 
 #include <boost/function_types/parameter_types.hpp>
@@ -73,20 +77,35 @@ RealType pdf(const vmf_distribution<RealType>& distr,
 }
 
 template<typename IntType, class RealType>
-IntType pdf(const boost::random::poisson_distribution<IntType, RealType>& distr,
+RealType pdf(const boost::random::poisson_distribution<IntType, RealType>& distr,
              const typename boost::random::poisson_distribution<IntType, RealType>::result_type & x)
 {
     using namespace boost::math;
     return pdf(poisson_distribution<RealType>(distr.mean()), x);
 }
 
-template<typename RealType = double>
+template<typename RealType>
 RealType pdf(const boost::random::uniform_real_distribution<RealType>& distr,
             const typename boost::random::uniform_real_distribution<RealType>::result_type &)
 {
     return 1/(distr.b()-distr.a());
 }
 
+template<typename RealType>
+RealType pdf(const multivariate_normal_distribution<RealType>& distr,
+             const typename multivariate_normal_distribution<RealType>::result_type & x)
+{
+    RealType ret = 1;
+    auto vec_distr = distr.distr();
+    auto it_distr = vec_distr.begin();
+    auto it_x = x.begin();
+    for(; it_distr != vec_distr.end() && it_x != x.end(); ++it_distr, ++it_x)
+        ret *= pdf(*it_distr, *it_x);
+    return ret;
+}
+
+// TODO(Lezcano) In all the default_distr functions, check if the input type is already the default.
+//               If it is, return the argument
 template <class RealType>
 boost::random::normal_distribution<> default_distr(const boost::random::normal_distribution<RealType>& distr)
 {
@@ -121,6 +140,15 @@ boost::random::uniform_real_distribution<> default_distr(const boost::random::un
     return boost::random::uniform_real_distribution<>(static_cast<double>(distr.a()), static_cast<double>(distr.b()));
 }
 
+template<class RealType>
+multivariate_normal_distribution<> default_distr(const multivariate_normal_distribution<RealType>& distr)
+{
+    auto mean = distr.mean();
+    auto sigma = distr.sigma();
+    std::vector<double> mean_double(mean.begin(), mean.end()),
+                        sigma_double(sigma.begin(), sigma.end());
+    return multivariate_normal_distribution<>(mean_double, sigma_double);
+}
 
 template <class F, template <class ...> class C, class = std::make_index_sequence<boost::function_types::function_arity<F>::value>>
 struct parameter_types;
@@ -199,6 +227,23 @@ struct proposal<boost::random::poisson_distribution, IntType, RealType> {
     }
 };
 
+
+template<class RealType>
+struct proposal<multivariate_normal_distribution, RealType> {
+    static constexpr auto type_enum = infcomp::Distribution::MultivariateNormal;
+
+    static multivariate_normal_distribution<RealType>
+    get_distr(const infcomp::ProposalReply* msg)
+    {
+        auto distr = static_cast<const infcomp::MultivariateNormal*>(msg->distribution());
+        flatbuffers::Vector<double>::iterator mean_ptr = distr->proposal_mean()->data()->begin();
+        flatbuffers::Vector<double>::iterator sigma_ptr = distr->proposal_sigma()->data()->begin();
+        auto dim = distr->proposal_mean()->data()->size();
+        return multivariate_normal_distribution<>(mean_ptr, mean_ptr + dim,
+                                                  sigma_ptr, sigma_ptr + dim);
+    }
+};
+
 template<class RealType>
 constexpr infcomp::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
 
@@ -213,5 +258,8 @@ constexpr infcomp::Distribution proposal<boost::random::uniform_real_distributio
 
 template<class IntType, class RealType>
 constexpr infcomp::Distribution proposal<boost::random::poisson_distribution, IntType, RealType>::type_enum;
+
+template<class RealType>
+constexpr infcomp::Distribution proposal<multivariate_normal_distribution, RealType>::type_enum;
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_

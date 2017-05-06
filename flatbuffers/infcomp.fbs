@@ -1,6 +1,13 @@
 namespace infcomp;
 
-union MessageBody { TracesFromPriorRequest, ObservesInitRequest, ProposalRequest, TracesFromPriorReply, ObservesInitReply, ProposalReply }
+union MessageBody {
+    TracesFromPriorRequest,
+    ObservesInitRequest,
+    ProposalRequest,
+    TracesFromPriorReply,
+    ObservesInitReply,
+    ProposalReply
+}
 
 table Message {
     body:MessageBody;
@@ -8,7 +15,17 @@ table Message {
 
 root_type Message;
 
-union Distribution { Categorical, Discrete, Flip, Normal, UniformDiscrete, VMF, Poisson, UniformContinuous}
+union Distribution {
+    Categorical,
+    Discrete,
+    Flip,
+    Normal,
+    UniformDiscrete,
+    VMF,
+    Poisson,
+    UniformContinuous,
+    MultivariateNormal
+}
 
 table NDArray {
     data:[double];
@@ -50,6 +67,14 @@ table VMF {
     proposal_kappa:double;
 }
 
+table MultivariateNormal {
+    prior_mean:NDArray;
+    prior_sigma:NDArray;
+
+    proposal_mean:NDArray;
+    proposal_sigma:NDArray;
+}
+
 table Poisson {
     prior_lambda:double;
 
@@ -57,8 +82,8 @@ table Poisson {
 }
 
 table UniformContinuous {
-    prior_min:int;
-    prior_max:int;
+    prior_min:double;
+    prior_max:double;
 }
 
 

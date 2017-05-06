@@ -4,7 +4,10 @@
 #include <string>
 #include <boost/any.hpp>
 
-#include <cpprob/traits.hpp>
+#include "cpprob/distributions/vmf.hpp"
+#include "cpprob/distributions/multivariate_normal.hpp"
+
+#include "cpprob/traits.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
@@ -94,34 +97,47 @@ flatbuffers::Offset<infcomp::Sample> Sample::pack(flatbuffers::FlatBufferBuilder
 }
 
 flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buff,
-                                             const boost::any& distr,
+                                             const boost::any& distr_any,
                                              infcomp::Distribution type) const
 {
     if (type == infcomp::Distribution::Normal){
-        auto param = boost::any_cast<boost::random::normal_distribution<>>(distr);
-        return infcomp::CreateNormal(buff, param.mean(), param.sigma()).Union();
+        auto distr = boost::any_cast<boost::random::normal_distribution<>>(distr_any);
+        return infcomp::CreateNormal(buff, distr.mean(), distr.sigma()).Union();
     }
     else if (type == infcomp::Distribution::UniformDiscrete){
-        auto param = boost::any_cast<boost::random::uniform_smallint<>>(distr);
-        return infcomp::CreateUniformDiscrete(buff,param.a(), param.b()-param.a()+1).Union();
+        auto distr = boost::any_cast<boost::random::uniform_smallint<>>(distr_any);
+        return infcomp::CreateUniformDiscrete(buff,distr.a(), distr.b()-distr.a()+1).Union();
     }
     else if (type == infcomp::Distribution::VMF){
-        auto param = boost::any_cast<vmf_distribution<>>(distr);
-        auto mu = NDArray<double>(param.mu());
+        auto distr = boost::any_cast<vmf_distribution<>>(distr_any);
+        auto mu = NDArray<double>(distr.mu());
         return infcomp::CreateVMF(buff,
                                   infcomp::CreateNDArray(buff,
                                                          buff.CreateVector<double>(mu.values()),
                                                          buff.CreateVector<int32_t>(mu.shape())),
-                                  param.kappa()).Union();
+                                  distr.kappa()).Union();
     }
     else if (type == infcomp::Distribution::Poisson){
-        auto param = boost::any_cast<boost::random::poisson_distribution<>>(distr);
-        return infcomp::CreatePoisson(buff, param.mean()).Union();
+        auto distr = boost::any_cast<boost::random::poisson_distribution<>>(distr_any);
+        return infcomp::CreatePoisson(buff, distr.mean()).Union();
 
     }
     else if (type == infcomp::Distribution::UniformContinuous){
-        auto param = boost::any_cast<boost::random::uniform_real_distribution<>>(distr);
-        return infcomp::CreateUniformContinuous(buff, param.a(), param.b()).Union();
+        auto distr = boost::any_cast<boost::random::uniform_real_distribution<>>(distr_any);
+        return infcomp::CreateUniformContinuous(buff, distr.a(), distr.b()).Union();
+    }
+    else if (type == infcomp::Distribution::MultivariateNormal){
+        auto distr = boost::any_cast<multivariate_normal_distribution<>>(distr_any);
+        auto mean = NDArray<double>(distr.mean());
+        auto sigma = NDArray<double>(distr.sigma());
+        return infcomp::CreateMultivariateNormal(buff,
+                                                 infcomp::CreateNDArray(buff,
+                                                                        buff.CreateVector<double>(mean.values()),
+                                                                        buff.CreateVector<int32_t>(mean.shape())),
+                                                 infcomp::CreateNDArray(buff,
+                                                                        buff.CreateVector<double>(sigma.values()),
+                                                                        buff.CreateVector<int32_t>(sigma.shape()))
+        ).Union();
     }
     else if (type == infcomp::Distribution::NONE){
         return 0;

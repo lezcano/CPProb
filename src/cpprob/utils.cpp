@@ -6,6 +6,7 @@
 #include <numeric>
 #include <iostream>
 #include <vector>
+#include <string>
 
 #include <boost/random/random_device.hpp>
 
@@ -21,7 +22,7 @@ std::string get_addr(){
     static void *buffer[buf_size];
     char **strings;
 
-    size_t nptrs = backtrace(buffer, buf_size);
+    int nptrs = backtrace(buffer, buf_size);
 
     // We will not store the call to get_traces or the call to sample
     // We discard either observe -> sample_impl -> get_addr
@@ -35,7 +36,7 @@ std::string get_addr(){
     }
 
     // Discard calls to sample / observe and subsequent calls
-    size_t i = 0;
+    int i = 0;
     std::string s;
     do {
         if (i == 4){
@@ -55,8 +56,8 @@ std::string get_addr(){
 
 
     // The -4 is to discard the call to _start and the call to __libc_start_main
-    // plus the two calls untill the function is called
-    for (size_t j = i; j < nptrs - 4; j++) {
+    // plus the two calls until the function is called
+    for (auto j = i; j < nptrs - 4; j++) {
         s = std::string(strings[j]);
         // The +3 is to discard the characters
         auto first = s.find("[0x") + 3;

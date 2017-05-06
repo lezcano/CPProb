@@ -70,7 +70,7 @@ public:
 
         template<typename CharT, typename Traits>
         friend std::basic_istream <CharT, Traits> &
-        operator>>(std::basic_istream <CharT, Traits> & is, const param_type & param)
+        operator>>(std::basic_istream <CharT, Traits> & is, param_type & param)
         {
             is >> param.min_ >> std::ws >> param.max_ >> std::ws >> param.distr_;
             return is;
@@ -96,7 +96,7 @@ public:
     // construct/copy/destruct
     template<typename Iter> min_max_discrete_distribution(IntType min, IntType max, Iter first, Iter last) : param_(min, max, first, last) {}
 
-    min_max_discrete_distribution(IntType min, IntType max, std::initializer_list<WeightType> w) : param_(min, max, w) {}
+    min_max_discrete_distribution(IntType min, IntType max, const std::initializer_list<WeightType>& w) : param_(min, max, w) {}
 
     template<typename Range>
     explicit min_max_discrete_distribution(IntType min, IntType max, const Range & range) : param_(min, max, range) {}
@@ -170,11 +170,7 @@ public:
     operator>>(std::basic_istream <CharT, Traits> & is,
                min_max_discrete_distribution & distr)
     {
-        param_type parm;
-        if(is >> parm) {
-            distr.param_ = std::move(parm);
-        }
-        return is;
+        return is >> distr.param_;
     }
 
 

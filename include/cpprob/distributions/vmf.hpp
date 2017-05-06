@@ -7,6 +7,7 @@
 #include <istream>
 #include <algorithm>
 #include <cmath>
+#include <tuple>
 
 #include <boost/range.hpp>
 #include <boost/random/beta_distribution.hpp>
@@ -21,7 +22,7 @@ namespace detail {
 template<class RealType = double>
 void normalize_l2(std::vector <RealType> &vector) {
     auto norm = std::sqrt(std::inner_product(vector.begin(), vector.end(), vector.begin(), static_cast<RealType>(0)));
-    std::transform(vector.begin(), vector.end(), vector.begin(), [norm](const RealType &a) { return a / norm; });
+    std::transform(vector.begin(), vector.end(), vector.begin(), [norm](RealType a) { return a / norm; });
 }
 
 } // end namespace detail
@@ -47,18 +48,18 @@ public:
         }
 
         template<class Iter>
-        param_type(Iter mu_first, Iter mu_last, const RealType& kappa) : mu_(mu_first, mu_last), kappa_{kappa}
+        param_type(Iter mu_first, Iter mu_last, RealType kappa) : mu_(mu_first, mu_last), kappa_{kappa}
         {
             init(mu_first, mu_last, kappa);
         }
 
-        param_type(const std::initializer_list<RealType> & mu, const RealType& kappa) : mu_(mu), kappa_(kappa)
+        param_type(const std::initializer_list<RealType> & mu, RealType kappa) : mu_(mu), kappa_(kappa)
         {
             init(mu.begin(), mu.end(), kappa);
         }
 
         template<class Range>
-        explicit param_type(const Range& range_mu, const RealType& kappa)
+        explicit param_type(const Range& range_mu, RealType kappa)
         {
             init(boost::begin(range_mu), boost::end(range_mu), kappa);
         }
@@ -86,21 +87,19 @@ public:
 
         template<class CharT, class Traits>
         friend std::basic_istream< CharT, Traits > &
-        operator>>(std::basic_istream< CharT, Traits > & is, const param_type & param)
+        operator>>(std::basic_istream< CharT, Traits > & is, param_type & param)
         {
-            std::vector<RealType> mu_temp;
-            detail::read_vector(is, mu_temp);
+            detail::read_vector(is, param.mu_);
             if(!is) {
                 return is;
             }
-            param.mu_.swap(mu_temp);
             is >> std::ws >> param.kappa_;
             return is;
         }
 
         friend bool operator==(const param_type & lhs, const param_type & rhs)
         {
-            return lhs.kappa_ == rhs.kappa_ && lhs.mu_ == rhs.mu_;
+            return std::tie(lhs.kappa_, lhs.mu_) == std::tie(rhs.kappa_, rhs.mu_);
         }
         friend bool operator!=(const param_type & lhs, const param_type & rhs)
         {
@@ -133,12 +132,12 @@ public:
 
     // construct/copy/destruct
     template<class Iter>
-    vmf_distribution(Iter mu_first, Iter mu_last, const RealType& kappa) : param_(mu_first, mu_last, kappa) {}
+    vmf_distribution(Iter mu_first, Iter mu_last, RealType kappa) : param_(mu_first, mu_last, kappa) {}
 
-    vmf_distribution(const std::initializer_list<RealType> & mu, const RealType& kappa) : param_(mu, kappa) {}
+    vmf_distribution(const std::initializer_list<RealType> & mu, RealType kappa) : param_(mu, kappa) {}
 
     template<class Range>
-    explicit vmf_distribution(const Range& range_mu, const RealType& kappa) : param_(range_mu, kappa) {}
+    explicit vmf_distribution(const Range& range_mu, RealType kappa) : param_(range_mu, kappa) {}
 
     // public member functions
     RealType kappa() const
@@ -213,7 +212,7 @@ public:
 private:
 
     template<class URNG>
-    RealType sample_weight(URNG& urng, const RealType& kappa, int dim) const {
+    RealType sample_weight(URNG& urng, RealType kappa, int dim) const {
         dim--; // We sample over S^{n-1}
         auto b = dim / (std::sqrt(4.0 * kappa * kappa + dim * dim) + 2 * kappa);
         auto x = (1.0 - b) / (1 + b);

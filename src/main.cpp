@@ -22,13 +22,13 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
     std::string mode, tcp_addr, observes_file, observes_str;
-    int n_samples;
+    size_t n_samples;
 
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
       ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer")->default_value("compile"), "Compile or Inference mode.")
-      ("n_samples,n", po::value<int>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference.")
+      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default tcp://127.0.0.1:5555 for compile, tcp://127.0.0.1:6666 for inference.")
       ("observes,o", po::value<std::string>(&observes_str), "Values to observe. Used in Inference mode.")
       ("observes_file,f", po::value<std::string>(&observes_file), "File with the observed values in Serialized format. Used in Inference mode.")
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &cpprob::models::least_sqr;
+    auto f = &cpprob::models::all_distr;
 
     if (mode == "compile"){
         if (tcp_addr.empty())

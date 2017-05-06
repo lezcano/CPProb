@@ -4,7 +4,8 @@
 #include <boost/random/uniform_smallint.hpp>
 
 #include "cpprob/cpprob.hpp"
-#include "cpprob/distr/vmf.hpp"
+#include "cpprob/distributions/vmf.hpp"
+#include "cpprob/distributions/multivariate_normal.hpp"
 
 /*
 void f() {
@@ -52,35 +53,46 @@ void mean_normal(const int y1) {
     cpprob::observe(obs_distr, y1);
 }
 
-void all_distr(const int y1, const int y2) {
+void all_distr() {
+    using cpprob::sample;
+    using cpprob::predict;
+    using cpprob::observe;
+
     using boost::random::normal_distribution;
+    normal_distribution<> normal{1,2};
+    auto normal_val = sample(normal);
+    predict(normal_val);
+    observe(normal, normal_val);
+
     using boost::random::uniform_smallint;
+    uniform_smallint<> discrete {2, 7};
+    auto discrete_val = sample(discrete);
+    predict(discrete_val);
+    observe(discrete, discrete_val);
+
     using boost::random::uniform_real_distribution;
+    uniform_real_distribution<> rand_unif {2, 9.5};
+    auto rand_unif_val = sample(rand_unif);
+    predict(rand_unif_val);
+    observe(rand_unif, rand_unif_val);
+
     using boost::random::poisson_distribution;
+    poisson_distribution<> poiss(0.8);
+    auto poiss_val = sample(poiss);
+    predict(poiss_val);
+    observe(poiss, poiss_val);
 
     using cpprob::vmf_distribution;
-    uniform_smallint<> discrete {2, 7};
-    auto dis = cpprob::sample(discrete);
-    cpprob::predict(dis);
-    normal_distribution<> normal1{0,static_cast<double>(dis)};
-    normal_distribution<> normal2{cpprob::sample(normal1),static_cast<double>(cpprob::sample(discrete))};
-    vmf_distribution<> vmf({1,2,3,4}, 3);
+    vmf_distribution<> vmf{{1,2,3}, 3};
+    auto vmf_val = sample(vmf);
+    predict(vmf_val);
+    observe(vmf, vmf_val);
 
-    auto poiss = poisson_distribution<>(0.8);
-    auto poiss_val = cpprob::sample(poiss);
-    cpprob::predict(poiss_val);
-
-    auto rand_unif = uniform_real_distribution<>(2, 9.5);
-    auto rand_unif_val = cpprob::sample(rand_unif);
-    cpprob::predict(rand_unif_val);
-
-    auto x = cpprob::sample(vmf);
-    cpprob::predict(x);
-
-    cpprob::observe(rand_unif, rand_unif_val);
-    cpprob::observe(vmf, x);
-    cpprob::observe(normal2, y1);
-    cpprob::observe(discrete, y2);
+    using cpprob::multivariate_normal_distribution;
+    multivariate_normal_distribution<> multi{{1,2,3,4}, {2,1,5,3}};
+    auto sample_multi = sample(multi);
+    predict(sample_multi);
+    observe(multi, sample_multi);
 }
 
 } // end namespace models

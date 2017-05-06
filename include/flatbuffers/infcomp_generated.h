@@ -24,6 +24,8 @@ struct UniformDiscrete;
 
 struct VMF;
 
+struct MultivariateNormal;
+
 struct Poisson;
 
 struct UniformContinuous;
@@ -116,8 +118,9 @@ enum class Distribution : uint8_t {
   VMF = 6,
   Poisson = 7,
   UniformContinuous = 8,
+  MultivariateNormal = 9,
   MIN = NONE,
-  MAX = UniformContinuous
+  MAX = MultivariateNormal
 };
 
 inline const char **EnumNamesDistribution() {
@@ -131,6 +134,7 @@ inline const char **EnumNamesDistribution() {
     "VMF",
     "Poisson",
     "UniformContinuous",
+    "MultivariateNormal",
     nullptr
   };
   return names;
@@ -175,6 +179,10 @@ template<> struct DistributionTraits<Poisson> {
 
 template<> struct DistributionTraits<UniformContinuous> {
   static const Distribution enum_value = Distribution::UniformContinuous;
+};
+
+template<> struct DistributionTraits<MultivariateNormal> {
+  static const Distribution enum_value = Distribution::MultivariateNormal;
 };
 
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
@@ -638,6 +646,80 @@ inline flatbuffers::Offset<VMF> CreateVMF(
   return builder_.Finish();
 }
 
+struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MEAN = 4,
+    VT_PRIOR_SIGMA = 6,
+    VT_PROPOSAL_MEAN = 8,
+    VT_PROPOSAL_SIGMA = 10
+  };
+  const NDArray *prior_mean() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_MEAN);
+  }
+  const NDArray *prior_sigma() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_SIGMA);
+  }
+  const NDArray *proposal_mean() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_MEAN);
+  }
+  const NDArray *proposal_sigma() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_SIGMA);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_MEAN) &&
+           verifier.VerifyTable(prior_mean()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_SIGMA) &&
+           verifier.VerifyTable(prior_sigma()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_MEAN) &&
+           verifier.VerifyTable(proposal_mean()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_SIGMA) &&
+           verifier.VerifyTable(proposal_sigma()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MultivariateNormalBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_mean(flatbuffers::Offset<NDArray> prior_mean) {
+    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_MEAN, prior_mean);
+  }
+  void add_prior_sigma(flatbuffers::Offset<NDArray> prior_sigma) {
+    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_SIGMA, prior_sigma);
+  }
+  void add_proposal_mean(flatbuffers::Offset<NDArray> proposal_mean) {
+    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_MEAN, proposal_mean);
+  }
+  void add_proposal_sigma(flatbuffers::Offset<NDArray> proposal_sigma) {
+    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_SIGMA, proposal_sigma);
+  }
+  MultivariateNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MultivariateNormalBuilder &operator=(const MultivariateNormalBuilder &);
+  flatbuffers::Offset<MultivariateNormal> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<MultivariateNormal>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<NDArray> prior_mean = 0,
+    flatbuffers::Offset<NDArray> prior_sigma = 0,
+    flatbuffers::Offset<NDArray> proposal_mean = 0,
+    flatbuffers::Offset<NDArray> proposal_sigma = 0) {
+  MultivariateNormalBuilder builder_(_fbb);
+  builder_.add_proposal_sigma(proposal_sigma);
+  builder_.add_proposal_mean(proposal_mean);
+  builder_.add_prior_sigma(prior_sigma);
+  builder_.add_prior_mean(prior_mean);
+  return builder_.Finish();
+}
+
 struct Poisson FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_PRIOR_LAMBDA = 4,
@@ -693,16 +775,16 @@ struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PRIOR_MIN = 4,
     VT_PRIOR_MAX = 6
   };
-  int32_t prior_min() const {
-    return GetField<int32_t>(VT_PRIOR_MIN, 0);
+  double prior_min() const {
+    return GetField<double>(VT_PRIOR_MIN, 0.0);
   }
-  int32_t prior_max() const {
-    return GetField<int32_t>(VT_PRIOR_MAX, 0);
+  double prior_max() const {
+    return GetField<double>(VT_PRIOR_MAX, 0.0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<int32_t>(verifier, VT_PRIOR_MIN) &&
-           VerifyField<int32_t>(verifier, VT_PRIOR_MAX) &&
+           VerifyField<double>(verifier, VT_PRIOR_MIN) &&
+           VerifyField<double>(verifier, VT_PRIOR_MAX) &&
            verifier.EndTable();
   }
 };
@@ -710,11 +792,11 @@ struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct UniformContinuousBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_prior_min(int32_t prior_min) {
-    fbb_.AddElement<int32_t>(UniformContinuous::VT_PRIOR_MIN, prior_min, 0);
+  void add_prior_min(double prior_min) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MIN, prior_min, 0.0);
   }
-  void add_prior_max(int32_t prior_max) {
-    fbb_.AddElement<int32_t>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0);
+  void add_prior_max(double prior_max) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0.0);
   }
   UniformContinuousBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -730,8 +812,8 @@ struct UniformContinuousBuilder {
 
 inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
     flatbuffers::FlatBufferBuilder &_fbb,
-    int32_t prior_min = 0,
-    int32_t prior_max = 0) {
+    double prior_min = 0.0,
+    double prior_max = 0.0) {
   UniformContinuousBuilder builder_(_fbb);
   builder_.add_prior_max(prior_max);
   builder_.add_prior_min(prior_min);
@@ -1275,6 +1357,10 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
     }
     case Distribution::UniformContinuous: {
       auto ptr = reinterpret_cast<const UniformContinuous *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::MultivariateNormal: {
+      auto ptr = reinterpret_cast<const MultivariateNormal *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

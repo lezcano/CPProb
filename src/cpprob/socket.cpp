@@ -30,7 +30,7 @@ int Compilation::get_batch_size(){
     auto message = infcomp::GetMessage(request.data());
     auto request_msg = static_cast<const infcomp::TracesFromPriorRequest*>(message->body());
 
-    Compilation::vec.reserve(request_msg->num_traces());
+    Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
     return request_msg->num_traces();
 }
 

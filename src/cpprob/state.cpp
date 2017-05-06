@@ -48,7 +48,7 @@ int State::register_addr_sample(const std::string& addr)
 {
     auto id = State::ids_sample.emplace(addr, static_cast<int>(State::ids_sample.size())).first->second;
     if (static_cast<int>(State::t.sample_instance_.size()) <= id){
-        State::t.sample_instance_.resize(id + 1);
+        State::t.sample_instance_.resize(static_cast<size_t>(id) + 1);
     }
     // First id is 1
     // To change to zero change to post increment
@@ -75,7 +75,7 @@ void State::add_predict(const std::string& addr, const NDArray<double>& x)
 {
     auto id = register_addr_predict(addr);
     if (static_cast<int>(State::t.predict_.size()) >= id)
-        State::t.predict_.resize(id + 1);
+        State::t.predict_.resize(static_cast<size_t>(id) + 1);
     State::t.predict_[id].emplace_back(x);
     State::t.predict_addr_.emplace_back(id, x);
 }
