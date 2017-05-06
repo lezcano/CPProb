@@ -100,8 +100,9 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
 }
 
 template<template <class ...> class Distr, class ...Params>
-typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr) {
-    return sample_impl(distr, false);
+typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr, bool control = false) {
+    if (control) return sample_impl(distr, false);
+    else return distr(get_rng());
 }
 
 template<template <class ...> class Distr, class ...Params>

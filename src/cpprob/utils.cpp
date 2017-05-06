@@ -45,8 +45,10 @@ std::string get_addr(){
         }
         s = std::string(strings[i]);
         ++i;
+        // CHECK THIS
     } while (s.find("sample_impl") == std::string::npos && s.find("predict") == std::string::npos);
     s = std::string(strings[i]);
+    // AND THIS
     if (s.find("cpprob") != std::string::npos &&
         (s.find("sample") != std::string::npos ||
          s.find("observe") != std::string::npos ||

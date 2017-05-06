@@ -29,8 +29,8 @@ void least_sqr(std::vector<std::pair<double, double>> points) {
 
     static normal_distribution<double> normal{0, 10};
 
-    const auto slope = cpprob::sample(normal);
-    const auto bias = cpprob::sample(normal);
+    const auto slope = cpprob::sample(normal, true);
+    const auto bias = cpprob::sample(normal, true);
     cpprob::predict(slope);
     cpprob::predict(bias);
 
@@ -45,7 +45,7 @@ void mean_normal(const int y1) {
 
     static normal_distribution<> normal{0, 1};
 
-    auto mean = cpprob::sample(normal);
+    auto mean = cpprob::sample(normal, true);
     cpprob::predict(mean);
 
     auto obs_distr = normal_distribution<double>{mean, 0.1};
@@ -60,37 +60,37 @@ void all_distr() {
 
     using boost::random::normal_distribution;
     normal_distribution<> normal{1,2};
-    auto normal_val = sample(normal);
+    auto normal_val = sample(normal, true);
     predict(normal_val);
     observe(normal, normal_val);
 
     using boost::random::uniform_smallint;
     uniform_smallint<> discrete {2, 7};
-    auto discrete_val = sample(discrete);
+    auto discrete_val = sample(discrete, true);
     predict(discrete_val);
     observe(discrete, discrete_val);
 
     using boost::random::uniform_real_distribution;
     uniform_real_distribution<> rand_unif {2, 9.5};
-    auto rand_unif_val = sample(rand_unif);
+    auto rand_unif_val = sample(rand_unif, true);
     predict(rand_unif_val);
     observe(rand_unif, rand_unif_val);
 
     using boost::random::poisson_distribution;
     poisson_distribution<> poiss(0.8);
-    auto poiss_val = sample(poiss);
+    auto poiss_val = sample(poiss, true);
     predict(poiss_val);
     observe(poiss, poiss_val);
 
     using cpprob::vmf_distribution;
     vmf_distribution<> vmf{{1,2,3}, 3};
-    auto vmf_val = sample(vmf);
+    auto vmf_val = sample(vmf, true);
     predict(vmf_val);
     observe(vmf, vmf_val);
 
     using cpprob::multivariate_normal_distribution;
     multivariate_normal_distribution<> multi{{1,2,3,4}, {2,1,5,3}};
-    auto sample_multi = sample(multi);
+    auto sample_multi = sample(multi, true);
     predict(sample_multi);
     observe(multi, sample_multi);
 }
