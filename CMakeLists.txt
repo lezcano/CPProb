@@ -19,9 +19,9 @@ else()
     set(STD_CXX c++14)
 endif()
 
-set(CMAKE_CXX_FLAGS "-std=${STD_CXX} -Wall -Wextra -pedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=${STD_CXX} -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -160,9 +160,10 @@ if(NOT FLATBUFFERS_FOUND)
 endif()
 
 ##############################################################################
-# Setup include paths. More include paths can be added in subdirectories.
+# Download and configure Boost
 ##############################################################################
 
+# Setup include paths. More include paths can be added in subdirectories.
 set(Boost_COMPONENTS_FOR_BUILD program_options serialization)
 find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
@@ -207,6 +208,15 @@ if (NOT Boost_FOUND)
     find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
     MESSAGE(WARNING ${Boost_INCLUDE_DIRS})
     MESSAGE(WARNING ${Boost_FOUND})
+endif()
+
+##############################################################################
+# Look for Backtrace
+##############################################################################
+find_package(Backtrace REQUIRED)
+if (Backtrace_FOUND)
+    include_directories(${Backtrace_INCLUDE_DIR})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Backtrace_LIBRARIES} -rdynamic")
 endif()
 
 include_directories(include)

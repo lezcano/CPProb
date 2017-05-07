@@ -211,7 +211,7 @@ public:
     {
         std::vector<RealType> ret;
         std::transform(param_.distr_.begin(), param_.distr_.end(), std::back_inserter(ret),
-        [&rng](auto & distr) { return distr(rng); });
+                       [&rng](auto & distr) { return distr(rng); });
         return ret;
     }
 

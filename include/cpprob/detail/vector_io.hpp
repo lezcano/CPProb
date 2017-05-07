@@ -1,5 +1,5 @@
-#ifndef INCLUDE_VECTOR_IO_HPP
-#define INCLUDE_VECTOR_IO_HPP
+#ifndef INCLUDE_DETAIL_VECTOR_IO_HPP
+#define INCLUDE_DETAIL_VECTOR_IO_HPP
 
 #include <iostream>
 #include <vector>
@@ -52,4 +52,4 @@ void read_vector(std::basic_istream <CharT, Traits> &is, std::vector <T> &vec) {
 
 } // end namespace detail
 } // end namespace cpprob
-#endif //INCLUDE_VECTOR_IO_HPP
+#endif // INCLUDE_DETAIL_VECTOR_IO_HPP
