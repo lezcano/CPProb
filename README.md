@@ -9,7 +9,7 @@ This repository contains a library to allow probabilistic programming in C++14.
 ## Building CPProb
 In order to build ALCP you will need [CMake][] and a C++14 compiler.
 
-All the dependancies are automatically managed by cmake. If cmake does not find
+All the dependancies are automatically managed by CMake. If CMake does not find
 a dependance, it will download and configure it automatically.
 
 The dependancies are the following:
