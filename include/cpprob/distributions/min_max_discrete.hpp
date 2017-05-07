@@ -2,10 +2,13 @@
 #define INCLUDE_MIN_MAX_DISCRETE_HPP
 
 
+
+#include <istream>
+#include <ostream>
+#include <tuple>
 #include <vector>
 #include <utility>
 #include <iterator>
-#include <iostream>
 #include <initializer_list>
 
 #include <boost/random/discrete_distribution.hpp>
@@ -65,22 +68,20 @@ public:
         friend std::basic_ostream <CharT, Traits> &
         operator<<(std::basic_ostream <CharT, Traits> & os, const param_type & param)
         {
-            os << param.min_ << " " << param.max_ << " " << param.dist_;
+            return os << param.min_ << " " << param.max_ << " " << param.dist_;
         }
 
         template<typename CharT, typename Traits>
         friend std::basic_istream <CharT, Traits> &
         operator>>(std::basic_istream <CharT, Traits> & is, param_type & param)
         {
-            is >> param.min_ >> std::ws >> param.max_ >> std::ws >> param.distr_;
-            return is;
+            return is >> param.min_ >> std::ws >> param.max_ >> std::ws >> param.distr_;
         }
 
         friend bool operator==(const param_type & lhs, const param_type & rhs)
         {
-            return lhs.min_   == rhs.min_ &&
-                   lhs.max_   == rhs.max_ &&
-                   lhs.distr_ == rhs.distr_;
+            return std::tie(lhs.min_, lhs.max_, lhs.distr_) ==
+                   std::tie(rhs.min_, rhs.max_, rhs.distr_);
         }
 
         friend bool operator!=(const param_type & lhs, const param_type & rhs)
@@ -161,8 +162,7 @@ public:
     operator<<(std::basic_ostream <CharT, Traits> & os,
                const min_max_discrete_distribution & distr)
     {
-        os << distr.param_;
-        return os;
+        return os << distr.param_;
     }
 
     template<typename CharT, typename Traits>

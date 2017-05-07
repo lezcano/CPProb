@@ -1,10 +1,11 @@
 #ifndef INCLUDE_VMF_HPP_
 #define INCLUDE_VMF_HPP_
 
-#include <vector>
-#include <utility>
-#include <iosfwd>
 #include <istream>
+#include <ostream>
+#include <vector>
+#include <numeric>
+#include <utility>
 #include <algorithm>
 #include <cmath>
 #include <tuple>

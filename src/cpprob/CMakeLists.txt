@@ -1,6 +1,6 @@
 file(GLOB SRC_FILES *.cpp)
 
-add_library(${PROJECT_NAME} STATIC ${SRC_FILES})
+add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 ## add the include directory to our compile directives
 target_include_directories(${PROJECT_NAME} PUBLIC ${ZeroMQ_INCLUDE_DIR})

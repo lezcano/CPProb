@@ -6,7 +6,7 @@
 
 namespace cpprob {
 namespace models {
-void least_sqr(std::vector<std::pair<double, double>> points);
+void least_sqr(const std::vector<std::pair<double, double>>& points);
 void mean_normal(const int y1);
 void all_distr();
 } // end namespace models

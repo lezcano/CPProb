@@ -219,6 +219,8 @@ if (Backtrace_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Backtrace_LIBRARIES} -rdynamic")
 endif()
 
+file(COPY "${CMAKE_SOURCE_DIR}/observes" DESTINATION "${CMAKE_BINARY_DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
 include_directories(include)
 add_subdirectory(src)
 

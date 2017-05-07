@@ -7,7 +7,9 @@
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/traits.hpp"
+
 #include "models/models.hpp"
+#include "models/sherpa_mini.hpp"
 
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
@@ -53,7 +55,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &cpprob::models::all_distr;
+    auto f = &models::sherpa_wrapper;
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
@@ -72,8 +74,9 @@ int main(int argc, char** argv) {
         }
 
         // The return type of parse_file_param_f and parse_string_param_f is the same
-        using tuple_params = cpprob::parameter_types_t<decltype(f), std::tuple>;
-        tuple_params observes;
+        using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
+
+        tuple_params_t observes;
         bool ok;
         if (vm.count("observes_file") != 0u) {
             ok = cpprob::parse_file(observes_file, observes);
@@ -82,7 +85,8 @@ int main(int argc, char** argv) {
             ok = cpprob::parse_string(observes_str, observes);
         }
         if (ok) {
-            std::cout << "Expectation example means:\n" << cpprob::inference(f, observes, tcp_addr, n_samples)
+            std::cout << "Expectation example means:\n"
+                      << cpprob::inference(f, observes, tcp_addr, n_samples)
                       << std::endl;
         }
         else {

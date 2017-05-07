@@ -1,6 +1,8 @@
 #ifndef CPPROB_MULTIVARIATE_NORMAL_HPP_HPP
 #define CPPROB_MULTIVARIATE_NORMAL_HPP_HPP
 
+#include <istream>
+#include <ostream>
 #include <vector>
 #include <iterator>
 #include <initializer_list>
@@ -15,8 +17,8 @@ template<typename RealType = double>
 class multivariate_normal_distribution {
 public:
     // types
-    typedef std::vector<RealType> input_type;
-    typedef std::vector<RealType> result_type;
+    using input_type =  std::vector<RealType>;
+    using result_type =  std::vector<RealType>;
 
     // member classes/structs/unions
 

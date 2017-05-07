@@ -773,7 +773,9 @@ inline flatbuffers::Offset<Poisson> CreatePoisson(
 struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_PRIOR_MIN = 4,
-    VT_PRIOR_MAX = 6
+    VT_PRIOR_MAX = 6,
+    VT_PROPOSAL_MODE = 8,
+    VT_PROPOSAL_K = 10
   };
   double prior_min() const {
     return GetField<double>(VT_PRIOR_MIN, 0.0);
@@ -781,10 +783,18 @@ struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   double prior_max() const {
     return GetField<double>(VT_PRIOR_MAX, 0.0);
   }
+  double proposal_mode() const {
+    return GetField<double>(VT_PROPOSAL_MODE, 0.0);
+  }
+  double proposal_k() const {
+    return GetField<double>(VT_PROPOSAL_K, 0.0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<double>(verifier, VT_PRIOR_MIN) &&
            VerifyField<double>(verifier, VT_PRIOR_MAX) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_MODE) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_K) &&
            verifier.EndTable();
   }
 };
@@ -798,13 +808,19 @@ struct UniformContinuousBuilder {
   void add_prior_max(double prior_max) {
     fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0.0);
   }
+  void add_proposal_mode(double proposal_mode) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_MODE, proposal_mode, 0.0);
+  }
+  void add_proposal_k(double proposal_k) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_K, proposal_k, 0.0);
+  }
   UniformContinuousBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
   UniformContinuousBuilder &operator=(const UniformContinuousBuilder &);
   flatbuffers::Offset<UniformContinuous> Finish() {
-    const auto end = fbb_.EndTable(start_, 2);
+    const auto end = fbb_.EndTable(start_, 4);
     auto o = flatbuffers::Offset<UniformContinuous>(end);
     return o;
   }
@@ -813,8 +829,12 @@ struct UniformContinuousBuilder {
 inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
     flatbuffers::FlatBufferBuilder &_fbb,
     double prior_min = 0.0,
-    double prior_max = 0.0) {
+    double prior_max = 0.0,
+    double proposal_mode = 0.0,
+    double proposal_k = 0.0) {
   UniformContinuousBuilder builder_(_fbb);
+  builder_.add_proposal_k(proposal_k);
+  builder_.add_proposal_mode(proposal_mode);
   builder_.add_prior_max(prior_max);
   builder_.add_prior_min(prior_min);
   return builder_.Finish();

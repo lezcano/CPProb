@@ -22,11 +22,12 @@ namespace cpprob {
 namespace detail {
 using boost::function_types::result_type;
 
+// TODO(Lezcano) Use cpprob::parameter_types_t to avoid duplicate code
 template<class F, size_t... Indices>
 typename result_type<F>::type
 call_f_default_params_detail(const F& f, std::index_sequence<Indices...>)
 {
-    return f(typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type()...);
+    return f(std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type>()...);
 }
 
 template <class F, class... Args, size_t... Indices>

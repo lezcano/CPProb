@@ -24,7 +24,7 @@ namespace cpprob {
 namespace models {
 
 //-m infer -n 100 -o [(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)]
-void least_sqr(std::vector<std::pair<double, double>> points) {
+void least_sqr(const std::vector<std::pair<double, double>>& points) {
     using boost::random::normal_distribution;
 
     static normal_distribution<double> normal{0, 10};

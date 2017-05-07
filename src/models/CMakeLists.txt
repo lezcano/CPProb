@@ -1,4 +1,7 @@
-file(GLOB SRC_FILES *.cpp)
+file(GLOB SRC_FILES_MODELS models.cpp sherpa_mini.cpp)
 
-add_library(models STATIC ${SRC_FILES})
-target_link_libraries (models PRIVATE ${PROJECT_NAME})
+add_library(models SHARED ${SRC_FILES_MODELS})
+target_link_libraries (models PUBLIC ${PROJECT_NAME})
+
+add_executable(sherpa_gen sherpa_gen.cpp)
+target_link_libraries(sherpa_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} models)

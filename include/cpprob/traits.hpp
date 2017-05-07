@@ -3,6 +3,7 @@
 
 #include <numeric>
 #include <functional>
+#include <type_traits>
 
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/normal.hpp>
@@ -14,11 +15,15 @@
 
 #include <boost/random/uniform_real_distribution.hpp>
 
+#include <boost/math/distributions/beta.hpp>
+
 #include <boost/math/constants/constants.hpp>
 
 #include "distributions/min_max_discrete.hpp"
+#include "distributions/min_max_continuous.hpp"
 #include "distributions/vmf.hpp"
 #include "distributions/multivariate_normal.hpp"
+
 
 
 #include <boost/function_types/parameter_types.hpp>
@@ -58,11 +63,22 @@ double pdf(const boost::random::uniform_smallint<IntType>& distr,
 }
 
 template<class IntType, class WeightType>
-WeightType pdf(const min_max_discrete_distribution<IntType, WeightType>& dist,
+WeightType pdf(const min_max_discrete_distribution<IntType, WeightType>& distr,
                const typename min_max_discrete_distribution<IntType, WeightType>::result_type & x)
 {
-    if (x < dist.min() || x > dist.max()) return 0;
-    return dist.probabilities()[static_cast<std::size_t>(x-dist.min())];
+    if (x < distr.min() || x > distr.max()) return 0;
+    return distr.probabilities()[static_cast<std::size_t>(x-distr.min())];
+}
+
+template<class RealType>
+RealType pdf(const min_max_continuous_distribution<RealType>& distr,
+               const typename min_max_continuous_distribution<RealType>::result_type & x)
+{
+    auto beta_distr = distr.beta();
+    auto min = distr.min();
+    auto max = distr.max();
+    auto norm_x = (x-min)/(max-min);
+    return boost::math::pdf(boost::math::beta_distribution<RealType>(beta_distr.alpha(), beta_distr.beta()), norm_x)/(max - min);
 }
 
 template<class RealType>
@@ -155,7 +171,7 @@ struct parameter_types;
 
 template<class F, template <class ...> class C, size_t... Indices>
 struct parameter_types <F, C, std::index_sequence<Indices...>> {
-    using type = C<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type ...>;
+    using type = C<std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type> ...>;
 };
 
 template <class F, template <class ...> class C>
@@ -207,11 +223,12 @@ template<class RealType>
 struct proposal<boost::random::uniform_real_distribution, RealType> {
     static constexpr auto type_enum = infcomp::Distribution::UniformContinuous;
 
-    static boost::random::uniform_real_distribution<RealType>
+    static min_max_continuous_distribution<RealType>
     get_distr(const infcomp::ProposalReply* msg)
     {
         auto distr = static_cast<const infcomp::UniformContinuous*>(msg->distribution());
-        return boost::random::uniform_real_distribution<RealType>(distr->prior_min(), distr->prior_max());
+        return min_max_continuous_distribution<RealType>(distr->prior_min(), distr->prior_max(),
+                                                         distr->proposal_mode(), distr->proposal_k());
     }
 };
 
