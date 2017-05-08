@@ -8,19 +8,27 @@
 
 namespace cpprob {
 
+enum class StateType {
+    compile,
+    inference,
+    dryrun
+};
+
 class State {
 public:
     static void reset_trace();
 
     static Trace get_trace();
 
-    static void set_training(const bool t);
+    static void set(StateType s);
+
+    static StateType current_state();
 
     static void reset_ids();
 
 private:
     static Trace t;
-    static bool training;
+    static StateType state;
     static std::unordered_map<std::string, int> ids_sample;
     static std::unordered_map<std::string, int> ids_predict;
     static Sample prev_sample;

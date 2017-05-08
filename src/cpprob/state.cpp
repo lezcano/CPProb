@@ -8,7 +8,7 @@
 namespace cpprob {
 
 Trace State::t;
-bool State::training;
+StateType State::state;
 std::unordered_map<std::string, int> State::ids_sample;
 std::unordered_map<std::string, int> State::ids_predict;
 Sample State::prev_sample;
@@ -27,10 +27,15 @@ Trace State::get_trace()
     return t;
 }
 
-void State::set_training(const bool t)
+void State::set(StateType s)
 {
-    training = t;
+    state = s;
     reset_ids();
+}
+
+StateType State::current_state()
+{
+    return state;
 }
 
 void State::reset_ids()

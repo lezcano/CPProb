@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer")->default_value("compile"), "Compile or Inference mode.")
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("dryrun/compile/infer")->default_value("compile"), "Compile, Inference or Dry Run mode.")
       ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default tcp://127.0.0.1:5555 for compile, tcp://127.0.0.1:6666 for inference.")
       ("observes,o", po::value<std::string>(&observes_str), "Values to observe. Used in Inference mode.")

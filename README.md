@@ -88,6 +88,8 @@ we can execute the inference engine as
 ./cpprob --mode infer --observes "[(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)] 2 3.78"
 python -m infcomp.infer
 ```
+## License
+Please see [LICENSE](LICENSE).
 
 <!-- Links -->
 [CMake]: http://www.cmake.org
