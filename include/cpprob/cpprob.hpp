@@ -63,7 +63,7 @@ std::vector<T> to_vec(const std::tuple<Args...>& args){
     return detail::to_vec_tuple<T, Args...>(args, std::make_index_sequence<sizeof...(Args)>());
 }
 
-}
+} // end namespace detail
 
 template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, const bool from_observe) {
@@ -71,7 +71,7 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
     std::string addr = get_addr();
     auto id = State::register_addr_sample(addr);
 
-    if (State::training) {
+    if (State::current_state() == StateType::compile) {
         x = distr(get_rng());
 
         if(from_observe){
@@ -101,16 +101,20 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
 
 template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr, bool control = false) {
-    if (control) return sample_impl(distr, false);
-    else return distr(get_rng());
+    if (!control || State::current_state() == StateType::dryrun){
+        return distr(get_rng());
+    }
+    else {
+        return sample_impl(distr, false);
+    }
 }
 
 template<template <class ...> class Distr, class ...Params>
 void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x) {
-    if (State::training){
+    if (State::current_state() == StateType::compile){
         sample_impl(distr, true);
     }
-    else{
+    else if (State::current_state() == StateType::inference){
         using std::log;
         auto prob = cpprob::pdf(distr, x);
         State::increment_cum_log_prob(prob);
@@ -119,10 +123,12 @@ void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x
 
 void predict(const NDArray<double> &x);
 
+void set_state(StateType s);
+
 template<class Func>
 void compile(const Func& f, const std::string& tcp_addr) {
     Compilation::connect_server(tcp_addr);
-    State::set_training(true);
+    set_state(StateType::compile);
 
     while(true){
         auto batch_size = Compilation::get_batch_size();
@@ -145,7 +151,7 @@ std::vector<std::vector<NDArray<double>>> inference(
         size_t n){
 
     Inference::connect_client(tcp_addr);
-    State::set_training(false);
+    set_state(StateType::inference);
 
     double sum_w = 0;
     Trace ret;

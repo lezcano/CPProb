@@ -1,10 +1,11 @@
 #ifndef INCLUDE_SERIALIZATION_HPP
 #define INCLUDE_SERIALIZATION_HPP
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <tuple>
 #include <vector>
-#include <sstream>
-#include <fstream>
 
 #include "cpprob/detail/vector_io.hpp"
 
@@ -119,7 +120,12 @@ template <class... T>
 bool parse_file(const std::string& path, std::tuple<T...>& tup)
 {
     std::ifstream file(path);
-    detail::parse_stream(file, tup, std::make_index_sequence<sizeof...(T)>());
+    if (file) {
+        detail::parse_stream(file, tup, std::make_index_sequence<sizeof...(T)>());
+    }
+    else {
+        std::cerr << "File " << path << " could not be opened.\n";
+    }
     return !file.fail();
 }
 

@@ -7,10 +7,15 @@
 namespace cpprob {
 
 void predict(const NDArray<double> &x) {
-    if (!State::training) {
+    if (State::current_state() == StateType::inference) {
         auto addr = get_addr();
         State::add_predict(addr, x);
     }
+}
+
+void set_state(StateType s)
+{
+    State::set(s);
 }
 
 } // end namespace cpprob
