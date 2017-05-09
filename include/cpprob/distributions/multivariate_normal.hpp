@@ -11,6 +11,8 @@
 
 #include <boost/random/normal_distribution.hpp>
 
+#include "cpprob/serialization.hpp"
+
 namespace cpprob {
 
 template<typename RealType = double>
@@ -90,31 +92,21 @@ public:
         friend std::basic_ostream< CharT, Traits > &
         operator<<(std::basic_ostream< CharT, Traits > & os, const param_type & param)
         {
-            detail::print_vector(os, param.mean());
-            os << os.widen(' ');
-            detail::print_vector(os, param.sigma());
-            return os;
+            using namespace detail; // operator<< for std::vector
+            return os << param.mean() << os.widen(' ') << param.sigma();
         }
 
         template<typename CharT, typename Traits>
         friend std::basic_istream< CharT, Traits > &
         operator>>(std::basic_istream< CharT, Traits > & is, param_type &  param)
         {
-            std::vector<RealType> mean_temp;
-            detail::read_vector(is, mean_temp);
-            if(!is) {
+            using namespace detail; // operator>> for std::vector
+            std::vector<RealType> mean_temp, sigma_temp;
+            if(!(is >> mean_temp >> std::ws >> sigma_temp)) {
                 return is;
             }
 
-            is >> std::ws;
-
-            std::vector<RealType> sigma_temp;
-            detail::read_vector(is, sigma_temp);
-            if(!is) {
-                return is;
-            }
-
-            if (sigma_temp == 1){
+            if (sigma_temp.size() == 1){
                 param.init(mean_temp.begin(), mean_temp.end(), sigma_temp.front());
                 return is;
             }

@@ -34,7 +34,7 @@ int Compilation::get_batch_size(){
     return request_msg->num_traces();
 }
 
-void Compilation::add_trace(const Trace& t){
+void Compilation::add_trace(const TraceCompile& t){
     Compilation::vec.emplace_back(t.pack(Compilation::buff));;
 }
 

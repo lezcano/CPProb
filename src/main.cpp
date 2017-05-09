@@ -24,24 +24,29 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    std::string mode, tcp_addr, observes_file, observes_str;
+    std::string mode, tcp_addr, observes_file, observes_str, model_file;
     size_t n_samples;
 
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help messages")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("dryrun/compile/infer")->default_value("compile"), "Compile, Inference or Dry Run mode.")
-      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "Number of particles to be sampled during inference.")
-      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn. Default tcp://127.0.0.1:5555 for compile, tcp://127.0.0.1:6666 for inference.")
-      ("observes,o", po::value<std::string>(&observes_str), "Values to observe. Used in Inference mode.")
-      ("observes_file,f", po::value<std::string>(&observes_file), "File with the observed values in Serialized format. Used in Inference mode.")
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("dryrun/compile/infer"), "Compile, Inference or Dry Run mode.")
+      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Inference) Number of particles to be sampled.")
+      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
+                                                        "Defaults:\n"
+                                                        "  Compile:   tcp://127.0.0.1:5555\n"
+                                                        "  Inference: tcp://127.0.0.1:6666\n"
+                                                        "  Dry Run:   None")
+      ("observes,o", po::value<std::string>(&observes_str), "(Inference) Values to observe.")
+      ("observes_file,f", po::value<std::string>(&observes_file), "(Inference) File with the observed values.")
+      ("model_file", po::value<std::string>(&model_file), "(Inference) File to output the posterior distribution.")
       ;
 
     po::variables_map vm;
     try {
         po::store(po::parse_command_line(argc, argv, desc),  vm);
         if (vm.count("help") != 0u) {
-            std::cout << "Basic Command Line Parameter App" << std::endl
+            std::cout << "CPProb Compiled Inference Library" << std::endl
                       << desc << std::endl;
             return 0;
         }
@@ -69,7 +74,12 @@ int main(int argc, char** argv) {
         }
         // Check that exactly one of the options is set
         if (vm.count("observes") == vm.count("observes_file")) {
-            std::cerr << R"(Exactly one of the options "--observes" or "--observes_file" has to be set)" << std::endl;
+            std::cerr << R"(In Infer mode exactly one of the options "--observes" or "--observes_file" has to be set)" << std::endl;
+            return -1;
+        }
+
+        if (vm.count("model_file") == 0u) {
+            std::cerr << R"(In Infer mode, please provide a "--model_file" argument.)" << std::endl;
             return -1;
         }
 
@@ -85,9 +95,7 @@ int main(int argc, char** argv) {
             ok = cpprob::parse_string(observes_str, observes);
         }
         if (ok) {
-            std::cout << "Expectation example means:\n"
-                      << cpprob::inference(f, observes, tcp_addr, n_samples)
-                      << std::endl;
+            cpprob::generate_posterior(f, observes, tcp_addr, model_file, n_samples);
         }
         else {
             std::cerr << "Could not parse the arguments.\n"

@@ -3,11 +3,13 @@
 #include <string>
 #include <unordered_map>
 
+#include "cpprob/serialization.hpp"
 #include "cpprob/trace.hpp"
 
 namespace cpprob {
 
-Trace State::t;
+TraceCompile State::t_comp;
+TracePredicts State::t_pred;
 StateType State::state;
 std::unordered_map<std::string, int> State::ids_sample;
 std::unordered_map<std::string, int> State::ids_predict;
@@ -17,14 +19,20 @@ Sample State::curr_sample;
 
 void State::reset_trace()
 {
-    t = Trace();
+    t_comp = TraceCompile();
+    t_pred = TracePredicts();
     prev_sample = Sample();
     curr_sample = Sample();
 }
 
-Trace State::get_trace()
+TraceCompile State::get_trace_comp()
 {
-    return t;
+    return t_comp;
+}
+
+TracePredicts State::get_trace_pred()
+{
+    return t_pred;
 }
 
 void State::set(StateType s)
@@ -46,29 +54,39 @@ void State::reset_ids()
 
 int State::sample_instance(int id)
 {
-    return State::t.sample_instance_[id];
+    return State::t_comp.sample_instance_[id];
 }
 
 int State::register_addr_sample(const std::string& addr)
 {
     auto id = State::ids_sample.emplace(addr, static_cast<int>(State::ids_sample.size())).first->second;
-    if (static_cast<int>(State::t.sample_instance_.size()) <= id){
-        State::t.sample_instance_.resize(static_cast<size_t>(id) + 1);
+    if (static_cast<int>(State::t_comp.sample_instance_.size()) <= id){
+        State::t_comp.sample_instance_.resize(static_cast<size_t>(id) + 1);
     }
     // First id is 1
     // To change to zero change to post increment
-    ++State::t.sample_instance_[id];
+    ++State::t_comp.sample_instance_[id];
     return id;
 }
 
 void State::add_sample(const Sample& s)
 {
-    State::t.samples_.emplace_back(s);
+    State::t_comp.samples_.emplace_back(s);
 }
 
 void State::add_observe(const NDArray<double>& x)
 {
-    State::t.observes_.emplace_back(x);
+    State::t_comp.observes_.emplace_back(x);
+}
+
+int State::time_index()
+{
+    return State::t_comp.time_index_;
+}
+
+void State::increment_time()
+{
+    ++State::t_comp.time_index_;
 }
 
 int State::register_addr_predict(const std::string& addr)
@@ -79,23 +97,21 @@ int State::register_addr_predict(const std::string& addr)
 void State::add_predict(const std::string& addr, const NDArray<double>& x)
 {
     auto id = register_addr_predict(addr);
-    if (static_cast<int>(State::t.predict_.size()) >= id)
-        State::t.predict_.resize(static_cast<size_t>(id) + 1);
-    State::t.predict_[id].emplace_back(x);
-    State::t.predict_addr_.emplace_back(id, x);
+    State::t_pred.add_predict(id, x);
 }
 
-int State::time_index()
+void State::increment_cum_log_prob(double log_p)
 {
-    return State::t.time_index_;
+    State::t_pred.increment_cum_log_prob(log_p);
 }
 
-void State::increment_time()
+void State::serialize_ids_pred(std::ofstream & out_file)
 {
-    ++State::t.time_index_;
-}
-void State::increment_cum_log_prob(double log_p){
-    State::t.log_w_ += log_p;
+    using namespace detail;
+    std::vector<std::string> addresses(State::ids_predict.size());
+    for(const auto& kv : State::ids_predict)
+        addresses[kv.second] = kv.first;
+    out_file << addresses;
 }
 
 }  // namespace cpprob

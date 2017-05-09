@@ -7,89 +7,140 @@
 #include <tuple>
 #include <vector>
 
-#include "cpprob/detail/vector_io.hpp"
-
 namespace cpprob {
 namespace detail {
 
 // Forward declarations
-template<class CharT, class Traits, class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
-void load(std::basic_istream<CharT, Traits> &is, T& v);
 template<class CharT, class Traits, class U, class V>
-void load(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair);
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair);
 template<class CharT, class Traits, class... T>
-void load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
 template<class CharT, class Traits, class T>
-void load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
-
-template<class CharT, class Traits, class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
-void load(std::basic_istream<CharT, Traits> &is, T& v)
-{
-    is >> std::ws >> v;
-}
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
 
 template<class CharT, class Traits, class U, class V>
-void load(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair);
+template<class CharT, class Traits, class... T>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup);
+template<class CharT, class Traits, class T>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec);
+
+
+template<class CharT, class Traits, class U, class V>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair)
 {
-    std::tuple<U, V> tup;
-    load(is, tup);
-    if (is.fail())
-        return;
-    pair.first = std::move(std::get<0>(tup));
-    pair.second = std::move(std::get<1>(tup));
+    return os << os.widen('(') << pair.first << os.widen(' ') << pair.second << os.widen(')');
 }
 
 template<class CharT, class Traits, class... T, size_t... Indices>
-void load_tuple_impl(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup, std::index_sequence<Indices...>)
+void print_tuple_impl(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup, std::index_sequence<Indices...>)
 {
-    (void)std::initializer_list<int>{ ((load(is, std::get<Indices>(tup)), is.fail()), 0)... };
+    (void)std::initializer_list<int>
+    {
+        (os << os.widen(' ') << std::get<Indices+1>(tup)
+        , 0)...
+    };
 }
 
 template<class CharT, class Traits, class... T>
-void load(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup)
+{
+    os << os.widen('(');
+    if (sizeof...(T) != 0)
+    {
+        os << std::get<0>(tup);
+        print_tuple_impl<CharT, Traits, T...>(os, tup, std::make_index_sequence<sizeof...(T)-1>());
+    }
+    return os << os.widen(')');
+}
+
+template<class CharT, class Traits, class T>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec)
+{
+    auto iter = vec.begin(), end = vec.end();
+    os << os.widen('[');
+    if (iter != end) {
+        os << *iter;
+        ++iter;
+        for (; iter != end; ++iter) {
+            os << os.widen(' ') << *iter;
+        }
+    }
+    return os << os.widen(']');
+}
+
+
+// Implementation
+template<class CharT, class Traits, class U, class V>
+std::basic_istream<CharT, Traits>&
+operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
+{
+    std::tuple<U, V> tup;
+    is >> tup;
+    if (is.fail())
+        return is;
+    pair.first = std::move(std::get<0>(tup));
+    pair.second = std::move(std::get<1>(tup));
+    return is;
+}
+
+template<class CharT, class Traits, class... T, size_t... Indices>
+void read_tuple_impl(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup, std::index_sequence<Indices...>)
+{
+    (void)std::initializer_list<int>{ (is >> std::get<Indices>(tup), 0)... };
+}
+
+template<class CharT, class Traits, class... T>
+std::basic_istream<CharT, Traits>&
+operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
     CharT ch;
-    if (!(is >> ch)) {
-        return;
+    if (!(is >> std::ws >> ch)) {
+        return is;
     }
     if (ch != is.widen('(')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
-        return;
+        return is;
     }
 
-    // load_tuple_impl will read exactly the number of elements of the tuple
+    // read_tuple_impl will read exactly the number of elements of the tuple
     // If the is.fail() is set it is because there was an error
-    load_tuple_impl<CharT, Traits, T...>(is, tup, std::make_index_sequence<sizeof...(T)>());
+    read_tuple_impl<CharT, Traits, T...>(is, tup, std::make_index_sequence<sizeof...(T)>());
     if (is.fail())
-        return;
+        return is;
 
-    if (!(is >> ch)) {
-        return;
+    if (!(is >> std::ws >> ch)) {
+        return is;
     }
     if (ch != is.widen(')')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
     }
+    return is;
 }
 
 template<class CharT, class Traits, class T>
-void load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
+std::basic_istream<CharT, Traits>&
+operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
 {
     CharT ch;
-    if (!(is >> ch)) {
-        return;
+    if (!(is >> std::ws >> ch)) {
+        return is;
     }
     if (ch != is.widen('[')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
-        return;
+        return is;
     }
 
     do {
         // Needed to be declared inside the loop, otherwise std::move
         // could leave it in an invalid state
         T val;
-        load(is, val);
+        is >> val;
         if(is.fail())
             break;
         vec.emplace_back(std::move(val));
@@ -99,19 +150,21 @@ void load(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
     // [(1 2) (1 4] for std::vector<std::pair<int, int>> or [] for std::vector<std::vector<T>>
     // but well...
     is.clear();
-    if (!(is >> ch)) {
-        return;
+    if (!(is >> std::ws >> ch)) {
+        return is;
     }
     if (ch != is.widen(']')) {
         is.putback(ch);
         is.setstate(std::ios_base::failbit);
     }
+    return is;
 }
 
 template<class... T, class CharT, class Traits, size_t... Indices>
-void parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
+void
+parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
 {
-    (void)std::initializer_list<int>{ (load(is, std::get<Indices>(tup)), 0)... };
+    (void)std::initializer_list<int>{ (is >> std::get<Indices>(tup), 0)... };
 }
 
 } // end namespace detail

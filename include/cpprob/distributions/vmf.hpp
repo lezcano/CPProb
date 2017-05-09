@@ -15,7 +15,7 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_on_sphere.hpp>
 
-#include "cpprob/detail/vector_io.hpp"
+#include "cpprob/serialization.hpp"
 
 namespace cpprob {
 
@@ -81,21 +81,16 @@ public:
         friend std::basic_ostream< CharT, Traits > &
         operator<<(std::basic_ostream< CharT, Traits > & os, const param_type & param)
         {
-            detail::print_vector(os, param.mu_);
-            os << os.widen(' ') << param.kappa_;
-            return os;
+            using namespace detail; // operator<< for std::vector
+            return os << param.mu_ << os.widen(' ') << param.kappa_;
         }
 
         template<class CharT, class Traits>
         friend std::basic_istream< CharT, Traits > &
         operator>>(std::basic_istream< CharT, Traits > & is, param_type & param)
         {
-            detail::read_vector(is, param.mu_);
-            if(!is) {
-                return is;
-            }
-            is >> std::ws >> param.kappa_;
-            return is;
+            using namespace detail; // operator>> for std::vector
+            return is >> param.mu_ >> std::ws >> param.kappa_;
         }
 
         friend bool operator==(const param_type & lhs, const param_type & rhs)

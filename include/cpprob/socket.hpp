@@ -19,7 +19,7 @@ class Compilation {
 public:
     static void connect_server(const std::string& tcp_addr);
     static int get_batch_size();
-    static void add_trace(const Trace& t);
+    static void add_trace(const TraceCompile& t);
     static void send_batch();
 private:
     static flatbuffers::FlatBufferBuilder buff;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <fstream>
 
 #include "cpprob/utils.hpp"
 #include "cpprob/trace.hpp"
@@ -136,7 +137,7 @@ void compile(const Func& f, const std::string& tcp_addr) {
         for (int i = 0; i < batch_size; ++i){
             State::reset_trace();
             call_f_default_params(f);
-            Compilation::add_trace(State::get_trace());
+            Compilation::add_trace(State::get_trace_comp());
         }
         Compilation::send_batch();
     }
@@ -144,29 +145,34 @@ void compile(const Func& f, const std::string& tcp_addr) {
 
 
 template<class Func, class... Args>
-std::vector<std::vector<NDArray<double>>> inference(
+void generate_posterior(
         const Func& f,
-        const std::tuple<Args...>& args,
+        const std::tuple<Args...>& observes,
         const std::string& tcp_addr,
+        const std::string& file_name,
         size_t n){
 
     Inference::connect_client(tcp_addr);
     set_state(StateType::inference);
 
-    double sum_w = 0;
-    Trace ret;
+    std::ofstream out_file(file_name);
+
+    //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
-        Inference::send_observe_init(detail::to_vec<double>(args));
-        call_f_tuple(f, args);
-        auto t = State::get_trace();
-        auto w = std::exp(t.log_w());
-        sum_w += w;
-        auto a = w*t;
-        ret += a;
+        Inference::send_observe_init(detail::to_vec<double>(observes));
+        call_f_tuple(f, observes);
+        auto t = State::get_trace_pred();
+        out_file << t;
+        //auto w = std::exp(t.log_w());
+        //sum_w += w;
+        //auto a = w*t;
+        //ret += a;
     }
-    ret /= sum_w;
-    return ret.predict();
+    State::serialize_ids_pred(out_file);
+
+    //ret /= sum_w;
+    //return ret.predict();
 }
 }       // namespace cpprob
 #endif //INCLUDE_CPPROB_HPP

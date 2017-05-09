@@ -10,27 +10,39 @@
 #include "cpprob/traits.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
-namespace cpprob{
+namespace cpprob {
 
-double Trace::log_w() const{ return log_w_; }
-
-std::vector<std::vector<NDArray<double>>> Trace::predict() const{ return predict_; }
-
-flatbuffers::Offset<infcomp::Trace> Trace::pack(flatbuffers::FlatBufferBuilder& buff) const{
+flatbuffers::Offset<infcomp::Trace> TraceCompile::pack(flatbuffers::FlatBufferBuilder &buff) const {
     std::vector<flatbuffers::Offset<infcomp::Sample>> vec_sample(samples_.size());
     std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
-        [&](const Sample& s){return s.pack(buff);});
+                   [&](const Sample &s) { return s.pack(buff); });
 
     // TODO(Lezcano) We are currently just packing the first element of observes_!!!
     return infcomp::CreateTraceDirect(
             buff,
             infcomp::CreateNDArray(buff,
-                buff.CreateVector<double>(observes_[0].values()),
-                buff.CreateVector<int32_t>(observes_[0].shape())),
+                                   buff.CreateVector<double>(observes_[0].values()),
+                                   buff.CreateVector<int32_t>(observes_[0].shape())),
             &vec_sample);
 }
 
-Trace& Trace::operator+= (const Trace& rhs){
+double TracePredicts::log_w() const
+{
+    return log_w_;
+}
+
+void TracePredicts::add_predict(int id, const NDArray<double> &x)
+{
+    predict_.emplace_back(id, x);
+}
+
+void TracePredicts::increment_cum_log_prob(double log_p)
+{
+    log_w_ += log_p;
+}
+
+/*
+TracePredicts& TracePredicts::operator+= (const TracePredicts& rhs){
     if (rhs.predict_.size() > this->predict_.size())
         this->predict_.resize(rhs.predict_.size());
 
@@ -50,23 +62,24 @@ Trace& Trace::operator+= (const Trace& rhs){
     return *this;
 }
 
-Trace& Trace::operator*= (double rhs){
+TracePredicts& TracePredicts::operator*= (double rhs){
     for (auto& v : this->predict_)
         for (auto& e : v)
             e *= rhs;
     return *this;
 }
 
-Trace& Trace::operator/= (double rhs){
+TracePredicts& TracePredicts::operator/= (double rhs){
     for (auto& v : this->predict_)
         for (auto& e : v)
             e /= rhs;
     return *this;
 }
 
-Trace operator+ (const Trace& lhs, const Trace& rhs){ return Trace(lhs) += rhs; }
-Trace operator* (const double lhs, const Trace& rhs){ return Trace(rhs) *= lhs; }
-Trace operator* (const Trace& lhs, const double rhs){ return Trace(lhs) *= rhs; }
+TracePredicts operator+ (const TracePredicts& lhs, const TracePredicts& rhs){ return TracePredicts(lhs) += rhs; }
+TracePredicts operator* (const double lhs, const TracePredicts& rhs){ return TracePredicts(rhs) *= lhs; }
+TracePredicts operator* (const TracePredicts& lhs, const double rhs){ return TracePredicts(lhs) *= rhs; }
+ */
 
 Sample::Sample(const std::string& sample_address,
            int sample_instance,

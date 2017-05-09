@@ -1,18 +1,8 @@
 #include <iostream>
 
 #include "models/sherpa_mini.hpp"
-#include "cpprob/detail/vector_io.hpp"
-
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-    out << "[ ";
-    for (const auto &elem : v) {
-        out << elem << " ";
-    }
-    out << "]";
-    return out;
-}
+#include "cpprob/serialization.hpp"
 
 int main(){
-    std::cout << models::dummy_sherpa() << std::endl;
+    cpprob::detail::print(std::cout, models::dummy_sherpa());
 }
