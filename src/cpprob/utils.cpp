@@ -59,15 +59,21 @@ std::string get_addr(){
 
     // The -4 is to discard the call to _start and the call to __libc_start_main
     // plus the two calls until the function is called
-    for (auto j = i; j < nptrs - 4; j++) {
+    // plus the two calls to f_default_params, f_default_params_detail
+    for (auto j = i; j < nptrs - 6; j++) {
         s = std::string(strings[j]);
+        auto first = s.find_last_of('(') + 1;
+        auto last = s.find_last_of(')');
         // The +3 is to discard the characters
-        auto first = s.find("[0x") + 3;
-        auto last = s.find("]");
+        //auto first = s.find("[0x") + 3;
+        //auto last = s.find("]");
         trace_addrs.emplace_back(s.substr(first, last-first));
     }
     std::free(strings);
-    return std::accumulate(trace_addrs.rbegin(), trace_addrs.rend(), std::string(""));
+    return "[" + std::accumulate(trace_addrs.rbegin(), trace_addrs.rend(), std::string(""),
+                                 [](const std::string& acc, const std::string& next)
+                                 { return acc + " " + next; })
+               + "]";
 }
 
 }  // namespace cpprob

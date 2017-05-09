@@ -10,6 +10,7 @@
 #include "YODA/Histo2D.h"
 #include "Rivet/Math/Vector4.hh"
 
+namespace cpprob {
 namespace models {
 
 std::pair<double, std::vector<std::vector<double> > > energy_deposits(const Rivet::FourMomentum &mom) {
@@ -88,3 +89,4 @@ void sherpa_wrapper(const std::vector<double> &test_image) {
 }
 
 } // end namespace models
+} // end namespace cpprob

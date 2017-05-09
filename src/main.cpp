@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
       ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
                                                         "Defaults:\n"
-                                                        "  Compile:   tcp://127.0.0.1:5555\n"
+                                                        "  Compile:   tcp://0.0.0.0:5555\n"
                                                         "  Inference: tcp://127.0.0.1:6666\n"
                                                         "  Dry Run:   None")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference) Values to observe.")
@@ -60,11 +60,11 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &models::sherpa_wrapper;
+    auto f = &cpprob::models::mean_normal;
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
-            tcp_addr = "tcp://127.0.0.1:5555";
+            tcp_addr = "tcp://0.0.0.0:5555";
         }
         cpprob::compile(f, tcp_addr);
     }

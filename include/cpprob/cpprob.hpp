@@ -163,13 +163,14 @@ void generate_posterior(
         Inference::send_observe_init(detail::to_vec<double>(observes));
         call_f_tuple(f, observes);
         auto t = State::get_trace_pred();
-        out_file << t;
+        out_file << t << '\n';
         //auto w = std::exp(t.log_w());
         //sum_w += w;
         //auto a = w*t;
         //ret += a;
     }
-    State::serialize_ids_pred(out_file);
+    std::ofstream ids_file(file_name + "_ids");
+    State::serialize_ids_pred(ids_file);
 
     //ret /= sum_w;
     //return ret.predict();

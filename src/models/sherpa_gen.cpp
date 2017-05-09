@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include "models/sherpa_mini.hpp"
 #include "cpprob/serialization.hpp"
+#include "models/sherpa_mini.hpp"
 
 int main(){
-    cpprob::detail::print(std::cout, models::dummy_sherpa());
+    using namespace cpprob::detail; // I/O vectors
+    std::cout << cpprob::models::dummy_sherpa() << std::endl;
 }

@@ -14,8 +14,7 @@ class Model {
 
 
     template<class CharT, class Traits>
-    friend std::basic_ostream< CharT, Traits > &
-    operator>>(std::basic_istream< CharT, Traits > & is, const Model & m)
+    void load_points(std::basic_istream< CharT, Traits > & is, const Model & m)
     {
         using namespace detail;
 
@@ -25,8 +24,14 @@ class Model {
                 >
                 , double> val;
         while(is >> val)
-            points.emplace_back(std::move(val));
-        return is;
+            points_.emplace_back(std::move(val));
+    }
+
+    template<class CharT, class Traits>
+    void load_ids(std::basic_istream< CharT, Traits > & is, const Model & m)
+    {
+        using namespace detail;
+        is >> m.ids_;
     }
 
 private:
@@ -38,7 +43,9 @@ private:
                 std::pair<int, NDArray<double>> // (addr, value)
             >
         , double>
-    > points;
+    > points_;
+    std::vector<std::string> ids_;
+
 };
 }
 
