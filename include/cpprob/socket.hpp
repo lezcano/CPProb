@@ -6,6 +6,7 @@
 
 #include <zmq.hpp>
 
+#include "flatbuffers/infcomp_generated.h"
 #include "cpprob/traits.hpp"
 #include "cpprob/trace.hpp"
 
@@ -24,7 +25,7 @@ public:
 private:
     static flatbuffers::FlatBufferBuilder buff;
     static zmq::socket_t server;
-    static std::vector<flatbuffers::Offset<infcomp::Trace>> vec;
+    static std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> vec;
 
 };
 
@@ -41,10 +42,10 @@ public:
     static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
         static flatbuffers::FlatBufferBuilder buff;
 
-        auto msg = infcomp::CreateMessage(
+        auto msg = infcomp::protocol::CreateMessage(
                 buff,
-                infcomp::MessageBody::ProposalRequest,
-                infcomp::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
+                infcomp::protocol::MessageBody::ProposalRequest,
+                infcomp::protocol::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
 
         buff.Finish(msg);
 
@@ -56,8 +57,8 @@ public:
         zmq::message_t reply;
         client.recv (&reply);
 
-        auto message = infcomp::GetMessage(reply.data());
-        auto reply_msg = static_cast<const infcomp::ProposalReply*>(message->body());
+        auto message = infcomp::protocol::GetMessage(reply.data());
+        auto reply_msg = static_cast<const infcomp::protocol::ProposalReply*>(message->body());
         return proposal<Distr, Params...>::get_distr(reply_msg);
     }
 

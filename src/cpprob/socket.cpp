@@ -17,7 +17,7 @@ zmq::context_t context (1);
 
 flatbuffers::FlatBufferBuilder Compilation::buff;
 zmq::socket_t Compilation::server (context, ZMQ_REP);
-std::vector<flatbuffers::Offset<infcomp::Trace>> Compilation::vec;
+std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
 
 void Compilation::connect_server(const std::string& tcp_addr){
     Compilation::server.bind (tcp_addr);
@@ -27,8 +27,8 @@ int Compilation::get_batch_size(){
     zmq::message_t request;
     Compilation::server.recv (&request);
 
-    auto message = infcomp::GetMessage(request.data());
-    auto request_msg = static_cast<const infcomp::TracesFromPriorRequest*>(message->body());
+    auto message = infcomp::protocol::GetMessage(request.data());
+    auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest*>(message->body());
 
     Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
     return request_msg->num_traces();
@@ -39,10 +39,10 @@ void Compilation::add_trace(const TraceCompile& t){
 }
 
 void Compilation::send_batch(){
-    auto traces = infcomp::CreateTracesFromPriorReplyDirect(buff, &vec);
-    auto msg = infcomp::CreateMessage(
+    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &vec);
+    auto msg = infcomp::protocol::CreateMessage(
             Compilation::buff,
-            infcomp::MessageBody::TracesFromPriorReply,
+            infcomp::protocol::MessageBody::TracesFromPriorReply,
             traces.Union());
     Compilation::buff.Finish(msg);
 
@@ -67,13 +67,13 @@ void Inference::send_observe_init(std::vector<double>&& data){
     static flatbuffers::FlatBufferBuilder buff;
 
     const auto shape = std::vector<int>{static_cast<int>(data.size())};
-    auto observe_init = infcomp::CreateObservesInitRequest(
+    auto observe_init = infcomp::protocol::CreateObservesInitRequest(
             buff,
-            infcomp::CreateNDArrayDirect(buff, &data, &shape));
+            infcomp::protocol::CreateNDArrayDirect(buff, &data, &shape));
 
-    auto msg = infcomp::CreateMessage(
+    auto msg = infcomp::protocol::CreateMessage(
             buff,
-            infcomp::MessageBody::ObservesInitRequest,
+            infcomp::protocol::MessageBody::ObservesInitRequest,
             observe_init.Union());
 
     buff.Finish(msg);
@@ -86,8 +86,8 @@ void Inference::send_observe_init(std::vector<double>&& data){
     zmq::message_t reply;
     Inference::client.recv (&reply);
 
-    auto message = infcomp::GetMessage(reply.data());
-    auto reply_msg = static_cast<const infcomp::ObservesInitReply*>(message->body());
+    auto message = infcomp::protocol::GetMessage(reply.data());
+    auto reply_msg = static_cast<const infcomp::protocol::ObservesInitReply*>(message->body());
     if(!reply_msg->success())
         std::cerr << "Invalid command" << std::endl;
 }

@@ -36,9 +36,9 @@ namespace detail {
 
 template<typename IntType = int, typename WeightType = double>
 min_max_discrete_distribution<IntType, WeightType>
-get_min_max_discrete(const infcomp::ProposalReply* msg)
+get_min_max_discrete(const infcomp::protocol::ProposalReply* msg)
 {
-    auto param = static_cast<const infcomp::UniformDiscrete*>(msg->distribution());
+    auto param = static_cast<const infcomp::protocol::UniformDiscrete*>(msg->distribution());
     flatbuffers::Vector<double>::iterator probs_ptr = param->proposal_probabilities()->data()->begin();
     return min_max_discrete_distribution<IntType, WeightType>(param->prior_min(),
                                                               param->prior_min() + param->prior_size() - 1,
@@ -182,12 +182,12 @@ struct proposal;
 
 template<class RealType>
 struct proposal<boost::random::normal_distribution, RealType> {
-    static constexpr auto type_enum = infcomp::Distribution::Normal;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::Normal;
 
     static boost::random::normal_distribution<RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        auto param = static_cast<const infcomp::Normal*>(msg->distribution());
+        auto param = static_cast<const infcomp::protocol::Normal*>(msg->distribution());
         return boost::random::normal_distribution<RealType>(param->proposal_mean(), param->proposal_std());
     }
 };
@@ -195,11 +195,11 @@ struct proposal<boost::random::normal_distribution, RealType> {
 
 template<class IntType>
 struct proposal<boost::random::uniform_smallint, IntType> {
-    static constexpr auto type_enum = infcomp::Distribution::UniformDiscrete;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::UniformDiscrete;
 
     template<class RealType = double>
     static min_max_discrete_distribution<IntType, RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
         return detail::get_min_max_discrete<IntType, RealType>(msg);
     }
@@ -207,12 +207,12 @@ struct proposal<boost::random::uniform_smallint, IntType> {
 
 template<class RealType>
 struct proposal<vmf_distribution, RealType> {
-    static constexpr auto type_enum = infcomp::Distribution::VMF;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::VMF;
 
     static vmf_distribution<RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        auto distr = static_cast<const infcomp::VMF*>(msg->distribution());
+        auto distr = static_cast<const infcomp::protocol::VMF*>(msg->distribution());
         flatbuffers::Vector<double>::iterator mu_ptr = distr->proposal_mu()->data()->begin();
         auto dim = distr->proposal_mu()->data()->size();
         return vmf_distribution<RealType>(mu_ptr, mu_ptr + dim, distr->proposal_kappa());
@@ -221,25 +221,25 @@ struct proposal<vmf_distribution, RealType> {
 
 template<class RealType>
 struct proposal<boost::random::uniform_real_distribution, RealType> {
-    static constexpr auto type_enum = infcomp::Distribution::UniformContinuous;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::UniformContinuous;
 
     static min_max_continuous_distribution<RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        auto distr = static_cast<const infcomp::UniformContinuous*>(msg->distribution());
+        auto distr = static_cast<const infcomp::protocol::UniformContinuous*>(msg->distribution());
         return min_max_continuous_distribution<RealType>(distr->prior_min(), distr->prior_max(),
-                                                         distr->proposal_mode(), distr->proposal_k());
+                                                         distr->proposal_mode(), distr->proposal_certainty());
     }
 };
 
 template<class IntType, class RealType>
 struct proposal<boost::random::poisson_distribution, IntType, RealType> {
-    static constexpr auto type_enum = infcomp::Distribution::Poisson;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::Poisson;
 
     static boost::random::poisson_distribution<IntType, RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        auto distr = static_cast<const infcomp::Poisson*>(msg->distribution());
+        auto distr = static_cast<const infcomp::protocol::Poisson*>(msg->distribution());
         return boost::random::poisson_distribution<IntType, RealType>(distr->proposal_lambda());
     }
 };
@@ -247,12 +247,12 @@ struct proposal<boost::random::poisson_distribution, IntType, RealType> {
 
 template<class RealType>
 struct proposal<multivariate_normal_distribution, RealType> {
-    static constexpr auto type_enum = infcomp::Distribution::MultivariateNormal;
+    static constexpr auto type_enum = infcomp::protocol::Distribution::MultivariateNormal;
 
     static multivariate_normal_distribution<RealType>
-    get_distr(const infcomp::ProposalReply* msg)
+    get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        auto distr = static_cast<const infcomp::MultivariateNormal*>(msg->distribution());
+        auto distr = static_cast<const infcomp::protocol::MultivariateNormal*>(msg->distribution());
         flatbuffers::Vector<double>::iterator mean_ptr = distr->proposal_mean()->data()->begin();
         flatbuffers::Vector<double>::iterator sigma_ptr = distr->proposal_sigma()->data()->begin();
         auto dim = distr->proposal_mean()->data()->size();
@@ -262,21 +262,21 @@ struct proposal<multivariate_normal_distribution, RealType> {
 };
 
 template<class RealType>
-constexpr infcomp::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
 
 template<class RealType>
-constexpr infcomp::Distribution proposal<vmf_distribution, RealType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<vmf_distribution, RealType>::type_enum;
 
 template<class IntType>
-constexpr infcomp::Distribution proposal<boost::random::uniform_smallint, IntType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<boost::random::uniform_smallint, IntType>::type_enum;
 
 template<class RealType>
-constexpr infcomp::Distribution proposal<boost::random::uniform_real_distribution, RealType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<boost::random::uniform_real_distribution, RealType>::type_enum;
 
 template<class IntType, class RealType>
-constexpr infcomp::Distribution proposal<boost::random::poisson_distribution, IntType, RealType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<boost::random::poisson_distribution, IntType, RealType>::type_enum;
 
 template<class RealType>
-constexpr infcomp::Distribution proposal<multivariate_normal_distribution, RealType>::type_enum;
+constexpr infcomp::protocol::Distribution proposal<multivariate_normal_distribution, RealType>::type_enum;
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_
