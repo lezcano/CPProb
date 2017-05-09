@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &cpprob::models::mean_normal;
+    auto f = &cpprob::models::sherpa_wrapper;
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
