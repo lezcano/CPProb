@@ -6,9 +6,11 @@
 #include <cpprob/distributions/vmf.hpp>
 #include <cpprob/distributions/multivariate_normal.hpp>
 #include <cpprob/cpprob.hpp>
+#include <cpprob/ndarray.hpp>
 #include <math.h>
 #include "YODA/Histo2D.h"
 #include "Rivet/Math/Vector4.hh"
+
 
 namespace cpprob {
 namespace models {
@@ -24,7 +26,8 @@ std::pair<double, std::vector<std::vector<double> > > energy_deposits(const Rive
 
 	std::vector<std::vector<double> > distribution;
 	for (int i = 0; i < NSAMPLES; ++i) {
-		distribution.push_back(cpprob::sample(multi));
+        // Discarding the shape...
+		distribution.push_back(cpprob::sample(multi).values());
 	}
 
 	double mini_e = mom.E() / NSAMPLES;
@@ -85,8 +88,9 @@ std::vector<double> dummy_sherpa() {
 void sherpa_wrapper(const std::vector<double> &test_image) {
 	std::vector<double> sherpa_img = dummy_sherpa();
 	double OBS_WIDTH = 1.0;
-	cpprob::multivariate_normal_distribution<double> obs_distr(sherpa_img.begin(), sherpa_img.end(), OBS_WIDTH);
-	cpprob::observe(obs_distr, test_image);
+	const std::vector<int> dim{100, 100};
+	cpprob::multivariate_normal_distribution<double> obs_distr(NDArray<double>(sherpa_img, dim), OBS_WIDTH);
+	cpprob::observe(obs_distr, NDArray<double>(test_image, dim));
 }
 
 } // end namespace models

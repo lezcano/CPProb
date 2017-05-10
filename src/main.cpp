@@ -11,16 +11,6 @@
 #include "models/models.hpp"
 #include "models/sherpa_mini.hpp"
 
-template<typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-    out << "[ ";
-    for (const auto &elem : v) {
-        out << elem << " ";
-    }
-    out << "]";
-    return out;
-}
-
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 

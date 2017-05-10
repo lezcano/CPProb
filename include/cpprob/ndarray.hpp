@@ -8,6 +8,8 @@
 #include <iostream>
 #include <numeric>
 #include <functional>
+#include <exception>
+#include <utility>
 
 #include "cpprob/serialization.hpp"
 
@@ -16,6 +18,10 @@ namespace cpprob {
 template<class T = double>
 class NDArray {
 public:
+    // Iterator utilities
+    using iterator = typename std::vector<T>::iterator;
+    using const_iterator = typename std::vector<T>::const_iterator;
+
     NDArray() = default;
 
     NDArray(T a) : values_{a}, shape_{1} {}
@@ -24,12 +30,29 @@ public:
             class = std::enable_if_t<std::is_constructible<T, U>::value>>
     NDArray(U a) : NDArray(T(a)) {}
 
+    NDArray(std::vector<T> values, std::vector<int> shape) : values_(std::move(values)), shape_(std::move(shape))
+    {
+        // Check that dimensions agree
+        auto a = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+        if (a != static_cast<int>(values.size()))
+            throw std::runtime_error("Product of the elements of the shape vector is not equal to the size of the values vector.");
+
+    }
+
     template<class U>
     NDArray(const std::vector<U> &v)
     {
         compute_shape(v, 0);
         values_ = flatten(v, 0);
     }
+
+    // Iterator utilities
+    iterator begin() { return values_.begin(); }
+    const_iterator begin() const { return values_.begin(); }
+    iterator end() { return values_.end(); }
+    const_iterator end() const { return values_.end(); }
+    const_iterator cbegin() const { return values_.cbegin(); }
+    const_iterator cend() const { return values_.cend(); }
 
     NDArray& operator+=(const NDArray & rhs)
     {

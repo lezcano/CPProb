@@ -12,6 +12,7 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include "cpprob/serialization.hpp"
+#include "cpprob/ndarray.hpp"
 
 namespace cpprob {
 
@@ -20,7 +21,7 @@ class multivariate_normal_distribution {
 public:
     // types
     using input_type =  std::vector<RealType>;
-    using result_type =  std::vector<RealType>;
+    using result_type =  NDArray<RealType>;
 
     // member classes/structs/unions
 
@@ -31,48 +32,69 @@ public:
         using distribution_type = multivariate_normal_distribution;
 
         // construct/copy/destruct
-        param_type() : distr_{boost::random::normal_distribution<RealType>(0, 1)} {};
+        param_type() : distr_{boost::random::normal_distribution<RealType>(0, 1)}, shape_{1} {};
 
         template<class Iter>
         param_type(Iter mean_first, Iter mean_last, RealType sigma)
         {
             init(mean_first, mean_last, sigma);
+            init_shape();
         }
 
         template<class IterMean, class IterSigma>
         param_type(IterMean mean_first, IterMean mean_last, IterSigma sigma_first, IterSigma sigma_last)
         {
             init(mean_first, mean_last, sigma_first, sigma_last);
+            init_shape();
         }
 
         param_type(const std::initializer_list<RealType> & mean, RealType sigma)
         {
             init(mean.begin(), mean.end(),sigma);
+            init_shape();
         }
 
         param_type(const std::initializer_list<RealType> & mean,  const std::initializer_list<RealType> & sigma)
         {
             init(mean.begin(), mean.end(), sigma.begin(), sigma.end());
+            init_shape();
         }
 
         template<typename RangeMean>
         explicit param_type(const RangeMean & mean,  RealType sigma)
         {
             init(mean.begin(), mean.end(), sigma);
+            init_shape();
         }
 
         template<typename RangeMean, class RangeSigma>
         explicit param_type(const RangeMean & mean,  const RangeSigma & sigma)
         {
             init(mean.begin(), mean.end(), sigma.begin(), sigma.end());
+            init_shape();
+        }
+
+        param_type(const NDArray<RealType> & mean,  RealType sigma)
+        {
+            auto mean_v = mean.values();
+            init(mean_v.begin(), mean_v.end(), sigma);
+            init_shape(mean.shape());
+        }
+
+        template<class IterSigma>
+        param_type(const NDArray<RealType> & mean, IterSigma sigma_first, IterSigma sigma_last)
+        {
+            auto mean_v = mean.values();
+            init(mean_v.begin(), mean_v.end(), sigma_first, sigma_last);
+            init_shape(mean.shape());
         }
 
         // public member functions
-        std::vector<RealType> mean() const
+        NDArray<RealType> mean() const
         {
             std::vector<RealType> mean;
             std::transform(distr_.begin(), distr_.end(), std::back_inserter(mean), [](const auto & distr) { return distr.mean(); });
-            return mean;
+            return NDArray<RealType>(std::move(mean), shape_);
         }
 
         std::vector<RealType> sigma() const
@@ -80,6 +102,11 @@ public:
             std::vector<RealType> sigma;
             std::transform(distr_.begin(), distr_.end(), std::back_inserter(sigma), [](const auto & distr) { return distr.sigma(); });
             return sigma;
+        }
+
+        std::vector<int> shape() const
+        {
+            return shape_;
         }
 
         std::vector<boost::random::normal_distribution<RealType>> distr() const
@@ -144,9 +171,18 @@ public:
                 distr_.emplace_back(*mean_first, *sigma_first);
         }
 
+        void init_shape(std::vector<int> shape = std::vector<int>())
+        {
+            if (shape.empty())
+                shape_ = std::vector<int>{static_cast<int>(distr_.size())};
+            else
+                shape_ = shape;
+        }
+
         friend class multivariate_normal_distribution;
 
         std::vector<boost::random::normal_distribution<RealType>> distr_;
+        std::vector<int> shape_;
     };
 
     // construct/copy/destruct
@@ -171,10 +207,15 @@ public:
     explicit multivariate_normal_distribution(const RangeMean & mean,  RealType sigma) : param_(mean, sigma) {}
 
     template<typename RangeMean, class RangeSigma>
-    explicit multivariate_normal_distribution(const RangeMean & mean,  const RangeSigma & sigma) : param_(mean, sigma) { }
+    explicit multivariate_normal_distribution(const RangeMean & mean,  const RangeSigma & sigma) : param_(mean, sigma) {}
+
+    multivariate_normal_distribution(const NDArray<RealType> & mean,  RealType sigma) : param_(mean, sigma) {}
+
+    template<class IterSigma>
+    multivariate_normal_distribution(const NDArray<RealType> & mean, IterSigma sigma_first, IterSigma sigma_last) : param_(mean, sigma_first, sigma_last) {}
 
     // public member functions
-    std::vector<RealType> mean() const
+    NDArray<RealType> mean() const
     {
         return param_.mean();
     }
@@ -187,6 +228,11 @@ public:
     std::vector<boost::random::normal_distribution<RealType>> distr() const
     {
         return param_.distr_;
+    }
+
+    std::vector<int> shape() const
+    {
+        return param_.shape();
     }
 
     param_type param() const
@@ -206,7 +252,7 @@ public:
         std::vector<RealType> ret;
         std::transform(param_.distr_.begin(), param_.distr_.end(), std::back_inserter(ret),
                        [&rng](auto & distr) { return distr(rng); });
-        return ret;
+        return NDArray<RealType>(std::move(ret), param_.shape_);
     }
 
     template<typename URNG> result_type operator()(URNG & rng, const param_type & param)

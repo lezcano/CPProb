@@ -24,6 +24,7 @@
 #include "distributions/vmf.hpp"
 #include "distributions/multivariate_normal.hpp"
 
+#include "cpprob/ndarray.hpp"
 
 
 #include <boost/function_types/parameter_types.hpp>
@@ -159,11 +160,11 @@ boost::random::uniform_real_distribution<> default_distr(const boost::random::un
 template<class RealType>
 multivariate_normal_distribution<> default_distr(const multivariate_normal_distribution<RealType>& distr)
 {
-    auto mean = distr.mean();
+    auto mean_val = distr.mean().values();
     auto sigma = distr.sigma();
-    std::vector<double> mean_double(mean.begin(), mean.end()),
-                        sigma_double(sigma.begin(), sigma.end());
-    return multivariate_normal_distribution<>(mean_double, sigma_double);
+    std::vector<double> mean_double(mean_val.begin(), mean_val.end()),
+            sigma_double(sigma.begin(), sigma.end());
+    return multivariate_normal_distribution<>(NDArray<double>(std::move(mean_double), distr.shape()), sigma_double);
 }
 
 template <class F, template <class ...> class C, class = std::make_index_sequence<boost::function_types::function_arity<F>::value>>
@@ -253,11 +254,16 @@ struct proposal<multivariate_normal_distribution, RealType> {
     get_distr(const infcomp::protocol::ProposalReply* msg)
     {
         auto distr = static_cast<const infcomp::protocol::MultivariateNormal*>(msg->distribution());
-        flatbuffers::Vector<double>::iterator mean_ptr = distr->proposal_mean()->data()->begin();
-        flatbuffers::Vector<double>::iterator sigma_ptr = distr->proposal_sigma()->data()->begin();
+        auto mean_ptr = distr->proposal_mean()->data()->begin();
+        auto shape_ptr = distr->proposal_mean()->shape()->begin();
+        auto sigma_ptr = distr->proposal_sigma()->data()->begin();
         auto dim = distr->proposal_mean()->data()->size();
-        return multivariate_normal_distribution<>(mean_ptr, mean_ptr + dim,
-                                                  sigma_ptr, sigma_ptr + dim);
+        auto shape_size = distr->proposal_mean()->shape()->size();
+
+        auto vec_data = std::vector<RealType>(mean_ptr, mean_ptr+dim);
+        auto vec_shape = std::vector<int>(shape_ptr, shape_ptr+shape_size);
+        return multivariate_normal_distribution<RealType>(NDArray<RealType>(std::move(vec_data), std::move(vec_shape)),
+                                                          sigma_ptr, sigma_ptr + dim);
     }
 };
 

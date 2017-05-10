@@ -1,11 +1,15 @@
-#include <iostream>
-#include <cpprob/state.hpp>
+#include <ofstream>
+#include <string>
 
 #include "cpprob/serialization.hpp"
-#include "models/sherpa_mini.hpp"
 
-int main(){
-    using namespace cpprob::detail; // I/O vectors
-    cpprob::State::set(cpprob::StateType::dryrun);
-    std::cout << cpprob::models::dummy_sherpa() << std::endl;
+int main(int argc,char* argv[])
+{
+    using cpprob::detail;
+
+    std::string outputfilename = "out.txt";
+    if( argc > 1){
+        outputfilename = argv[1];
+    }
+    std::ofstream << sherpa_wrapper() << std::endl;
 }

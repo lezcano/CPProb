@@ -1,12 +1,16 @@
 #include "cpprob/utils.hpp"
 
 #include <execinfo.h>
+#include <cxxabi.h>
 
 #include <cstdlib>
 #include <numeric>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iterator>
+#include <algorithm>
 
 #include <boost/random/random_device.hpp>
 
@@ -56,24 +60,41 @@ std::string get_addr(){
         ++i;
     }
 
+    auto get_name = [](char* s){
+        auto str = std::string(s);
+        auto first = str.find_last_of('(') + 1;
+        auto last = str.find_last_of(')');
+
+        auto mas = str.find_last_of('+');
+
+        // The +3 is to discard the characters
+        //auto first = s.find("[0x") + 3;
+        //auto last = s.find("]");
+        int status;
+        char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
+        auto demangled = std::string(result);
+        free(result);
+        // Demangled function name + offset w.r.t the function frame
+        return demangled + str.substr(mas, last-mas);
+
+        // Mangled option
+        //return str.substr(first, last-first);
+    };
 
     // The -4 is to discard the call to _start and the call to __libc_start_main
     // plus the two calls until the function is called
     // plus the two calls to f_default_params, f_default_params_detail
-    for (auto j = i; j < nptrs - 6; j++) {
-        s = std::string(strings[j]);
-        auto first = s.find_last_of('(') + 1;
-        auto last = s.find_last_of(')');
-        // The +3 is to discard the characters
-        //auto first = s.find("[0x") + 3;
-        //auto last = s.find("]");
-        trace_addrs.emplace_back(s.substr(first, last-first));
+    std::string ret ("[");
+    if (i < nptrs - 6){
+        ret += get_name(strings[i]);
+        ++i;
     }
+    for (auto j = i; j < nptrs - 6; j++) {
+        ret += ' ' + get_name(strings[j]);
+    }
+    ret += ']';
     std::free(strings);
-    return "[" + std::accumulate(trace_addrs.rbegin(), trace_addrs.rend(), std::string(""),
-                                 [](const std::string& acc, const std::string& next)
-                                 { return acc + " " + next; })
-               + "]";
+    return ret;
 }
 
 }  // namespace cpprob
