@@ -13,5 +13,5 @@ int main(int argc,char* argv[])
         outputfilename = argv[1];
     }
     std::ofstream file (outputfilename);
-    file << sherpa_details::sherpa() << std::endl;
+    file << sherpa_detail::sherpa() << std::endl;
 }
