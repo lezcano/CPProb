@@ -22,6 +22,7 @@ namespace sherpa_detail {
 
 void sherpa_wrapper(const std::vector<std::vector<std::vector<double>>> &observes)
 {
+    cpprob::predict(jailbreak::instance().m_selected_channel_index);
     const double OBS_WIDTH = 1.0;
     auto sherpa_img = sherpa();
     cpprob::multivariate_normal_distribution<double> obs_distr(sherpa_img, OBS_WIDTH);
