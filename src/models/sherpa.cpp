@@ -15,7 +15,8 @@
 #include "ATOOLS/Org/AnalysisJailbreak.H"
 
 #include "cpprob/distributions/multivariate_normal.hpp"
-#include "cpprob/multivariate_normal.hpp"
+#include "cpprob/cpprob.hpp"
+#include "cpprob/ndarray.hpp"
 
 namespace sherpa_detail {
 
