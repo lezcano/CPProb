@@ -56,6 +56,7 @@ std::string get_addr(){
     if (s.find("cpprob") != std::string::npos &&
         (s.find("sample") != std::string::npos ||
          s.find("observe") != std::string::npos ||
+         s.find("importance_sampling") != std::string::npos ||
          s.find("predict") != std::string::npos)){
         ++i;
     }

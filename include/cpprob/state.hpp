@@ -12,7 +12,8 @@ namespace cpprob {
 enum class StateType {
     compile,
     inference,
-    dryrun
+    dryrun,
+    importance_sampling
 };
 
 class State {

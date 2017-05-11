@@ -7,7 +7,8 @@
 namespace cpprob {
 
 void predict(const NDArray<double> &x) {
-    if (State::current_state() == StateType::inference) {
+    if (State::current_state() == StateType::inference ||
+        State::current_state() == StateType::importance_sampling) {
         auto addr = get_addr();
         State::add_predict(addr, x);
     }

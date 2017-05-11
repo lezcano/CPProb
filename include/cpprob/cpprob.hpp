@@ -83,6 +83,10 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
                                      default_distr(distr), State::time_index(), x});
         }
     }
+    else if  (State::current_state() == StateType::importance_sampling) {
+        x = distr(get_rng());
+        State::increment_cum_log_prob(logpdf(distr, x));
+    }
     else {
         State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_distr(distr));
 
@@ -115,8 +119,9 @@ void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x
     if (State::current_state() == StateType::compile){
         sample_impl(distr, true);
     }
-    else if (State::current_state() == StateType::inference){
-        auto prob = cpprob::logpdf(distr, x);
+    else if (State::current_state() == StateType::inference ||
+             State::current_state() == StateType::importance_sampling){
+        auto prob = logpdf(distr, x);
         State::increment_cum_log_prob(prob);
     }
 }
@@ -142,6 +147,29 @@ void compile(const Func& f, const std::string& tcp_addr) {
     }
 }
 
+// TODO (Lezcano) Solve this
+// Almost copied from generate_posterior() :(
+template<class Func, class... Args>
+void importance_sampling(
+        const Func& f,
+        const std::tuple<Args...>& observes,
+        const std::string& file_name,
+        size_t n){
+
+    set_state(StateType::importance_sampling);
+
+    std::ofstream out_file(file_name);
+
+    //double sum_w = 0;
+    for (size_t i = 0; i < n; ++i) {
+        State::reset_trace();
+        call_f_tuple(f, observes);
+        auto t = State::get_trace_pred();
+        out_file << t << '\n';
+    }
+    std::ofstream ids_file(file_name + "_ids");
+    State::serialize_ids_pred(ids_file);
+}
 
 template<class Func, class... Args>
 void generate_posterior(
