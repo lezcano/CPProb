@@ -6,7 +6,7 @@
 
 int main(int argc,char* argv[])
 {
-    using cpprob::detail;
+    using namespace cpprob::detail;
 
     std::string outputfilename = "out.txt";
     if( argc > 1){
