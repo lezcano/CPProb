@@ -14,7 +14,7 @@
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    std::string mode, tcp_addr, observes_file, observes_str, model_file;
+    std::string mode, tcp_addr, observes_file, observes_str, posterior_file;
     size_t n_samples;
 
     po::options_description desc("Options");
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
                                                         "  Dry Run:   None")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference) File with the observed values.")
-      ("model_file", po::value<std::string>(&model_file), "(Inference) File to output the posterior distribution.")
+      ("posterior_file", po::value<std::string>(&posterior_file), "(Inference) File to output the posterior distribution.")
       ;
 
     po::variables_map vm;
@@ -68,8 +68,8 @@ int main(int argc, char** argv) {
             return -1;
         }
 
-        if (vm.count("model_file") == 0u) {
-            std::cerr << R"(In Infer mode, please provide a "--model_file" argument.)" << std::endl;
+        if (vm.count("posterior_file") == 0u) {
+            std::cerr << R"(In Infer mode, please provide a "--posterior_file" argument.)" << std::endl;
             return -1;
         }
 
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
             ok = cpprob::parse_string(observes_str, observes);
         }
         if (ok) {
-            cpprob::generate_posterior(f, observes, tcp_addr, model_file, n_samples);
+            cpprob::generate_posterior(f, observes, tcp_addr, posterior_file, n_samples);
         }
         else {
             std::cerr << "Could not parse the arguments.\n"
