@@ -4,20 +4,16 @@
 #include <numeric>
 #include <functional>
 #include <type_traits>
+#include <limits>
+#include <cmath>
 
 #include <boost/random/normal_distribution.hpp>
-#include <boost/math/distributions/normal.hpp>
-
 #include <boost/random/uniform_smallint.hpp>
-
 #include <boost/random/poisson_distribution.hpp>
-#include <boost/math/distributions/poisson.hpp>
-
 #include <boost/random/uniform_real_distribution.hpp>
 
-#include <boost/math/distributions/beta.hpp>
-
 #include <boost/math/constants/constants.hpp>
+#include <boost/math/distributions/beta.hpp>
 
 #include "distributions/min_max_discrete.hpp"
 #include "distributions/min_max_continuous.hpp"
@@ -25,7 +21,6 @@
 #include "distributions/multivariate_normal.hpp"
 
 #include "cpprob/ndarray.hpp"
-
 
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/function_types/function_arity.hpp>
@@ -49,75 +44,105 @@ get_min_max_discrete(const infcomp::protocol::ProposalReply* msg)
 } // end namespace detail
 
 template <class RealType>
-RealType pdf(const boost::random::normal_distribution<RealType>& distr,
-             const typename boost::random::normal_distribution<RealType>::result_type & x)
+RealType logpdf(const boost::random::normal_distribution<RealType>& distr,
+                const typename boost::random::normal_distribution<RealType>::result_type & x)
 {
-    using namespace boost::math;
-    return pdf(normal_distribution<RealType>{distr.mean(), distr.sigma()}, x);
+    RealType mean = distr.mean();
+    RealType std = distr.sigma();
+
+    if(std::numeric_limits<RealType>::has_infinity && std::abs(x) == std::numeric_limits<RealType>::infinity()) {
+        return -std::numeric_limits<RealType>::infinity();
+    }
+
+    RealType result = (x - mean)/std;
+    result *= result;
+    result += std::log(2 * boost::math::constants::pi<RealType>() * std * std);
+    result *= -0.5;
+
+    return result;
 }
 
 template <class IntType>
-double pdf(const boost::random::uniform_smallint<IntType>& distr,
-           const typename boost::random::uniform_smallint<IntType>::result_type &)
+double logpdf(const boost::random::uniform_smallint<IntType>& distr,
+              const typename boost::random::uniform_smallint<IntType>::result_type &)
 {
-    return 1.0/(distr.max() - distr.min() + 1.0);
+    return -std::log(distr.max() - distr.min() + 1.0);
 }
 
 template<class IntType, class WeightType>
-WeightType pdf(const min_max_discrete_distribution<IntType, WeightType>& distr,
-               const typename min_max_discrete_distribution<IntType, WeightType>::result_type & x)
+WeightType logpdf(const min_max_discrete_distribution<IntType, WeightType>& distr,
+                  const typename min_max_discrete_distribution<IntType, WeightType>::result_type & x)
 {
-    if (x < distr.min() || x > distr.max()) return 0;
-    return distr.probabilities()[static_cast<std::size_t>(x-distr.min())];
+    if (x < distr.min() || x > distr.max()) {
+        return -std::numeric_limits<WeightType>::infinity();
+    }
+    return std::log(distr.probabilities()[static_cast<std::size_t>(x-distr.min())]);
 }
 
 template<class RealType>
-RealType pdf(const min_max_continuous_distribution<RealType>& distr,
-               const typename min_max_continuous_distribution<RealType>::result_type & x)
-{
+RealType logpdf(const min_max_continuous_distribution<RealType>& distr,
+                const typename min_max_continuous_distribution<RealType>::result_type & x) {
     auto beta_distr = distr.beta();
+    auto a = beta_distr.alpha();
+    auto b = beta_distr.beta();
     auto min = distr.min();
     auto max = distr.max();
-    auto norm_x = (x-min)/(max-min);
-    return boost::math::pdf(boost::math::beta_distribution<RealType>(beta_distr.alpha(), beta_distr.beta()), norm_x)/(max - min);
+    auto norm_x = (x - min) / (max - min);
+    if (norm_x <= 0 || norm_x >= 1) {
+        return -std::numeric_limits<RealType>::infinity();
+    }
+
+    return std::log(boost::math::pdf(boost::math::beta_distribution<RealType>(a, b), norm_x))
+           - std::log(max - min);
 }
 
 template<class RealType>
-RealType pdf(const vmf_distribution<RealType>& distr,
-             const typename vmf_distribution<RealType>::result_type & x)
+RealType logpdf(const vmf_distribution<RealType>& distr,
+                const typename vmf_distribution<RealType>::result_type & x)
 {
+    // Not implemented yet
     if (distr.kappa() == 0){
         return 1.0/(4.0 * boost::math::constants::pi<RealType>());
     }
     return 0;
-
 }
 
 template<typename IntType, class RealType>
-RealType pdf(const boost::random::poisson_distribution<IntType, RealType>& distr,
+RealType logpdf(const boost::random::poisson_distribution<IntType, RealType>& distr,
              const typename boost::random::poisson_distribution<IntType, RealType>::result_type & x)
 {
-    using namespace boost::math;
-    return pdf(poisson_distribution<RealType>(distr.mean()), x);
+
+    if(std::numeric_limits<IntType>::has_infinity && std::abs(x) == std::numeric_limits<IntType>::infinity()) {
+        return -std::numeric_limits<RealType>::infinity();
+    }
+
+    auto l = distr.mean();
+    if (l == 0) {
+        return -std::numeric_limits<RealType>::infinity();
+    }
+    RealType ret = x * std::log(l) - l;
+    for (int i = 1; i <= x; ++i)
+        ret -= std::log(i);
+    return ret;
 }
 
 template<typename RealType>
-RealType pdf(const boost::random::uniform_real_distribution<RealType>& distr,
-            const typename boost::random::uniform_real_distribution<RealType>::result_type &)
+RealType logpdf(const boost::random::uniform_real_distribution<RealType>& distr,
+                const typename boost::random::uniform_real_distribution<RealType>::result_type &)
 {
-    return 1/(distr.b()-distr.a());
+    return -std::log(distr.b()-distr.a());
 }
 
 template<typename RealType>
-RealType pdf(const multivariate_normal_distribution<RealType>& distr,
-             const typename multivariate_normal_distribution<RealType>::result_type & x)
+RealType logpdf(const multivariate_normal_distribution<RealType>& distr,
+                const typename multivariate_normal_distribution<RealType>::result_type & x)
 {
-    RealType ret = 1;
+    RealType ret = 0;
     auto vec_distr = distr.distr();
     auto it_distr = vec_distr.begin();
     auto it_x = x.begin();
     for(; it_distr != vec_distr.end() && it_x != x.end(); ++it_distr, ++it_x)
-        ret *= pdf(*it_distr, *it_x);
+        ret += logpdf(*it_distr, *it_x);
     return ret;
 }
 

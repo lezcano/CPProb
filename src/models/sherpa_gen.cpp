@@ -2,6 +2,7 @@
 #include <string>
 
 #include "cpprob/serialization.hpp"
+#include "models/sherpa.hpp"
 
 int main(int argc,char* argv[])
 {
@@ -11,5 +12,5 @@ int main(int argc,char* argv[])
     if( argc > 1){
         outputfilename = argv[1];
     }
-    std::ofstream << sherpa_wrapper() << std::endl;
+    std::ofstream << sherpa_details::sherpa() << std::endl;
 }

@@ -10,6 +10,7 @@
 
 #include "models/models.hpp"
 #include "models/sherpa_mini.hpp"
+#include "models/sherpa.hpp"
 
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
