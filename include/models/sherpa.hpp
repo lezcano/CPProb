@@ -2,7 +2,7 @@
 #define CPPROB_SHERPA_HPP
 #include <vector>
 
-namespace sherpa_details{
+namespace sherpa_detail {
 
   void sherpa_wrapper(const std::vector<std::vector<std::vector<double>>> & observes);
 

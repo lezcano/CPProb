@@ -78,7 +78,11 @@ int main(int argc, char** argv) {
         std::exit (EXIT_FAILURE);
     }
 
+    #ifdef BUILD_SHERPA
+    auto f = &sherpa_detail::sherpa_wrapper;
+    #else
     auto f = &cpprob::models::sherpa_wrapper;
+    #endif
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
