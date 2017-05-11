@@ -92,7 +92,7 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
         State::curr_sample.set_value(x);
         State::prev_sample = std::move(State::curr_sample);
 
-        State::increment_cum_log_prob(pdf(distr, x) - pdf(proposal, x));
+        State::increment_cum_log_prob(logpdf(distr, x) - logpdf(proposal, x));
     }
 
     State::increment_time();
@@ -116,8 +116,7 @@ void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x
         sample_impl(distr, true);
     }
     else if (State::current_state() == StateType::inference){
-        using std::log;
-        auto prob = cpprob::pdf(distr, x);
+        auto prob = cpprob::logpdf(distr, x);
         State::increment_cum_log_prob(prob);
     }
 }
