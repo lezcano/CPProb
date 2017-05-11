@@ -17,4 +17,4 @@ endif()
 add_library(sherpa_mini SHARED sherpa_mini.cpp)
 
 add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
-target_link_libraries(sherpa_mini_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} models)
+target_link_libraries(sherpa_mini_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa_mini)
