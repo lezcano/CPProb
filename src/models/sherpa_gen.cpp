@@ -1,4 +1,4 @@
-#include <ofstream>
+#include <fstream>
 #include <string>
 
 #include "cpprob/serialization.hpp"
