@@ -10,6 +10,7 @@
 
 #include "models/models.hpp"
 #include "models/sherpa_mini.hpp"
+#include "models/sherpa.hpp"
 
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &cpprob::models::sherpa_wrapper;
+    auto f = &sherpa_details::sherpa_wrapper;
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
