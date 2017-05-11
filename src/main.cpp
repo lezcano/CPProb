@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto f = &sherpa_details::sherpa_wrapper;
+    auto f = &cpprob::models::sherpa_wrapper;
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
