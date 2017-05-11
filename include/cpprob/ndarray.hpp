@@ -2,6 +2,7 @@
 #define INCLUDE_NDARRAY_HPP
 
 #include <vector>
+#include <string>
 #include <algorithm>
 #include <type_traits>
 #include <stdexcept>
@@ -32,11 +33,17 @@ public:
 
     NDArray(std::vector<T> values, std::vector<int> shape) : values_(std::move(values)), shape_(std::move(shape))
     {
-        // Check that dimensions agree
-        auto a = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-        if (a != static_cast<int>(values.size()))
-            throw std::runtime_error("Product of the elements of the shape vector is not equal to the size of the values vector.");
-
+        #ifndef NDEBUG
+        // Check that dimensions agree if values is not empty.
+        // If values is empty it might be a default initialisation
+        if (!values_.empty()) {
+            auto a = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int>());
+            if (a != static_cast<int>(values_.size()))
+                throw std::runtime_error("Product of the elements of the shape vector " + std::to_string(a) +
+                                         " is not equal to the size of the values vector " +
+                                         std::to_string(values_.size()) + ".");
+        }
+        #endif
     }
 
     template<class U>
