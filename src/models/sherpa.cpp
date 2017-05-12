@@ -21,7 +21,7 @@
 
 namespace sherpa_detail {
 
-SherpaWrapper::SherpaWrapper() : generator_{std::make_unique()}
+SherpaWrapper::SherpaWrapper() : generator_{std::make_unique<SHERPA::Sherpa>()}
 {
     jailbreak::instance().m_histo3d.clear();
     try {
@@ -50,7 +50,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
 {
     try {
-        while (!generator_->enerateOneEvent());
+        while (!generator_->GenerateOneEvent());
     }
     catch (::ATOOLS::Exception exception) {
         std::terminate();
@@ -64,7 +64,7 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
 
     auto ret = jailbreak::instance().m_histo3d;
 
-    generator_->ummarizeRun();
+    generator_->SummarizeRun();
     return ret;
 }
 } // end namespace sherpa_details
