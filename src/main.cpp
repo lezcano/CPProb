@@ -117,9 +117,16 @@ int main(int argc, char** argv) {
     }
     else if (mode == "infer-regular") {
         // The return type of parse_file_param_f and parse_string_param_f is the same
-        using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
 
+        // TODO(Lezcano) Hack
+        #ifdef BUILD_SHERPA
+        std::tuple<std::vector<std::vector<std::vector<double>>>> observes;
+        #else
+        // The return type of parse_file_param_f and parse_string_param_f is the same
+        using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
         tuple_params_t observes;
+        #endif
+
         if (get_observes(vm, observes, observes_file, observes_str)) {
             cpprob::importance_sampling(f, observes, posterior_file, n_samples);
         }

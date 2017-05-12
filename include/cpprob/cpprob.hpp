@@ -131,7 +131,7 @@ void predict(const NDArray<double> &x);
 void set_state(StateType s);
 
 template<class Func>
-void compile(const Func& f, const std::string& tcp_addr) {
+void compile(Func& f, const std::string& tcp_addr) {
     Compilation::connect_server(tcp_addr);
     set_state(StateType::compile);
 
@@ -157,7 +157,7 @@ void compile(const Func& f, const std::string& tcp_addr) {
 // Almost copied from generate_posterior() :(
 template<class Func, class... Args>
 void importance_sampling(
-        const Func& f,
+        Func& f,
         const std::tuple<Args...>& observes,
         const std::string& file_name,
         size_t n){
@@ -186,7 +186,7 @@ void importance_sampling(
 
 template<class Func, class... Args>
 void generate_posterior(
-        const Func& f,
+        Func& f,
         const std::tuple<Args...>& observes,
         const std::string& tcp_addr,
         const std::string& file_name,
