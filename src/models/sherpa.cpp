@@ -21,7 +21,7 @@
 
 namespace sherpa_detail {
 
-SherpaWrapper::SherpaWrapper() : generator_{std::make_unique<SHERPA::Sherpa>()}
+SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
 {
     jailbreak::instance().m_histo3d.clear();
     try {
@@ -34,6 +34,11 @@ SherpaWrapper::SherpaWrapper() : generator_{std::make_unique<SHERPA::Sherpa>()}
     catch (::ATOOLS::Exception exception) {
         std::terminate();
     }
+}
+
+SherpaWrapper::~SherpaWrapper()
+{
+    delete generator_;
 }
 
 
