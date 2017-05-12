@@ -140,7 +140,11 @@ void compile(const Func& f, const std::string& tcp_addr) {
 
         for (int i = 0; i < batch_size; ++i){
             State::reset_trace();
+            #ifdef BUILD_SHERPA
+            f(std::vector<std::vector<std::vector<double>>>());
+            #else
             call_f_default_params(f);
+            #endif
             Compilation::add_trace(State::get_trace_comp());
         }
         Compilation::send_batch();

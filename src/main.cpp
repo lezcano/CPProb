@@ -95,10 +95,14 @@ int main(int argc, char** argv) {
             tcp_addr = "tcp://127.0.0.1:6666";
         }
 
+        #ifdef BUILD_SHERPA
+        std::vector<std::vector<std::vector<double>>> observes;
+        #else
         // The return type of parse_file_param_f and parse_string_param_f is the same
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
-
         tuple_params_t observes;
+        #endif
+
         if (get_observes(vm, observes, observes_file, observes_str)) {
             cpprob::generate_posterior(f, observes, tcp_addr, posterior_file, n_samples);
         }
