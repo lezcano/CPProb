@@ -4,7 +4,10 @@
 #include <vector>
 #include <memory>
 
-class SHERPA::Sherpa;
+namespace SHERPA {
+	class Sherpa;
+}
+
 namespace sherpa_detail {
 
     class SherpaWrapper {
