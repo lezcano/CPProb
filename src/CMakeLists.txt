@@ -10,4 +10,4 @@ else()
     set(SHERPA_LIB sherpa_mini)
 endif()
 
-target_link_libraries(main PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa_mini)
+target_link_libraries(main PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} ${SHERPA_LIB})
