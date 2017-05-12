@@ -5,6 +5,7 @@ find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share
 
 
 if(BUILD_SHERPA)
+    MESSAGE(STATUS "Linking to SHERPA")
     add_library(sherpa SHARED sherpa.cpp)
     target_link_libraries(sherpa PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
     target_compile_options(sherpa PRIVATE -I /usr/local/include/SHERPA-MC -L/usr/local/lib/SHERPA-MC  -rdynamic -Wl,--no-as-needed)

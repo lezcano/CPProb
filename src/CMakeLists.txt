@@ -5,9 +5,9 @@ add_executable(main main.cpp)
 
 # Link cpprob & models
 if (BUILD_SHERPA)
-    set(SHERPA_LIB sherpa)
+    set(SHERPA_WRAPPER_LIB sherpa)
 else()
-    set(SHERPA_LIB sherpa_mini)
+    set(SHERPA_WRAPPER_LIB sherpa_mini)
 endif()
 
-target_link_libraries(main PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} ${SHERPA_LIB})
+target_link_libraries(main PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} ${SHERPA_WRAPPER_LIB})

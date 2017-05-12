@@ -2,9 +2,9 @@
 #define CPPROB_SHERPA_HPP
 
 #include <vector>
+#include <memory>
 
-#include "SHERPA/Main/Sherpa.H"
-
+class SHERPA::Sherpa;
 namespace sherpa_detail {
 
     class SherpaWrapper {
@@ -15,7 +15,7 @@ namespace sherpa_detail {
 
         std::vector<std::vector<std::vector<double>>> sherpa();
     private:
-        SHERPA::Sherpa generator_;
+        std::unique_ptr<SHERPA::Sherpa> generator_;
     };
 }
 #endif //CPPROB_SHERPA_HPP

@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>     // std::cout, std::ostream, std::ios
 #include <exception>    // std::terminate
+#include <memory>
 
 
 #include "SHERPA/Main/Sherpa.H"
@@ -20,15 +21,15 @@
 
 namespace sherpa_detail {
 
-SherpaWraper::SherpaWrapper()
+SherpaWrapper::SherpaWrapper() : generator_{std::make_unique()}
 {
     jailbreak::instance().m_histo3d.clear();
     try {
         int sherpa_argc = 5;
         char *sherpa_argv[] = {"some_binary", "-f", "Gun.dat", "EXTERNAL_RNG=ProbProbRNG",
                                "SHERPA_LDADD=ProbProgRNG"};
-        Generator.InitializeTheRun(sherpa_argc, sherpa_argv);
-        Generator.InitializeTheEventHandler();
+        generator_->InitializeTheRun(sherpa_argc, sherpa_argv);
+        generator_->InitializeTheEventHandler();
     }
     catch (::ATOOLS::Exception exception) {
         std::terminate();
@@ -49,7 +50,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
 {
     try {
-        while (!generator_.GenerateOneEvent());
+        while (!generator_->enerateOneEvent());
     }
     catch (::ATOOLS::Exception exception) {
         std::terminate();
@@ -63,7 +64,7 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
 
     auto ret = jailbreak::instance().m_histo3d;
 
-    generator_.SummarizeRun();
+    generator_->ummarizeRun();
     return ret;
 }
 } // end namespace sherpa_details
