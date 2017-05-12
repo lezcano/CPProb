@@ -60,6 +60,14 @@ std::string get_addr(){
          s.find("predict") != std::string::npos)){
         ++i;
     }
+    // TODO(Lezcano) Hack
+    #ifdef BUILD_SHERPA
+    // Discard call to Get function
+    s = std::string(strings[i]);
+    if(s.find("Get") != std::string::npos){
+      ++i;
+    }
+    #endif
 
     auto get_name = [](char* s){
         auto str = std::string(s);
@@ -86,11 +94,21 @@ std::string get_addr(){
     // plus the two calls until the function is called
     // plus the two calls to f_default_params, f_default_params_detail
     std::string ret ("[");
+    // TODO(Lezcano) Hack
+    #ifdef BUILD_SHERPA
+    if (i < nptrs - 4){
+    #else
     if (i < nptrs - 6){
+    #endif
         ret += get_name(strings[i]);
         ++i;
     }
+    // TODO(Lezcano) Hack
+    #ifdef BUILD_SHERPA
+    for (auto j = i; j < nptrs - 4; j++) {
+    #else
     for (auto j = i; j < nptrs - 6; j++) {
+    #endif
         ret += ' ' + get_name(strings[j]);
     }
     ret += ']';
