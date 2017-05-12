@@ -45,6 +45,7 @@ SherpaWrapper::~SherpaWrapper()
 void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes)
 {
     cpprob::predict(jailbreak::instance().m_selected_channel_index);
+    cpprob::predict(jailbreak::instance().m_mother_momentum);
     const double OBS_WIDTH = 1.0;
     auto sherpa_img = this->sherpa();
     cpprob::multivariate_normal_distribution<double> obs_distr(cpprob::NDArray<double>(sherpa_img), OBS_WIDTH);
@@ -62,7 +63,8 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
     }
 
     std::cout << "SHERPAPROBPROG: successfully generated an event!!" << std::endl;
-    std::cout << "SHERPAPROBPROG: Infer me:" << jailbreak::instance().m_selected_channel_index << std::endl;
+    std::cout << "SHERPAPROBPROG: Selected Channel Index: " << jailbreak::instance().m_selected_channel_index << std::endl;
+    std::cout << "SHERPAPROBPROG: Mother Momentum: " << jailbreak::instance().m_mother_momentum << std::endl;
     std::cout << "SHERPAPROBPROG: jailbroken value is: " << jailbreak::instance().m_histo3d.size() << " ... "
               << std::endl;
     std::cout << "----" << std::endl;
