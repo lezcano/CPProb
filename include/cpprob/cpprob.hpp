@@ -140,6 +140,8 @@ void compile(const Func& f, const std::string& tcp_addr) {
 
         for (int i = 0; i < batch_size; ++i){
             State::reset_trace();
+
+            // TODO(Lezcano) Hack
             #ifdef BUILD_SHERPA
             f(std::vector<std::vector<std::vector<double>>>());
             #else
@@ -167,7 +169,14 @@ void importance_sampling(
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
+
+        // TODO(Lezcano) Hack
+        #ifdef BUILD_SHERPA
+        f(std::get<0>(observes));
+        #else
         call_f_tuple(f, observes);
+        #endif
+
         auto t = State::get_trace_pred();
         out_file << t << '\n';
     }
@@ -192,7 +201,14 @@ void generate_posterior(
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
         Inference::send_observe_init(detail::to_vec<double>(observes));
+
+        // TODO(Lezcano) Hack
+        #ifdef BUILD_SHERPA
+        f(std::get<0>(observes));
+        #else
         call_f_tuple(f, observes);
+        #endif
+
         auto t = State::get_trace_pred();
         out_file << t << '\n';
         //auto w = std::exp(t.log_w());

@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
         std::exit (EXIT_FAILURE);
     }
 
+    //TODO(Lezcano) Hack
     #ifdef BUILD_SHERPA
     sherpa_detail::SherpaWrapper f{};
     #else
@@ -95,8 +96,9 @@ int main(int argc, char** argv) {
             tcp_addr = "tcp://127.0.0.1:6666";
         }
 
+        // TODO(Lezcano) Hack
         #ifdef BUILD_SHERPA
-        std::vector<std::vector<std::vector<double>>> observes;
+        std::tuple<std::vector<std::vector<std::vector<double>>>> observes;
         #else
         // The return type of parse_file_param_f and parse_string_param_f is the same
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
