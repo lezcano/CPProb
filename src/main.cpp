@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     }
 
     #ifdef BUILD_SHERPA
-    auto f = &sherpa_detail::sherpa_wrapper;
+    sherpa_detail::SherpaWrapper f{};
     #else
     auto f = &cpprob::models::sherpa_wrapper;
     #endif
