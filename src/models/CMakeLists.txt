@@ -12,10 +12,10 @@ if(BUILD_SHERPA)
 
     add_executable(sherpa_gen sherpa_gen.cpp)
     target_link_libraries(sherpa_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa)
+else()
+    # Due to the ñapa, sherpa_mini does not work when using BUILD_SHERPA
+    add_library(sherpa_mini SHARED sherpa_mini.cpp)
+
+    add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
+    target_link_libraries(sherpa_mini_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa_mini)
 endif()
-
-# -L/usr/local/lib/SHERPA-MC -lSherpaMain -L/usr/local/lib -L/usr/local/lib64
-add_library(sherpa_mini SHARED sherpa_mini.cpp)
-
-add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
-target_link_libraries(sherpa_mini_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa_mini)

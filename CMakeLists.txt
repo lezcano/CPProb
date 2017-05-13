@@ -167,7 +167,8 @@ endif()
 ##############################################################################
 
 # Setup include paths. More include paths can be added in subdirectories.
-set(Boost_COMPONENTS_FOR_BUILD program_options serialization system filesystem)
+add_definitions("-DBOOST_SYSTEM_NO_DEPRECATED")
+set(Boost_COMPONENTS_FOR_BUILD program_options serialization filesystem)
 find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
     message(STATUS "Boost not found, using binary directory.")
@@ -209,8 +210,6 @@ if (NOT Boost_FOUND)
     set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/boost/lib")
     set(Boost_NO_SYSTEM_PATHS ON)
     find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
-    MESSAGE(WARNING ${Boost_INCLUDE_DIRS})
-    MESSAGE(WARNING ${Boost_FOUND})
 endif()
 
 ##############################################################################
