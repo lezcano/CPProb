@@ -131,9 +131,15 @@ void predict(const NDArray<double> &x);
 void set_state(StateType s);
 
 template<class Func>
-void compile(Func& f, const std::string& tcp_addr) {
-    Compilation::connect_server(tcp_addr);
+void compile(Func& f, const std::string& tcp_addr, const std::string& traces_file) {
     set_state(StateType::compile);
+
+    if (traces_file.empty()) {
+        Compilation::connect_server(tcp_addr);
+    }
+    else {
+        Compilation::set_traces_file(traces_file);
+    }
 
     while(true){
         auto batch_size = Compilation::get_batch_size();
@@ -161,7 +167,6 @@ void importance_sampling(
         const std::tuple<Args...>& observes,
         const std::string& file_name,
         size_t n){
-
     set_state(StateType::importance_sampling);
 
     std::ofstream out_file(file_name);
@@ -191,9 +196,8 @@ void generate_posterior(
         const std::string& tcp_addr,
         const std::string& file_name,
         size_t n){
-
-    Inference::connect_client(tcp_addr);
     set_state(StateType::inference);
+    Inference::connect_client(tcp_addr);
 
     std::ofstream out_file(file_name);
 

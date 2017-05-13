@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include <zmq.hpp>
 
@@ -16,15 +17,23 @@ namespace cpprob{
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+// Forward declaration
+namespace std {
+    class FILE;
+}
+
 class Compilation {
 public:
-    static void connect_server(const std::string& tcp_addr);
+    static void connect_server(const std::string & tcp_addr);
     static int get_batch_size();
-    static void add_trace(const TraceCompile& t);
+    static void add_trace(const TraceCompile & t);
     static void send_batch();
+    static void set_traces_file(const std::string & traces_file);
 private:
     static flatbuffers::FlatBufferBuilder buff;
+    static bool to_file;
     static zmq::socket_t server;
+    static std::ofstream file;
     static std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> vec;
 
 };

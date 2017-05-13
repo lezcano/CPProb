@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <cstdio>       // std::fwrite
+#include <exception>    // std::terminate
 
 
 #include "cpprob/trace.hpp"
@@ -19,11 +22,23 @@ flatbuffers::FlatBufferBuilder Compilation::buff;
 zmq::socket_t Compilation::server (context, ZMQ_REP);
 std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
 
-void Compilation::connect_server(const std::string& tcp_addr){
+void Compilation::connect_server(const std::string& tcp_addr)
+{
     Compilation::server.bind (tcp_addr);
+    to_file = false;
 }
 
-int Compilation::get_batch_size(){
+void Compilation::set_traces_file(const std::string & traces_file)
+{
+    file = std::ofstream(traces_file, std::ofstream::binary);
+    if (!file.is_open()) {
+        std::terminate();
+    }
+    to_file = true;
+}
+
+int Compilation::get_batch_size()
+{
     zmq::message_t request;
     Compilation::server.recv (&request);
 
@@ -34,11 +49,13 @@ int Compilation::get_batch_size(){
     return request_msg->num_traces();
 }
 
-void Compilation::add_trace(const TraceCompile& t){
+void Compilation::add_trace(const TraceCompile& t)
+{
     Compilation::vec.emplace_back(t.pack(Compilation::buff));;
 }
 
-void Compilation::send_batch(){
+void Compilation::send_batch()
+{
     auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &vec);
     auto msg = infcomp::protocol::CreateMessage(
             Compilation::buff,
@@ -46,12 +63,21 @@ void Compilation::send_batch(){
             traces.Union());
     Compilation::buff.Finish(msg);
 
-    zmq::message_t reply (Compilation::buff.GetSize());
-    memcpy (reply.data(), Compilation::buff.GetBufferPointer(), Compilation::buff.GetSize());
-    Compilation::server.send (reply);
+    if (to_file) {
+        using type_ptr = decltype(*Compilation::buff.GetBufferPointer());
+        auto size = Compilation::buff.GetSize();
+        file << size;
+        file.write(static_cast<char*>(Compilation::buff.GetBufferPointer()), size);
+    }
+    else {
+        zmq::message_t reply(Compilation::buff.GetSize());
+        memcpy(reply.data(), Compilation::buff.GetBufferPointer(), Compilation::buff.GetSize());
+        Compilation::server.send(reply);
+    }
 
     Compilation::buff.Clear();
     Compilation::vec.clear();
+
 }
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////          Inference            ////////////////////////

@@ -13,9 +13,9 @@
 #include "models/sherpa_mini.hpp"
 #include "models/sherpa.hpp"
 
-template <class T>
+template <class... T>
 bool get_observes(const boost::program_options::variables_map & vm,
-                  T& observes,
+                  std::tuple<T...>& observes,
                   const std::string & observes_file,
                   const std::string & observes_str) {
     // Check that exactly one of the options is set
@@ -41,7 +41,7 @@ bool get_observes(const boost::program_options::variables_map & vm,
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    std::string mode, tcp_addr, observes_file, observes_str, posterior_file;
+    std::string mode, tcp_addr, observes_file, observes_str, posterior_file, traces_file;
     size_t n_samples;
 
     po::options_description desc("Options");
@@ -55,9 +55,10 @@ int main(int argc, char** argv) {
                                                         "  Inference: tcp://127.0.0.1:6666\n"
                                                         "  Dry Run:   None"
                                                         "  Regular:   None")
+      ("traces_file", po::value<std::string>(&traces_file), "(Compilation) Dump traces into a file.")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference | Importance Sampling) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
-      ("posterior_file", po::value<std::string>(&posterior_file), "(Inference | Regular) File to output the posterior distribution.")
+      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular) File to output the posterior distribution.")
       ;
 
     po::variables_map vm;
@@ -82,14 +83,14 @@ int main(int argc, char** argv) {
     #ifdef BUILD_SHERPA
     sherpa_detail::SherpaWrapper f{};
     #else
-    auto f = &cpprob::models::sherpa_wrapper;
+    auto f = &cpprob::models::gaussian_unknown_mean;
     #endif
 
     if (mode == "compile"){
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://0.0.0.0:5555";
         }
-        cpprob::compile(f, tcp_addr);
+        cpprob::compile(f, tcp_addr, traces_file);
     }
     else if (mode == "infer"){
         if (tcp_addr.empty()) {

@@ -17,13 +17,27 @@ flatbuffers::Offset<infcomp::protocol::Trace> TraceCompile::pack(flatbuffers::Fl
     std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
                    [&](const Sample &s) { return s.pack(buff); });
 
-    // TODO(Lezcano) We are currently just packing the first element of observes_!!!
+    // TODO(Lezcano) Currently we only support one multidimensional observe or many one-dimensional observes
+    if (observes_.size() == 1) {
     return infcomp::protocol::CreateTraceDirect(
             buff,
             infcomp::protocol::CreateNDArray(buff,
-                                   buff.CreateVector<double>(observes_[0].values()),
-                                   buff.CreateVector<int32_t>(observes_[0].shape())),
+                                             buff.CreateVector<double>(observes_.front().values()),
+                                             buff.CreateVector<int32_t>(observes_.front().shape())),
             &vec_sample);
+    }
+    else {
+        std::vector<double> obs_flat;
+        for (auto obs : observes_) {
+            obs_flat.emplace_back(obs.values().front());
+        }
+        return infcomp::protocol::CreateTraceDirect(
+                buff,
+                infcomp::protocol::CreateNDArray(buff,
+                                                 buff.CreateVector<double>(obs_flat),
+                                                 buff.CreateVector<int32_t>(std::vector<int32_t>{static_cast<int32_t>(obs_flat.size())})),
+                &vec_sample);
+    }
 }
 
 double TracePredicts::log_w() const
@@ -120,6 +134,11 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
     else if (type == infcomp::protocol::Distribution::UniformDiscrete){
         auto distr = boost::any_cast<boost::random::uniform_smallint<>>(distr_any);
         return infcomp::protocol::CreateUniformDiscrete(buff,distr.a(), distr.b()-distr.a()+1).Union();
+    }
+    else if (type == infcomp::protocol::Distribution::Discrete){
+        auto distr = boost::any_cast<boost::random::discrete_distribution<>>(distr_any);
+        // distr.max() + 1 is the number of parameters of the distribution
+        return infcomp::protocol::CreateDiscrete(buff, distr.max() + 1).Union();
     }
     else if (type == infcomp::protocol::Distribution::VMF){
         auto distr = boost::any_cast<vmf_distribution<>>(distr_any);

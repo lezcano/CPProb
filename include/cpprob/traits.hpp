@@ -11,6 +11,7 @@
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/poisson_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/discrete_distribution.hpp>
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/distributions/beta.hpp>
@@ -28,20 +29,6 @@
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob {
-namespace detail {
-
-template<typename IntType = int, typename WeightType = double>
-min_max_discrete_distribution<IntType, WeightType>
-get_min_max_discrete(const infcomp::protocol::ProposalReply* msg)
-{
-    auto param = static_cast<const infcomp::protocol::UniformDiscrete*>(msg->distribution());
-    flatbuffers::Vector<double>::iterator probs_ptr = param->proposal_probabilities()->data()->begin();
-    return min_max_discrete_distribution<IntType, WeightType>(param->prior_min(),
-                                                              param->prior_min() + param->prior_size() - 1,
-                                                              probs_ptr, probs_ptr+param->prior_size());
-}
-
-} // end namespace detail
 
 template <class RealType>
 RealType logpdf(const boost::random::normal_distribution<RealType>& distr,
@@ -77,6 +64,16 @@ WeightType logpdf(const min_max_discrete_distribution<IntType, WeightType>& dist
         return -std::numeric_limits<WeightType>::infinity();
     }
     return std::log(distr.probabilities()[static_cast<std::size_t>(x-distr.min())]);
+}
+
+template<class IntType, class WeightType>
+WeightType logpdf(const boost::random::discrete_distribution<IntType, WeightType>& distr,
+                  const typename boost::random::discrete_distribution<IntType, WeightType>::result_type & x)
+{
+    if (x < distr.min() || x > distr.max()) {
+        return -std::numeric_limits<WeightType>::infinity();
+    }
+    return std::log(distr.probabilities()[static_cast<std::size_t>(x)]);
 }
 
 template<class RealType>
@@ -162,6 +159,14 @@ boost::random::uniform_smallint<> default_distr(const boost::random::uniform_sma
                                              static_cast<int>(distr.b()));
 }
 
+template<class IntType, class WeightType>
+boost::random::discrete_distribution<> default_distr(const boost::random::discrete_distribution<IntType, WeightType>& distr)
+{
+    auto probs = distr.probabilities();
+    return boost::random::discrete_distribution<>(probs.begin(), probs.end());
+}
+
+
 template<class RealType>
 vmf_distribution<> default_distr(const vmf_distribution<RealType>& distr)
 {
@@ -223,11 +228,28 @@ template<class IntType>
 struct proposal<boost::random::uniform_smallint, IntType> {
     static constexpr auto type_enum = infcomp::protocol::Distribution::UniformDiscrete;
 
-    template<class RealType = double>
-    static min_max_discrete_distribution<IntType, RealType>
+    template<class WeightType = double>
+    static min_max_discrete_distribution<IntType, WeightType>
     get_distr(const infcomp::protocol::ProposalReply* msg)
     {
-        return detail::get_min_max_discrete<IntType, RealType>(msg);
+        auto param = static_cast<const infcomp::protocol::UniformDiscrete*>(msg->distribution());
+        flatbuffers::Vector<double>::iterator probs_ptr = param->proposal_probabilities()->data()->begin();
+        return min_max_discrete_distribution<IntType, WeightType>(param->prior_min(),
+                                                                  param->prior_min() + param->prior_size() - 1,
+                                                                  probs_ptr, probs_ptr+param->prior_size());
+    }
+};
+
+template<class IntType, class WeightType>
+struct proposal<boost::random::discrete_distribution, IntType, WeightType> {
+    static constexpr auto type_enum = infcomp::protocol::Distribution::Discrete;
+
+    static boost::random::discrete_distribution<IntType, WeightType>
+    get_distr(const infcomp::protocol::ProposalReply* msg)
+    {
+        auto param = static_cast<const infcomp::protocol::Discrete*>(msg->distribution());
+        flatbuffers::Vector<double>::iterator probs_ptr = param->proposal_probabilities()->data()->begin();
+        return boost::random::discrete_distribution<IntType, WeightType>(probs_ptr, probs_ptr+param->prior_size());
     }
 };
 
@@ -309,5 +331,8 @@ constexpr infcomp::protocol::Distribution proposal<boost::random::poisson_distri
 
 template<class RealType>
 constexpr infcomp::protocol::Distribution proposal<multivariate_normal_distribution, RealType>::type_enum;
+
+template<class IntType, class WeightType>
+constexpr infcomp::protocol::Distribution proposal<boost::random::discrete_distribution, IntType, WeightType>::type_enum;
 }  // end namespace cpprob
 #endif  // INCLUDE_TRAITS_HPP_

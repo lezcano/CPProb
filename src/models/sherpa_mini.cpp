@@ -59,6 +59,7 @@ std::vector<Rivet::FourMomentum> select() {
 		case 3:
 			return {v0, v1, v2, v3};
 	}
+	return {};
 }
 
 std::vector<double> dummy_sherpa() {
