@@ -7,6 +7,9 @@
 #include <utility>
 #include <string>
 #include <fstream>
+#include <cstdlib> // std::exit
+
+#include <boost/filesystem/operations.hpp>
 
 #include "cpprob/utils.hpp"
 #include "cpprob/trace.hpp"
@@ -131,14 +134,21 @@ void predict(const NDArray<double> &x);
 void set_state(StateType s);
 
 template<class Func>
-void compile(Func& f, const std::string& tcp_addr, const std::string& traces_file) {
+void compile(Func& f, const std::string& tcp_addr, const std::string& dump_folder, const int n) {
     set_state(StateType::compile);
+    bool to_file = !dump_folder.empty();
 
-    if (traces_file.empty()) {
-        Compilation::connect_server(tcp_addr);
+    if (to_file) {
+        const boost::filesystem::path path_dump_folder (dump_folder);
+        if (!boost::filesystem::exists(path_dump_folder)) {
+            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
+                      << "Please provide a valid folder.\n";
+            std::exit (EXIT_FAILURE);
+        }
+        Compilation::config_to_file(dump_folder, n);
     }
     else {
-        Compilation::set_traces_file(traces_file);
+        Compilation::connect_server(tcp_addr);
     }
 
     while(true){

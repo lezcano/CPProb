@@ -41,22 +41,22 @@ bool get_observes(const boost::program_options::variables_map & vm,
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    std::string mode, tcp_addr, observes_file, observes_str, posterior_file, traces_file;
+    std::string mode, tcp_addr, observes_file, observes_str, posterior_file, dump_folder;
     size_t n_samples;
 
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help message")
       ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular"), "Compile, Inference, Dry Run or Importance Sampling with Priors as Proposals mode.")
-      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Inference) Number of particles to be sampled.")
+      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
                                                         "Defaults:\n"
                                                         "  Compile:   tcp://0.0.0.0:5555\n"
                                                         "  Inference: tcp://127.0.0.1:6666\n"
                                                         "  Dry Run:   None"
                                                         "  Regular:   None")
-      ("traces_file", po::value<std::string>(&traces_file), "(Compilation) Dump traces into a file.")
-      ("observes,o", po::value<std::string>(&observes_str), "(Inference | Importance Sampling) Values to observe.")
+      ("dump_folder", po::value<std::string>(&dump_folder)->default_value("."), "(Compilation) Dump traces into a file.")
+      ("observes,o", po::value<std::string>(&observes_str), "(Inference | Regular) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
       ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular) File to output the posterior distribution.")
       ;
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://0.0.0.0:5555";
         }
-        cpprob::compile(f, tcp_addr, traces_file);
+        cpprob::compile(f, tcp_addr, dump_folder, n_samples);
     }
     else if (mode == "infer"){
         if (tcp_addr.empty()) {

@@ -1403,15 +1403,24 @@ inline const infcomp::protocol::Message *GetMessage(const void *buf) {
   return flatbuffers::GetRoot<infcomp::protocol::Message>(buf);
 }
 
+inline const char *MessageIdentifier() {
+  return "INFC";
+}
+
+inline bool MessageBufferHasIdentifier(const void *buf) {
+  return flatbuffers::BufferHasIdentifier(
+      buf, MessageIdentifier());
+}
+
 inline bool VerifyMessageBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<infcomp::protocol::Message>(nullptr);
+  return verifier.VerifyBuffer<infcomp::protocol::Message>(MessageIdentifier());
 }
 
 inline void FinishMessageBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<infcomp::protocol::Message> root) {
-  fbb.Finish(root);
+  fbb.Finish(root, MessageIdentifier());
 }
 
 }  // namespace protocol

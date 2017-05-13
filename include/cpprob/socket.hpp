@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <fstream>
 #include <string>
 
 #include <zmq.hpp>
@@ -24,13 +23,17 @@ public:
     static int get_batch_size();
     static void add_trace(const TraceCompile & t);
     static void send_batch();
-    static void set_traces_file(const std::string & traces_file);
+    static void config_to_file(const std::string & dump_folder, const int n);
 private:
+    // Static data
     static flatbuffers::FlatBufferBuilder buff;
-    static bool to_file;
-    static zmq::socket_t server;
-    static std::ofstream file;
     static std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> vec;
+
+    static bool to_file;
+    static int batch_size;
+    static std::string dump_folder;
+
+    static zmq::socket_t server;
 
 };
 

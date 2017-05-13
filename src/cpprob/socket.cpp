@@ -6,9 +6,13 @@
 #include <cstdio>       // std::fwrite
 #include <exception>    // std::terminate
 
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "cpprob/trace.hpp"
 #include "flatbuffers/infcomp_generated.h"
+
 
 namespace cpprob {
 
@@ -18,11 +22,15 @@ namespace cpprob {
 ////////////////////////////////////////////////////////////////////////////////
 zmq::context_t context (1);
 
+// Static data
 flatbuffers::FlatBufferBuilder Compilation::buff;
-bool Compilation::to_file;
-std::ofstream Compilation::file;
-zmq::socket_t Compilation::server (context, ZMQ_REP);
 std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
+
+bool Compilation::to_file;
+int Compilation::batch_size;
+std::string Compilation::dump_folder;
+
+zmq::socket_t Compilation::server (context, ZMQ_REP);
 
 void Compilation::connect_server(const std::string& tcp_addr)
 {
@@ -30,25 +38,28 @@ void Compilation::connect_server(const std::string& tcp_addr)
     to_file = false;
 }
 
-void Compilation::set_traces_file(const std::string & traces_file)
+void Compilation::config_to_file(const std::string & dump_folder, const int n)
 {
-    file = std::ofstream(traces_file, std::ofstream::binary);
-    if (!file.is_open()) {
-        std::terminate();
-    }
+    Compilation::batch_size = n;
+    Compilation::dump_folder = dump_folder;
     to_file = true;
 }
 
 int Compilation::get_batch_size()
 {
-    zmq::message_t request;
-    Compilation::server.recv (&request);
+    if (to_file) {
+        return batch_size;
+    }
+    else {
+        zmq::message_t request;
+        Compilation::server.recv(&request);
 
-    auto message = infcomp::protocol::GetMessage(request.data());
-    auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest*>(message->body());
+        auto message = infcomp::protocol::GetMessage(request.data());
+        auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest *>(message->body());
 
-    Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
-    return request_msg->num_traces();
+        Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
+        return request_msg->num_traces();
+    }
 }
 
 void Compilation::add_trace(const TraceCompile& t)
@@ -66,9 +77,16 @@ void Compilation::send_batch()
     Compilation::buff.Finish(msg);
 
     if (to_file) {
-        auto size = Compilation::buff.GetSize();
-        file << size;
-        file.write(reinterpret_cast<char *>(Compilation::buff.GetBufferPointer()), size);
+        static auto rand_gen {boost::uuids::random_generator()};
+
+        // We alraedy know that dump_folder exists
+        auto file_name = dump_folder + "/" + boost::lexical_cast<std::string>(rand_gen());
+        auto file = std::ofstream(file_name, std::ofstream::binary);
+        if (!file.is_open()) {
+            std::cerr << "File \"" << file_name << "\" could not be open.\n";
+            std::terminate();
+        }
+        file.write(reinterpret_cast<char *>(Compilation::buff.GetBufferPointer()), Compilation::buff.GetSize());
     }
     else {
         zmq::message_t reply(Compilation::buff.GetSize());

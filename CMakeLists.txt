@@ -167,7 +167,7 @@ endif()
 ##############################################################################
 
 # Setup include paths. More include paths can be added in subdirectories.
-set(Boost_COMPONENTS_FOR_BUILD program_options serialization)
+set(Boost_COMPONENTS_FOR_BUILD program_options serialization system filesystem)
 find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)
     message(STATUS "Boost not found, using binary directory.")
