@@ -25,6 +25,7 @@ SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
 {
     jailbreak::instance().m_histo3d.clear();
     try {
+        int sherpa_argc = 7;
         char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
         generator_->InitializeTheRun(sherpa_argc, sherpa_argv);
         generator_->InitializeTheEventHandler();
