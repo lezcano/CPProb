@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <string>
 
 #include <zmq.hpp>
 
@@ -16,11 +17,6 @@ namespace cpprob{
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-// Forward declaration
-namespace std {
-    class FILE;
-}
 
 class Compilation {
 public:
@@ -45,7 +41,7 @@ private:
 class Inference {
 public:
     static void connect_client(const std::string& tcp_addr);
-    static void send_observe_init(std::vector<double>&& data);
+    static void send_observe_init(const std::vector<double> & data);
 
     template<template <class ...> class Distr, class ...Params>
     static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){

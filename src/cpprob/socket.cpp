@@ -19,6 +19,8 @@ namespace cpprob {
 zmq::context_t context (1);
 
 flatbuffers::FlatBufferBuilder Compilation::buff;
+bool Compilation::to_file;
+std::ofstream Compilation::file;
 zmq::socket_t Compilation::server (context, ZMQ_REP);
 std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
 
@@ -64,10 +66,9 @@ void Compilation::send_batch()
     Compilation::buff.Finish(msg);
 
     if (to_file) {
-        using type_ptr = decltype(*Compilation::buff.GetBufferPointer());
         auto size = Compilation::buff.GetSize();
         file << size;
-        file.write(static_cast<char*>(Compilation::buff.GetBufferPointer()), size);
+        file.write(reinterpret_cast<char *>(Compilation::buff.GetBufferPointer()), size);
     }
     else {
         zmq::message_t reply(Compilation::buff.GetSize());
@@ -89,7 +90,7 @@ void Inference::connect_client(const std::string& tcp_addr){
     Inference::client.connect (tcp_addr);
 }
 
-void Inference::send_observe_init(std::vector<double>&& data){
+void Inference::send_observe_init(const std::vector<double> & data){
     static flatbuffers::FlatBufferBuilder buff;
 
     const auto shape = std::vector<int>{static_cast<int>(data.size())};
