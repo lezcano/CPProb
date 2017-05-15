@@ -19,7 +19,8 @@
 #include "cpprob/cpprob.hpp"
 #include "cpprob/ndarray.hpp"
 
-namespace sherpa_detail {
+namespace cpprob {
+namespace models {
 
 SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
 {
@@ -73,4 +74,5 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
     generator_->SummarizeRun();
     return ret;
 }
-} // end namespace sherpa_details
+} // end namespace models
+} // end namespace cpprob

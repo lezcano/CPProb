@@ -62,7 +62,7 @@ std::vector<Rivet::FourMomentum> select() {
 	return {};
 }
 
-std::vector<double> dummy_sherpa() {
+std::vector<double> sherpa_mini() {
 	int NETA = 100;
 	int NPHI = 100;
 	YODA::Histo2D histo(NETA, -1, 1, NPHI, -1, 1);
@@ -86,8 +86,8 @@ std::vector<double> dummy_sherpa() {
 }
 
 
-void sherpa_wrapper(const std::vector<double> &test_image) {
-	std::vector<double> sherpa_img = dummy_sherpa();
+void sherpa_mini_wrapper(const std::vector<double> &test_image) {
+	std::vector<double> sherpa_img = sherpa_mini();
 	double OBS_WIDTH = 0.01;
 	const std::vector<int> dim{100, 100};
 	cpprob::multivariate_normal_distribution<double> obs_distr(NDArray<double>(sherpa_img, dim), OBS_WIDTH);

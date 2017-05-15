@@ -7,7 +7,8 @@ namespace SHERPA {
 	class Sherpa;
 }
 
-namespace sherpa_detail {
+namespace cpprob {
+namespace models {
 
     class SherpaWrapper {
     public:
@@ -20,5 +21,6 @@ namespace sherpa_detail {
     private:
         SHERPA::Sherpa* generator_;
     };
-}
+} // end namespace modeles
+} // end namespace cpprob
 #endif //CPPROB_SHERPA_HPP

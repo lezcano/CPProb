@@ -6,8 +6,8 @@
 namespace cpprob {
 namespace models {
 
-void sherpa_wrapper(const std::vector<double>& test_image);
-std::vector<double> dummy_sherpa();
+void sherpa_mini_wrapper(const std::vector<double>& test_image);
+std::vector<double> sherpa_mini();
 
 } // end namespace models
 } // end namespace cpprob

@@ -1,4 +1,4 @@
-add_library(models SHARED models.cpp)
+add_library(models SHARED models.cpp gaussian_unknown_mean.cpp)
 target_link_libraries (models PUBLIC ${PROJECT_NAME})
 
 find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
