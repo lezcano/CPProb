@@ -41,7 +41,7 @@ SherpaWrapper::~SherpaWrapper()
 }
 
 
-void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes)
+void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes) const
 {
     cpprob::predict(jailbreak::instance().m_selected_channel_index);
     cpprob::predict(jailbreak::instance().m_mother_momentum);

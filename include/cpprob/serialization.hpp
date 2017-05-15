@@ -17,6 +17,8 @@ template<class CharT, class Traits, class... T>
 std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
 template<class CharT, class Traits, class T>
 std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
+template<class CharT, class Traits, class T, std::size_t N>
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::array<T,N>& vec);
 
 template<class CharT, class Traits, class U, class V>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair);
@@ -24,6 +26,8 @@ template<class CharT, class Traits, class... T>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup);
 template<class CharT, class Traits, class T>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec);
+template<class CharT, class Traits, class T, std::size_t N>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T,N>& vec);
 
 
 template<class CharT, class Traits, class U, class V>
@@ -56,24 +60,38 @@ operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup)
     return os << os.widen(')');
 }
 
+template<class CharT, class Traits, class Iter>
+std::basic_ostream<CharT, Traits>&
+print_iter(std::basic_ostream<CharT, Traits> &os, Iter beg,  Iter end, char init_del, char end_del)
+{
+    os << os.widen(init_del);
+    if (beg != end) {
+        os << *beg;
+        ++beg;
+        for (; beg != end; ++beg) {
+            os << os.widen(' ') << *beg;
+        }
+    }
+    return os << os.widen(end_del);
+}
+
+
+
+template<class CharT, class Traits, class T, std::size_t N>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T, N>& arr)
+{
+    return print_iter(os, arr.begin(), arr.end(), '[', ']');
+}
+
 template<class CharT, class Traits, class T>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec)
 {
-    auto iter = vec.begin(), end = vec.end();
-    os << os.widen('[');
-    if (iter != end) {
-        os << *iter;
-        ++iter;
-        for (; iter != end; ++iter) {
-            os << os.widen(' ') << *iter;
-        }
-    }
-    return os << os.widen(']');
+    return print_iter(os, vec.begin(), vec.end(), '[', ']');
 }
 
 
-// Implementation
 template<class CharT, class Traits, class U, class V>
 std::basic_istream<CharT, Traits>&
 operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
@@ -146,10 +164,38 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
         vec.emplace_back(std::move(val));
     } while (true);
 
-    // Remark: This accepts not properly specified vectors like
+    // Remark: This accepts vectors not properly specified like
     // [(1 2) (1 4] for std::vector<std::pair<int, int>> or [] for std::vector<std::vector<T>>
     // but well...
     is.clear();
+    if (!(is >> std::ws >> ch)) {
+        return is;
+    }
+    if (ch != is.widen(']')) {
+        is.putback(ch);
+        is.setstate(std::ios_base::failbit);
+    }
+    return is;
+}
+
+template<class CharT, class Traits, class T, std::size_t N>
+std::basic_istream<CharT, Traits>&
+operator>>(std::basic_istream<CharT, Traits> &is, std::array<T, N>& arr)
+{
+    CharT ch;
+    if (!(is >> std::ws >> ch)) {
+        return is;
+    }
+    if (ch != is.widen('[')) {
+        is.putback(ch);
+        is.setstate(std::ios_base::failbit);
+        return is;
+    }
+
+    for (auto & elem : arr) {
+        if (!(is >> elem))
+            return is;
+    }
     if (!(is >> std::ws >> ch)) {
         return is;
     }

@@ -4,8 +4,10 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <limits>
 #include <utility>
 #include <string>
+#include <array>
 #include <fstream>
 #include <cstdlib> // std::exit
 
@@ -21,29 +23,52 @@
 namespace cpprob {
 namespace detail {
 
+// Forward declarations
+template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+std::vector<T> to_vec(U value);
+template<class T, class U, class V>
+std::vector<T> to_vec(const std::pair<U, V> & pair);
+template<class T, class U>
+std::vector<T> to_vec(const std::vector<U> & v);
+template<class T, class... Args>
+std::vector<T> to_vec(const std::tuple<Args...> & args);
+template<class T, class U, std::size_t N>
+std::vector<T> to_vec(const std::array<U, N> & args);
+
+
 template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
 std::vector<T> to_vec(U value)
 {
     return std::vector<T>({static_cast<T>(value)});
 }
 
-template<class T, class U, class V>
-std::vector<T> to_vec(const std::pair<U, V>& pair);
-
-template<class T, class U>
-std::vector<T> to_vec(const std::vector<U>& v)
+// Helper function
+template<class T, class Iter>
+std::vector<T> iter_to_vec(Iter begin, Iter end)
 {
     std::vector<T> ret;
-    for(const auto& elem : v) {
-        auto aux = to_vec<T>(elem);
+    for(; begin != end; ++begin) {
+        auto aux = to_vec<T>(*begin);
         ret.insert(ret.end(), aux.begin(), aux.end());
 
     }
     return ret;
 }
 
+template<class T, class U>
+std::vector<T> to_vec(const std::vector<U> & v)
+{
+    return iter_to_vec<T>(v.begin(), v.end());
+}
+
+template<class T, class U, std::size_t N>
+std::vector<T> to_vec(const std::array<U, N> & arr)
+{
+    return iter_to_vec<T>(arr.begin(), arr.end());
+}
+
 template<class T, class U, class V>
-std::vector<T> to_vec(const std::pair<U, V>& pair)
+std::vector<T> to_vec(const std::pair<U, V> & pair)
 {
     auto ret = to_vec<T>(pair.first);
     auto aux = to_vec<T>(pair.second);
@@ -53,24 +78,23 @@ std::vector<T> to_vec(const std::pair<U, V>& pair)
 }
 
 template<class T, class... Args, size_t... Indices>
-std::vector<T> to_vec_tuple(const std::tuple<Args...>& tup, std::index_sequence<Indices...>)
+std::vector<T> to_vec_tuple(const std::tuple<Args...> & tup, std::index_sequence<Indices...>)
 {
     std::vector<T> ret;
-    auto append_ret = [&](std::vector<T>&& other) { ret.insert(ret.end(), std::make_move_iterator(other.begin()),
+    auto append_ret = [&](std::vector<T> && other) { ret.insert(ret.end(), std::make_move_iterator(other.begin()),
                                                                       std::make_move_iterator(other.end())); };
     (void)std::initializer_list<int>{ (append_ret(to_vec<T>(std::get<Indices>(tup))), 0)... };
     return ret;
 }
 
 template<class T, class... Args>
-std::vector<T> to_vec(const std::tuple<Args...>& args){
+std::vector<T> to_vec(const std::tuple<Args...> & args){
     return detail::to_vec_tuple<T, Args...>(args, std::make_index_sequence<sizeof...(Args)>());
 }
-
 } // end namespace detail
 
 template<template <class ...> class Distr, class ...Params>
-typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, const bool from_observe) {
+typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe) {
     typename Distr<Params ...>::result_type x;
     std::string addr = get_addr();
     auto id = State::register_addr_sample(addr);
@@ -108,7 +132,7 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...>& distr, co
 }
 
 template<template <class ...> class Distr, class ...Params>
-typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr, bool control = false) {
+typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool control = false) {
     if (!control || State::current_state() == StateType::dryrun){
         return distr(get_rng());
     }
@@ -118,14 +142,13 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...>& distr, bool co
 }
 
 template<template <class ...> class Distr, class ...Params>
-void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x) {
+void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x) {
     if (State::current_state() == StateType::compile){
         sample_impl(distr, true);
     }
     else if (State::current_state() == StateType::inference ||
              State::current_state() == StateType::importance_sampling){
-        auto prob = logpdf(distr, x);
-        State::increment_cum_log_prob(prob);
+        State::increment_cum_log_prob(logpdf(distr, x));
     }
 }
 
@@ -134,7 +157,7 @@ void predict(const NDArray<double> &x);
 void set_state(StateType s);
 
 template<class Func>
-void compile(Func& f, const std::string& tcp_addr, const std::string& dump_folder, const int n) {
+void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, const int n) {
     set_state(StateType::compile);
     bool to_file = !dump_folder.empty();
 
@@ -173,13 +196,14 @@ void compile(Func& f, const std::string& tcp_addr, const std::string& dump_folde
 // Almost copied from generate_posterior() :(
 template<class Func, class... Args>
 void importance_sampling(
-        Func& f,
-        const std::tuple<Args...>& observes,
-        const std::string& file_name,
+        const Func & f,
+        const std::tuple<Args...> & observes,
+        const std::string & file_name,
         size_t n){
     set_state(StateType::importance_sampling);
 
     std::ofstream out_file(file_name);
+    out_file.precision(std::numeric_limits<double>::digits10);
 
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
@@ -193,7 +217,7 @@ void importance_sampling(
         #endif
 
         auto t = State::get_trace_pred();
-        out_file << t << '\n';
+        out_file << std::scientific << t << '\n';
     }
     std::ofstream ids_file(file_name + "_ids");
     State::serialize_ids_pred(ids_file);
@@ -201,15 +225,16 @@ void importance_sampling(
 
 template<class Func, class... Args>
 void generate_posterior(
-        Func& f,
-        const std::tuple<Args...>& observes,
-        const std::string& tcp_addr,
-        const std::string& file_name,
+        const Func & f,
+        const std::tuple<Args...> & observes,
+        const std::string & tcp_addr,
+        const std::string & file_name,
         size_t n){
     set_state(StateType::inference);
     Inference::connect_client(tcp_addr);
 
     std::ofstream out_file(file_name);
+    out_file.precision(std::numeric_limits<double>::digits10);
 
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
@@ -224,7 +249,7 @@ void generate_posterior(
         #endif
 
         auto t = State::get_trace_pred();
-        out_file << t << '\n';
+        out_file << std::scientific << t << '\n';
         //auto w = std::exp(t.log_w());
         //sum_w += w;
         //auto a = w*t;

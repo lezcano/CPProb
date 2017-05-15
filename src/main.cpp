@@ -1,12 +1,14 @@
 #include <iostream>
 #include <tuple>
 #include <cstdlib>
+#include <fstream>
 
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/program_options.hpp>
 
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
+#include "cpprob/model.hpp"
 #include "cpprob/traits.hpp"
 
 #include "models/models.hpp"
@@ -47,18 +49,23 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help message")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular"), "Compile, Inference, Dry Run or Importance Sampling with Priors as Proposals mode.")
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular/estimate"),
+                                                                       "Compile: Compile a NN to use in inference mode.\n"
+                                                                       "Infer: Perform compiled inference.\n"
+                                                                       "Infer-Regular: Perform importance sampling with priors as proposals.\n"
+                                                                       "Estimate: Compute estimators on a posterior distribution..\n"
+                                                                       "Dry Run: Execute the model without any inference algorithm.")
       ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
                                                         "Defaults:\n"
                                                         "  Compile:   tcp://0.0.0.0:5555\n"
                                                         "  Inference: tcp://127.0.0.1:6666\n"
-                                                        "  Dry Run:   None"
+                                                        "  Dry Run:   None\n"
                                                         "  Regular:   None")
-      ("dump_folder", po::value<std::string>(&dump_folder)->default_value("."), "(Compilation) Dump traces into a file.")
+      ("dump_folder", po::value<std::string>(&dump_folder), "(Compilation) Dump traces into a file.")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference | Regular) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
-      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular) File to output the posterior distribution.")
+      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular | Estimate) Posterior distribution file.")
       ;
 
     po::variables_map vm;
@@ -81,18 +88,21 @@ int main(int argc, char** argv) {
 
     //TODO(Lezcano) Hack
     #ifdef BUILD_SHERPA
-    sherpa_detail::SherpaWrapper f{};
+    sherpa_detail::SherpaWrapper f;
     #else
-    auto f = &cpprob::models::gaussian_unknown_mean;
+    auto f = &cpprob::models::linear_gaussian_1d<50>;
+    // auto f = &cpprob::models::gaussian_unknown_mean;
+    // auto f = &cpprob::models::hmm<16>;
+    // auto f = &cpprob::models::sherpa_wrapper;
     #endif
 
-    if (mode == "compile"){
+    if (mode == "compile") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://0.0.0.0:5555";
         }
         cpprob::compile(f, tcp_addr, dump_folder, n_samples);
     }
-    else if (mode == "infer"){
+    else if (mode == "infer") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://127.0.0.1:6666";
         }
@@ -137,6 +147,24 @@ int main(int argc, char** argv) {
             std::exit (EXIT_FAILURE);
         }
 
+    }
+    else if (mode == "estimate") {
+        if (vm.count("posterior_file") == 0u) {
+            std::cerr << "File with the posterior distribution not specified.\n"
+                      << "Pleas provide a \"--posterior_file\" argument.\n";
+            std::exit (EXIT_FAILURE);
+        }
+
+        std::ifstream file(posterior_file);
+        if (!file) {
+            std::cerr << "File " << posterior_file << " could not be opened.\n";
+            std::exit (EXIT_FAILURE);
+
+        }
+
+        cpprob::Model<> m;
+        m.load_points(file);
+        cpprob::print_stats_model(m, f);
     }
     else{
         std::cerr << "Incorrect mode.\n\n"

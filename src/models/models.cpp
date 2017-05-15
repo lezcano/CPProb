@@ -40,19 +40,6 @@ void least_sqr(const std::vector<std::pair<double, double>>& points) {
     }
 }
 
-void mean_normal(const int y1) {
-    using boost::random::normal_distribution;
-
-    static normal_distribution<> normal{2, 1};
-
-    auto mean = cpprob::sample(normal, true);
-    cpprob::predict(mean);
-
-    auto obs_distr = normal_distribution<double>{mean, 0.01};
-
-    cpprob::observe(obs_distr, y1);
-}
-
 void all_distr() {
     using cpprob::sample;
     using cpprob::predict;

@@ -153,7 +153,7 @@ public:
         if(!(is >> std::ws >> ch)) {
             is.clear();
             is.putback(ch);
-            v.shape_ = std::vector<int>{v.values_.size()};
+            v.shape_ = std::vector<int>{static_cast<int>(v.values_.size())};
             return is;
         }
 

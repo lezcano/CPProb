@@ -13,7 +13,7 @@ namespace sherpa_detail {
     public:
         SherpaWrapper();
 
-        void operator()(const std::vector<std::vector<std::vector<double>>> & observes);
+        void operator()(const std::vector<std::vector<std::vector<double>>> & observes) const;
 
         std::vector<std::vector<std::vector<double>>> sherpa();
         ~SherpaWrapper();
