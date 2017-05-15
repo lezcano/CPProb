@@ -10,6 +10,8 @@
 
 #include "cpprob/serialization.hpp"
 #include "models/models.hpp"
+#include "models/sherpa.hpp"
+#include "models/sherpa_mini.hpp"
 
 namespace cpprob {
 
@@ -162,14 +164,16 @@ void print_stats_model(const Model<RealType> & m, void (*f)(const std::array<Rea
     }
 }
 
+template<class RealType>
 void print_stats_model(const Model<RealType> & m, decltype(&cpprob::models::sherpa_mini_wrapper) f) {
     if (f == cpprob::models::sherpa_mini_wrapper) {
-        std::cout << "Mean " << i << ": " << m.mean(0, 0) << std::endl;
+        std::cout << "Mean: " << m.mean(0, 0) << std::endl;
     }
 }
 
+template<class RealType>
 void print_stats_model(const Model<RealType> & m, const cpprob::models::SherpaWrapper &) {
-    std::cout << "Mean " << i << ": " << m.mean(0, 0) << std::endl;
+    std::cout << "Mean: " << m.mean(0, 0) << std::endl;
 }
 
 } // end namespace cpprob

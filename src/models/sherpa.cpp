@@ -53,7 +53,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 }
 
 
-std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa()
+std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa() const
 {
     try {
         while (!generator_->GenerateOneEvent());

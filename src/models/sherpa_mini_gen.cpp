@@ -7,5 +7,5 @@
 int main(){
     using namespace cpprob::detail; // I/O vectors
     cpprob::State::set(cpprob::StateType::dryrun);
-    std::cout << cpprob::models::dummy_sherpa() << std::endl;
+    std::cout << cpprob::models::sherpa_mini() << std::endl;
 }
