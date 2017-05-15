@@ -5,6 +5,7 @@
 #include <iostream>     // std::cout, std::ostream, std::ios
 #include <exception>    // std::terminate
 #include <memory>
+#include <tuple>
 
 
 #include "SHERPA/Main/Sherpa.H"
@@ -62,17 +63,34 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa() const
         std::terminate();
     }
 
-    std::cout << "SHERPAPROBPROG: successfully generated an event!!" << std::endl;
     std::cout << "SHERPAPROBPROG: Selected Channel Index: " << jailbreak::instance().m_selected_channel_index << std::endl;
     std::cout << "SHERPAPROBPROG: Mother Momentum: " << jailbreak::instance().m_mother_momentum << std::endl;
-    std::cout << "SHERPAPROBPROG: jailbroken value is: " << jailbreak::instance().m_histo3d.size() << " ... "
-              << std::endl;
-    std::cout << "----" << std::endl;
 
     auto ret = jailbreak::instance().m_histo3d;
 
     generator_->SummarizeRun();
     return ret;
 }
+
+std::tuple<double,
+           std::vector<double>,
+           std::vector<std::vector<std::vector<double>>>>
+SherpaWrapper::sherpa_pred_obs() const
+{
+    try {
+        while (!generator_->GenerateOneEvent());
+    }
+    catch (::ATOOLS::Exception exception) {
+        std::terminate();
+    }
+
+    auto tup = std::make_tuple(jailbreak::instance().m_selected_channel_index,
+                               jailbreak::instance().m_mother_momentum,
+                               jailbreak::instance().m_histo3d);
+
+    generator_->SummarizeRun();
+    return tup;
+}
+
 } // end namespace models
 } // end namespace cpprob

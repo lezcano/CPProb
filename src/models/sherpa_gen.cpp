@@ -1,5 +1,6 @@
 #include <fstream>
 #include <string>
+#include <cstdlib>
 
 #include "cpprob/state.hpp"
 #include "cpprob/serialization.hpp"
@@ -12,10 +13,21 @@ int main(int argc,char* argv[])
 
     cpprob::models::SherpaWrapper s;
 
-    std::string outputfilename = "out.txt";
-    if( argc > 1){
-        outputfilename = argv[1];
+    if (argc != 3) {
+        std::cerr << "Please specify the output file and the number of particles\n";
+        std::cerr << "sherpa_gen [output_file] [number_particles]\n";
+        std::exit (EXIT_FAILURE);
     }
-    std::ofstream file (outputfilename);
-    file << s.sherpa() << std::endl;
+    std::string outputfilename = arcv[1];
+    int n = argv[2];
+
+    std::ofstream file_chan(outputfilename + "_chan.txt");
+    std::ofstream file_mom(outputfilename + "_mom.txt");
+    std::ofstream file_obs(outputfilename + "_obs.txt");
+    for (int i = 0; i < n; ++i) {
+        auto tup = s.sherpa_pred_obs();
+        file_chan << std::get<0>(tup) << std::endl;
+        file_mom <<  std::get<1>(tup) << std::endl;
+        file_obs <<  std::get<2>(tup) << std::endl;
+    }
 }

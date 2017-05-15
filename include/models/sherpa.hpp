@@ -17,6 +17,13 @@ namespace models {
         void operator()(const std::vector<std::vector<std::vector<double>>> & observes) const;
 
         std::vector<std::vector<std::vector<double>>> sherpa() const;
+
+
+        std::tuple<double,
+                std::vector<double>,
+                std::vector<std::vector<std::vector<double>>>>
+            sherpa_pred_obs() const;
+
         ~SherpaWrapper();
     private:
         SHERPA::Sherpa* generator_;
