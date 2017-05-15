@@ -18,8 +18,8 @@ int main(int argc,char* argv[])
         std::cerr << "sherpa_gen [output_file] [number_particles]\n";
         std::exit (EXIT_FAILURE);
     }
-    std::string outputfilename = arcv[1];
-    int n = argv[2];
+    std::string outputfilename = argv[1];
+    int n = std::stoi(argv[2]);
 
     std::ofstream file_chan(outputfilename + "_chan.txt");
     std::ofstream file_mom(outputfilename + "_mom.txt");
