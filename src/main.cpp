@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     #ifdef BUILD_SHERPA
     sherpa_detail::SherpaWrapper f{};
     #else
-    auto f = &cpprob::models::gaussian_unknown_mean;
+    auto f = &cpprob::models::sherpa_wrapper;
     #endif
 
     if (mode == "compile"){
