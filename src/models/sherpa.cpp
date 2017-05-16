@@ -39,6 +39,7 @@ SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
 
 SherpaWrapper::~SherpaWrapper()
 {
+    generator_->SummarizeRun();
     delete generator_;
 }
 
@@ -88,7 +89,6 @@ SherpaWrapper::sherpa_pred_obs() const
                                jailbreak::instance().m_mother_momentum,
                                jailbreak::instance().m_histo3d);
 
-    generator_->SummarizeRun();
     return tup;
 }
 
