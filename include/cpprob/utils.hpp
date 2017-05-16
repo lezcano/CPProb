@@ -14,12 +14,30 @@
 #include <boost/random/mersenne_twister.hpp>    // boost::random::mt19937
 #include <boost/random/random_device.hpp>
 
+#include <boost/type_traits/has_less.hpp>
+
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/function_types/result_type.hpp>
 #include <boost/function_types/function_arity.hpp>
 
+
 namespace cpprob {
 namespace detail {
+
+template<class Iter, class = std::enable_if_t<
+        boost::has_less<
+                typename std::iterator_traits<Iter>::value_type>::value>>
+typename std::iterator_traits<Iter>::value_type supremum (Iter begin, Iter end)
+{
+    return *std::max_element(begin, end);
+}
+
+template<class T, class = std::enable_if_t< std::is_arithmetic<T>::value> >
+T get_zero (T)
+{
+    return T(0);
+}
+
 using boost::function_types::result_type;
 
 // TODO(Lezcano) Use cpprob::parameter_types_t to avoid duplicate code

@@ -1,16 +1,19 @@
 #ifndef INCLUDE_NDARRAY_HPP
 #define INCLUDE_NDARRAY_HPP
 
-#include <vector>
-#include <string>
 #include <algorithm>
-#include <type_traits>
-#include <stdexcept>
-#include <iostream>
-#include <numeric>
-#include <functional>
+#include <cmath>
 #include <exception>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "cpprob/serialization.hpp"
 
@@ -76,37 +79,125 @@ public:
                        values_.end(),
                        rhs.values_.begin(),
                        values_.begin(),
-                       std::plus<double>());
+                       std::plus<T>());
         return *this;
     }
 
-    NDArray& operator*=(const double rhs)
+    NDArray& operator-=(const NDArray & rhs)
+    {
+        if (this->shape().empty()){
+            *this = rhs;
+            return *this;
+        }
+        if (rhs.shape_.empty())
+            return *this;
+        if (this->shape() != rhs.shape())
+            throw std::domain_error("The tensors do not have the same shape");
+
+        std::transform(values_.begin(),
+                       values_.end(),
+                       rhs.values_.begin(),
+                       values_.begin(),
+                       std::minus<T>());
+        return *this;
+    }
+
+    NDArray& operator*=(const NDArray & rhs)
+    {
+        if (this->shape().empty()){
+            *this = rhs;
+            return *this;
+        }
+        if (rhs.shape_.empty())
+            return *this;
+        if (this->shape() != rhs.shape())
+            throw std::domain_error("The tensors do not have the same shape");
+
+        std::transform(values_.begin(),
+                       values_.end(),
+                       rhs.values_.begin(),
+                       values_.begin(),
+                       std::multiplies<T>());
+        return *this;
+    }
+
+    NDArray& operator*=(const T rhs)
     {
         std::transform(values_.begin(),
                        values_.end(),
                        values_.begin(),
-                       [rhs](double a){ return rhs * a; });
+                       [rhs](T a){ return rhs * a; });
         return *this;
     }
 
-    NDArray& operator/=(const double rhs)
+    NDArray& operator/=(const T rhs)
     {
 
         std::transform(values_.begin(),
                        values_.end(),
                        values_.begin(),
-                       [rhs](double a){ return a / rhs; });
+                       [rhs](T a){ return a / rhs; });
         return *this;
     }
 
     // friend functions
     friend NDArray operator+ (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) += rhs; }
-    friend NDArray operator* (const double lhs, const NDArray& rhs){ return NDArray(rhs) *= lhs; }
-    friend NDArray operator* (const NDArray& lhs, const double rhs){ return NDArray(lhs) *= rhs; }
+    friend NDArray operator- (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) -= rhs; }
+    friend NDArray operator* (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) *= rhs; }
+    friend NDArray operator* (const T lhs, const NDArray& rhs){ return NDArray(rhs) *= lhs; }
+    friend NDArray operator* (const NDArray& lhs, const T rhs){ return NDArray(lhs) *= rhs; }
+
+    friend NDArray<T> sqrt (const NDArray<T> & arr)
+    {
+        std::vector<T> ret(arr.values_.size());
+        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::sqrt(elem); });
+        return NDArray<T>(ret, arr.shape());
+    }
+
+    friend NDArray<T> log (const NDArray<T> & arr)
+    {
+        std::vector<T> ret(arr.values_.size());
+        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::log(elem); });
+        return NDArray<T>(ret, arr.shape());
+    }
+
+    friend NDArray<T> exp (const NDArray<T> & arr)
+    {
+        std::vector<T> ret(arr.values_.size());
+        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::exp(elem); });
+        return NDArray<T>(ret, arr.shape());
+    }
+
+    template<class Iter, class = std::enable_if_t<
+                                        std::is_same<
+                                                typename std::iterator_traits<Iter>::value_type,
+                                                NDArray<T>>::value >>
+    friend NDArray<T> supremum (Iter begin, Iter end)
+    {
+        using namespace cpprob::detail; // print utilities
+        if (begin == end) {
+            return NDArray<T>();
+        }
+        NDArray<T> ret = *begin;
+        ++begin;
+
+        while(begin != end) {
+            if (ret.shape() != begin->shape()) {
+                std::ostringstream ss;
+                ss << "Error, the tensors of shape " << ret.shape()
+                   << " and " << begin->shape() << " are not compatible.\n";
+                throw std::range_error(ss.str());
+            }
+            std::transform(begin.begin(), begin.end(), ret.begin(), ret.begin(), [](T a, T b){ return std::max(a, b); });
+            ++begin;
+        }
+        return ret;
+    }
 
     template<class CharT, class Traits>
     friend std::basic_ostream< CharT, Traits > &
-    operator<<(std::basic_ostream< CharT, Traits > & os, const NDArray & v) {
+    operator<<(std::basic_ostream< CharT, Traits > & os, const NDArray & v)
+    {
         using namespace detail; // operator << for containers
         if (v.shape_.size() == 1 && v.shape_[0] == 1) {
             os << v.values_[0];
@@ -123,7 +214,8 @@ public:
 
     template<class CharT, class Traits>
     friend std::basic_istream< CharT, Traits > &
-    operator>>(std::basic_istream< CharT, Traits > & is, NDArray & v) {
+    operator>>(std::basic_istream< CharT, Traits > & is, NDArray & v)
+    {
         using namespace detail; // operator >> for containers
         CharT ch;
         T scalar;
@@ -165,6 +257,16 @@ public:
         is >> v.shape_;
 
         return is;
+    }
+
+    friend NDArray<T> get_zero(const NDArray<T> & x)
+    {
+        return NDArray<T>(std::vector<T>(x.values_.size(), 0), x.shape());
+    }
+
+    std::size_t size() const
+    {
+        return values_.size();
     }
 
     std::vector<T> values() const

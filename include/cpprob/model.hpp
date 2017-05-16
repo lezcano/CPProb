@@ -1,14 +1,16 @@
 #ifndef CPPROB_MODEL_HPP
 #define CPPROB_MODEL_HPP
 
-#include <utility>
-#include <type_traits>
-#include <string>
-#include <vector>
 #include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "cpprob/serialization.hpp"
+#include "cpprob/utils.hpp"
 #include "models/models.hpp"
 #include "models/sherpa.hpp"
 #include "models/sherpa_mini.hpp"
@@ -48,15 +50,16 @@ public:
         }
     }
 
-#include <iostream>
-
-    RealType raw_moment(const int addr, const int instance, const int n) const
+    NDArray<RealType> raw_moment(const int addr, const int instance, const int n) const
     {
+        using std::log;
         std::vector<RealType> weights;
         std::transform(points_.begin(), points_.end(), std::back_inserter(weights), [](const auto & elem){ return elem.second; });
         auto log_normalisation_constant = logsumexp(weights.begin(), weights.end());
 
-        std::vector<RealType> w, x;
+        std::vector<RealType> w;
+        std::vector<NDArray<RealType>> x;
+
 
         for (const auto & trace : points_ ) {
             int count = -1;
@@ -65,37 +68,40 @@ public:
                 if (elem.first == addr) {
                     ++count;
                     if (count == instance) {
-                        //
-                        // elem.second.values().front() should be elem.second when NDArray gets the proper overloads
                         w.emplace_back(std::exp(trace_logweight - log_normalisation_constant));
-                        x.emplace_back(elem.second.values().front());
+                        x.emplace_back(elem.second);
                         break;
                     }
                 }
             }
         }
+
+        if (x.size() == 0) {
+            return NDArray<RealType>();
+        }
+
         auto it_x = x.begin(), it_w = w.begin();
-        RealType ret = 0;
+        NDArray<RealType> ret = get_zero(*it_x);
         for(; it_x != x.end() || it_w != w.end(); ++it_w, ++it_x) {
             ret += *it_w * fast_pow(*it_x, n);
         }
         return ret;
     }
 
-    RealType mean(const int addr, const int instance) const
+    NDArray<RealType> mean(const int addr, const int instance) const
     {
         return raw_moment(addr, instance, 1);
     }
 
-    RealType variance(const int addr, const int instance) const
+    NDArray<RealType> variance(const int addr, const int instance) const
     {
         auto m = mean(addr, instance);
         return raw_moment(addr, instance, 2) - m * m;
     }
 
-    RealType std(const int addr, const int instance) const
+    NDArray<RealType> std(const int addr, const int instance) const
     {
-        return std::sqrt(variance(addr, instance));
+        return sqrt(variance(addr, instance));
     }
 
 private:
@@ -122,12 +128,27 @@ private:
         return result;
     }
 
+
+
     template<class Iter>
-    RealType logsumexp(Iter begin, Iter end) const
+
+    typename std::iterator_traits<Iter>::value_type
+    logsumexp(Iter begin, Iter end) const
     {
-        auto max = *std::max_element(begin, end);
-        auto exp = std::accumulate(begin, end, 0.0, [max](RealType acc, RealType next) { return acc + std::exp(next-max); });
-        return std::log(exp) + max;
+        using cpprob::detail::supremum; // Max for comparable types
+        using cpprob::detail::get_zero; // Get zero for arithmetic types
+        using std::exp;
+        using std::log;
+        if (begin == end) {
+            return typename std::iterator_traits<Iter>::value_type();
+        }
+
+        auto max = supremum(begin, end);
+        auto exp_val = std::accumulate(begin, end,
+                                   get_zero(*begin),
+                                   [&max](const auto & acc,
+                                              const auto & next){ return acc + exp(next-max); });
+        return log(exp_val) + max;
     }
 
     // Attributes
