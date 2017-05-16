@@ -1,15 +1,15 @@
 #ifndef INCLUDE_CPPROB_HPP
 #define INCLUDE_CPPROB_HPP
 
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <limits>
-#include <utility>
-#include <string>
 #include <array>
-#include <fstream>
+#include <cmath>
 #include <cstdlib> // std::exit
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/filesystem/operations.hpp>
 
@@ -117,13 +117,20 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
     else {
         State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_distr(distr));
 
-        auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
+        try {
+            auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
 
-        x = proposal(get_rng());
+            x = proposal(get_rng());
+
+            State::increment_cum_log_prob(logpdf(distr, x) - logpdf(proposal, x));
+        }
+        catch (const std::runtime_error &) {
+            x = distr(get_rng());
+            // We do not increment the log_probability of the trace since p(x)/p(x) = 1
+        }
+
         State::curr_sample.set_value(x);
         State::prev_sample = std::move(State::curr_sample);
-
-        State::increment_cum_log_prob(logpdf(distr, x) - logpdf(proposal, x));
     }
 
     State::increment_time();
@@ -230,6 +237,8 @@ void generate_posterior(
         const std::string & tcp_addr,
         const std::string & file_name,
         size_t n){
+    static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
+
     set_state(StateType::inference);
     Inference::connect_client(tcp_addr);
 
@@ -239,7 +248,13 @@ void generate_posterior(
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
         State::reset_trace();
-        Inference::send_observe_init(detail::to_vec<double>(observes));
+        // We just support either one tensorial observe or many scalar observes
+        if (sizeof...(Args) == 1) {
+            Inference::send_observe_init(NDArray<>(std::get<0>(observes)));
+        }
+        else {
+            Inference::send_observe_init(detail::to_vec<double>(observes));
+        }
 
         // TODO(Lezcano) Hack
         #ifdef BUILD_SHERPA
@@ -250,16 +265,9 @@ void generate_posterior(
 
         auto t = State::get_trace_pred();
         out_file << std::scientific << t << '\n';
-        //auto w = std::exp(t.log_w());
-        //sum_w += w;
-        //auto a = w*t;
-        //ret += a;
     }
     std::ofstream ids_file(file_name + "_ids");
     State::serialize_ids_pred(ids_file);
-
-    //ret /= sum_w;
-    //return ret.predict();
 }
 }       // namespace cpprob
 #endif //INCLUDE_CPPROB_HPP

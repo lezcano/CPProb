@@ -1,13 +1,14 @@
 #ifndef INCLUDE_SOCKET_HPP_
 #define INCLUDE_SOCKET_HPP_
 
+#include <exception>
 #include <string>
 #include <vector>
-#include <string>
 
 #include <zmq.hpp>
 
 #include "flatbuffers/infcomp_generated.h"
+#include "cpprob/ndarray.hpp"
 #include "cpprob/traits.hpp"
 #include "cpprob/trace.hpp"
 
@@ -44,7 +45,7 @@ private:
 class Inference {
 public:
     static void connect_client(const std::string& tcp_addr);
-    static void send_observe_init(const std::vector<double> & data);
+    static void send_observe_init(const NDArray<double> & data);
 
     template<template <class ...> class Distr, class ...Params>
     static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
@@ -67,6 +68,10 @@ public:
 
         auto message = infcomp::protocol::GetMessage(reply.data());
         auto reply_msg = static_cast<const infcomp::protocol::ProposalReply*>(message->body());
+        // TODO(Lezcano) C++17 std::expected would solve this in a cleaner way
+        if (!reply_msg->success()) {
+            throw std::runtime_error("NN could not propose parameters.");
+        }
         return proposal<Distr, Params...>::get_distr(reply_msg);
     }
 

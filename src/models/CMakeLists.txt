@@ -11,7 +11,10 @@ if(BUILD_SHERPA)
     target_compile_options(sherpa PRIVATE -I /usr/local/include/SHERPA-MC -L/usr/local/lib/SHERPA-MC  -rdynamic -Wl,--no-as-needed)
 
     add_executable(sherpa_gen sherpa_gen.cpp)
-    target_link_libraries(sherpa_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa)
+    target_link_libraries(sherpa_gen PUBLIC ${PROJECT_NAME} sherpa)
+
+    add_executable(sherpa_statistics sherpa_statistics.cpp)
+    target_link_libraries(sherpa_statistics PUBLIC ${PROJECT_NAME} sherpa)
 else()
     # Due to the ñapa, sherpa_mini does not work when using BUILD_SHERPA
     add_library(sherpa_mini SHARED sherpa_mini.cpp)

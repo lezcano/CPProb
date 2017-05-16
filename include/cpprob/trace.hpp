@@ -69,15 +69,6 @@ public:
 
     void increment_cum_log_prob(double log_p);
 
-    //TracePredicts& operator+=(const TracePredicts &);
-    //TracePredicts& operator*=(double);
-    //TracePredicts& operator/=(double);
-
-    //friend TracePredicts operator+(const TracePredicts &, const TracePredicts &);
-    //friend TracePredicts operator*(double, const TracePredicts &);
-    //friend TracePredicts operator*(const TracePredicts &, double);
-
-
     template<class CharT, class Traits>
     friend std::basic_ostream< CharT, Traits > &
     operator<<(std::basic_ostream< CharT, Traits > & os, const TracePredicts & t)

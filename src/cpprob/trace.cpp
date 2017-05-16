@@ -55,46 +55,6 @@ void TracePredicts::increment_cum_log_prob(double log_p)
     log_w_ += log_p;
 }
 
-/*
-TracePredicts& TracePredicts::operator+= (const TracePredicts& rhs){
-    if (rhs.predict_.size() > this->predict_.size())
-        this->predict_.resize(rhs.predict_.size());
-
-    for (std::size_t i = 0; i < rhs.predict_.size(); ++i){
-        if (rhs.predict_[i].empty()) continue;
-
-        if (rhs.predict_[i].size() > this->predict_[i].size())
-            this->predict_[i].resize(rhs.predict_[i].size());
-
-        // Add the vectors
-        std::transform(rhs.predict_[i].begin(),
-                       rhs.predict_[i].end(),
-                       this->predict_[i].begin(),
-                       this->predict_[i].begin(),
-                       std::plus<NDArray<double>>());
-    }
-    return *this;
-}
-
-TracePredicts& TracePredicts::operator*= (double rhs){
-    for (auto& v : this->predict_)
-        for (auto& e : v)
-            e *= rhs;
-    return *this;
-}
-
-TracePredicts& TracePredicts::operator/= (double rhs){
-    for (auto& v : this->predict_)
-        for (auto& e : v)
-            e /= rhs;
-    return *this;
-}
-
-TracePredicts operator+ (const TracePredicts& lhs, const TracePredicts& rhs){ return TracePredicts(lhs) += rhs; }
-TracePredicts operator* (const double lhs, const TracePredicts& rhs){ return TracePredicts(rhs) *= lhs; }
-TracePredicts operator* (const TracePredicts& lhs, const double rhs){ return TracePredicts(lhs) *= rhs; }
- */
-
 Sample::Sample(const std::string& sample_address,
            int sample_instance,
            const infcomp::protocol::Distribution & proposal_type,

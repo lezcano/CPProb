@@ -7,6 +7,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <map>
 #include <vector>
 
 #include "cpprob/serialization.hpp"
@@ -25,6 +26,7 @@ public:
     void load_points(std::basic_istream<CharT, Traits> & is)
     {
         using namespace detail;
+        points_.clear();
         std::pair< // ([(addr, value)], weight) - Weighted Trace
                 std::vector< // [(addr, value)] - Trace
                         std::pair<int, NDArray<RealType>> // (addr, value)
@@ -38,6 +40,7 @@ public:
     void load_ids(std::basic_istream<CharT, Traits> & is)
     {
         using namespace detail;
+        ids_.clear();
         is >> ids_;
     }
 
@@ -50,31 +53,55 @@ public:
         }
     }
 
-    NDArray<RealType> raw_moment(const int addr, const int instance, const int n) const
+    template<class XType>
+    std::map<NDArray<XType>, RealType>
+    distribution(const int addr, const int instance)
     {
-        using std::log;
-        std::vector<RealType> weights;
-        std::transform(points_.begin(), points_.end(), std::back_inserter(weights), [](const auto & elem){ return elem.second; });
-        auto log_normalisation_constant = logsumexp(weights.begin(), weights.end());
-
         std::vector<RealType> w;
         std::vector<NDArray<RealType>> x;
+        std::tie(w, x) = weights_points(addr, instance);
 
+        std::map<NDArray<XType>, RealType> ret;
 
-        for (const auto & trace : points_ ) {
-            int count = -1;
-            auto trace_logweight = trace.second;
-            for (const auto & elem : trace.first) {
-                if (elem.first == addr) {
-                    ++count;
-                    if (count == instance) {
-                        w.emplace_back(std::exp(trace_logweight - log_normalisation_constant));
-                        x.emplace_back(elem.second);
-                        break;
-                    }
-                }
+        for(auto it_x = x.begin(), it_w = w.begin(); it_x != x.end() || it_w != w.end(); ++it_w, ++it_x) {
+            auto result = [&]() {
+                                    if (std::is_same<RealType, XType>::value) {
+                                        return ret.emplace(std::move(*it_x), *it_w);
+                                    }
+                                    else {
+                                        return ret.emplace(static_cast<NDArray<XType>>(*it_x), *it_w);
+                                    }
+                                }();
+            if (!result.second) {
+                result.first->second += *it_w;
             }
         }
+        return ret;
+    }
+
+    template<class XType>
+    NDArray<XType>
+    map(const int addr, const int instance)
+    {
+        auto distr = distribution<XType>(addr, instance);
+        return std::max_element(distr.begin(), distr.end(), [](const auto & a, const auto & b) { return a.second < b.second; })->first;
+    }
+
+    template<class XType>
+    std::pair<std::map<NDArray<XType>, RealType>, NDArray<XType>>
+    distribution_map(const int addr, const int instance)
+    {
+        auto distr = distribution<XType>(addr, instance);
+        auto map = std::max_element(distr.begin(), distr.end(), [](const auto & a, const auto & b) { return a.second < b.second; })->first;
+        return std::make_pair(distr, map);
+
+    }
+
+    NDArray<RealType> raw_moment(const int addr, const int instance, const int n) const
+    {
+        std::vector<RealType> w;
+        std::vector<NDArray<RealType>> x;
+        std::tie(w, x) = weights_points(addr, instance);
 
         if (x.size() == 0) {
             return NDArray<RealType>();
@@ -97,6 +124,13 @@ public:
     {
         auto m = mean(addr, instance);
         return raw_moment(addr, instance, 2) - m * m;
+    }
+
+    std::pair<NDArray<RealType>, NDArray<RealType>>
+    mean_variance(const int addr, const int instance) const
+    {
+        auto m = mean(addr, instance);
+        return std::make_pair(m, raw_moment(addr, instance, 2) - m * m);
     }
 
     NDArray<RealType> std(const int addr, const int instance) const
@@ -128,10 +162,40 @@ private:
         return result;
     }
 
+    RealType log_normalisation_constant() const
+    {
 
+        std::vector<RealType> weights;
+        std::transform(points_.begin(), points_.end(), std::back_inserter(weights), [](const auto & elem){ return elem.second; });
+        return logsumexp(weights.begin(), weights.end());
+    }
+
+    std::pair<std::vector<RealType>, std::vector<NDArray<RealType>>>
+    weights_points(const int addr, const int instance) const
+    {
+        auto c = log_normalisation_constant();
+        std::vector<RealType> w;
+        std::vector<NDArray<RealType>> x;
+
+
+        for (const auto & trace : points_ ) {
+            int count = -1;
+            auto trace_logweight = trace.second;
+            for (const auto & elem : trace.first) {
+                if (elem.first == addr) {
+                    ++count;
+                    if (count == instance) {
+                        w.emplace_back(std::exp(trace_logweight - c));
+                        x.emplace_back(elem.second);
+                        break;
+                    }
+                }
+            }
+        }
+        return std::make_pair(std::move(w), std::move(x));
+    }
 
     template<class Iter>
-
     typename std::iterator_traits<Iter>::value_type
     logsumexp(Iter begin, Iter end) const
     {

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <tuple>
+#include <map>
 #include <vector>
 
 namespace cpprob {
@@ -19,6 +20,8 @@ template<class CharT, class Traits, class T>
 std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
 template<class CharT, class Traits, class T, std::size_t N>
 std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::array<T,N>& vec);
+template<class CharT, class Traits, class Key, class Value>
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::map<Key,Value>& map);
 
 template<class CharT, class Traits, class U, class V>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair);
@@ -28,6 +31,8 @@ template<class CharT, class Traits, class T>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec);
 template<class CharT, class Traits, class T, std::size_t N>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T,N>& vec);
+template<class CharT, class Traits, class Key, class Value>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map);
 
 
 template<class CharT, class Traits, class U, class V>
@@ -91,6 +96,12 @@ operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec)
     return print_iter(os, vec.begin(), vec.end(), '[', ']');
 }
 
+template<class CharT, class Traits, class Key, class Value>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map)
+{
+    return print_iter(os, map.begin(), map.end(), '{', '}');
+}
 
 template<class CharT, class Traits, class U, class V>
 std::basic_istream<CharT, Traits>&
@@ -204,6 +215,44 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::array<T, N>& arr)
         is.setstate(std::ios_base::failbit);
     }
     return is;
+}
+
+template<class CharT, class Traits, class Key, class Value>
+std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::map<Key,Value>& map)
+{
+    CharT ch;
+    if (!(is >> std::ws >> ch)) {
+        return is;
+    }
+    if (ch != is.widen('{')) {
+        is.putback(ch);
+        is.setstate(std::ios_base::failbit);
+        return is;
+    }
+
+    do {
+        // Needed to be declared inside the loop, otherwise std::move
+        // could leave it in an invalid state
+        typename std::map<Key, Value>::value_type val;
+        is >> val;
+        if(is.fail())
+            break;
+        val.insert(std::move(val));
+    } while (true);
+
+    // Remark: This accepts vectors not properly specified like
+    // [(1 2) (1 4] for std::vector<std::pair<int, int>> or [] for std::vector<std::vector<T>>
+    // but well...
+    is.clear();
+    if (!(is >> std::ws >> ch)) {
+        return is;
+    }
+    if (ch != is.widen('}')) {
+        is.putback(ch);
+        is.setstate(std::ios_base::failbit);
+    }
+    return is;
+
 }
 
 template<class... T, class CharT, class Traits, size_t... Indices>

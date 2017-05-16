@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
     cpprob::models::SherpaWrapper f;
     #else
     // auto f = &cpprob::models::linear_gaussian_1d<50>;
-    // auto f = &cpprob::models::gaussian_unknown_mean;
+    auto f = &cpprob::models::gaussian_unknown_mean;
     // auto f = &cpprob::models::hmm<16>;
-    auto f = &cpprob::models::sherpa_mini_wrapper;
+    // auto f = &cpprob::models::sherpa_mini_wrapper;
     #endif
 
     if (mode == "compile") {

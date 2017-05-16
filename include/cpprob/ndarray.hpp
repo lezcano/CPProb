@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>  // std::bad_cast
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -56,6 +57,33 @@ public:
         values_ = flatten(v, 0);
     }
 
+    // Casting to a different inner type
+    template<class U,
+             class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    explicit operator NDArray<U>() const
+    {
+        std::vector<U> ret_v(values_.begin(), values_.end());
+        return NDArray<U>(ret_v, shape_);
+    }
+
+    // Casting for scalars
+    explicit operator T() const
+    {
+        if (shape_.size() == 1 && shape_.front() == 1) {
+            return values_.front();
+        }
+        throw std::bad_cast();
+    }
+
+    // Casting for scalars
+    explicit operator std::vector<T>() const
+    {
+        if (shape_.size() == 1) {
+            return values_;
+        }
+        throw std::bad_cast("The NDArray is not a vector.");
+    }
+
     // Iterator utilities
     iterator begin() { return values_.begin(); }
     const_iterator begin() const { return values_.begin(); }
@@ -63,6 +91,37 @@ public:
     const_iterator end() const { return values_.end(); }
     const_iterator cbegin() const { return values_.cbegin(); }
     const_iterator cend() const { return values_.cend(); }
+
+    // Comparison operators
+    friend bool operator==( const NDArray & lhs, const NDArray & rhs )
+    {
+        return std::tie(lhs.shape_, lhs.values_) == std::tie(rhs.shape_, rhs.values_);
+    }
+
+    friend bool operator!=( const NDArray & lhs, const NDArray & rhs )
+    {
+        return !(lhs == rhs);
+    }
+
+    friend bool operator<( const NDArray & lhs, const NDArray & rhs )
+    {
+        return std::tie(lhs.shape_, lhs.values_) < std::tie(rhs.shape_, rhs.values_);
+    }
+
+    friend bool operator<=( const NDArray & lhs, const NDArray & rhs )
+    {
+        return lhs < rhs || lhs == rhs;
+    }
+
+    friend bool operator>=( const NDArray & lhs, const NDArray & rhs )
+    {
+        return !(lhs < rhs);
+    }
+
+    friend bool operator>( const NDArray & lhs, const NDArray & rhs )
+    {
+        return lhs >= rhs && lhs != rhs;
+    }
 
     NDArray& operator+=(const NDArray & rhs)
     {
@@ -328,5 +387,6 @@ private:
     std::vector<T> values_;
     std::vector<int> shape_;
 };
+
 } // end namespace cpprob
 #endif //INCLUDE_NDARRAY_HPP

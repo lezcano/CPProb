@@ -39,6 +39,7 @@ SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
 
 SherpaWrapper::~SherpaWrapper()
 {
+    generator_->SummarizeRun();
     delete generator_;
 }
 
@@ -66,13 +67,10 @@ std::vector<std::vector<std::vector<double>>> SherpaWrapper::sherpa() const
     std::cout << "SHERPAPROBPROG: Selected Channel Index: " << jailbreak::instance().m_selected_channel_index << std::endl;
     std::cout << "SHERPAPROBPROG: Mother Momentum: " << jailbreak::instance().m_mother_momentum << std::endl;
 
-    auto ret = jailbreak::instance().m_histo3d;
-
-    generator_->SummarizeRun();
-    return ret;
+    return jailbreak::instance().m_histo3d;
 }
 
-std::tuple<double,
+std::tuple<int,
            std::vector<double>,
            std::vector<std::vector<std::vector<double>>>>
 SherpaWrapper::sherpa_pred_obs() const
@@ -84,12 +82,9 @@ SherpaWrapper::sherpa_pred_obs() const
         std::terminate();
     }
 
-    auto tup = std::make_tuple(jailbreak::instance().m_selected_channel_index,
-                               jailbreak::instance().m_mother_momentum,
-                               jailbreak::instance().m_histo3d);
-
-    generator_->SummarizeRun();
-    return tup;
+    return std::make_tuple(jailbreak::instance().m_selected_channel_index,
+                           jailbreak::instance().m_mother_momentum,
+                           jailbreak::instance().m_histo3d);
 }
 
 } // end namespace models

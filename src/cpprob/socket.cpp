@@ -108,13 +108,14 @@ void Inference::connect_client(const std::string& tcp_addr){
     Inference::client.connect (tcp_addr);
 }
 
-void Inference::send_observe_init(const std::vector<double> & data){
+void Inference::send_observe_init(const NDArray<double> & data) {
     static flatbuffers::FlatBufferBuilder buff;
 
-    const auto shape = std::vector<int>{static_cast<int>(data.size())};
     auto observe_init = infcomp::protocol::CreateObservesInitRequest(
             buff,
-            infcomp::protocol::CreateNDArrayDirect(buff, &data, &shape));
+            infcomp::protocol::CreateNDArray(buff,
+                                             buff.CreateVector<double>(data.values()),
+                                             buff.CreateVector<int32_t>(data.shape())));
 
     auto msg = infcomp::protocol::CreateMessage(
             buff,
