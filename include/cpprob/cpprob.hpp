@@ -186,7 +186,7 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
             batch_size = Compilation::get_batch_size();
         }
 
-        for (int i = 0; i < batch_size; ++i){
+        for (std::size_t i = 0; i < batch_size; ++i){
             State::reset_trace();
 
             // TODO(Lezcano) Hack

@@ -32,6 +32,24 @@ void linear_gaussian_1d (const std::array<double, N> & obs)
     }
 }
 
+//-m infer -n 100 -o [(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)]
+template <std::size_t N>
+void least_sqr(const std::array<std::pair<double, double>, N>& points) {
+    using boost::random::normal_distribution;
+
+    static normal_distribution<double> normal{0, 10};
+
+    const auto slope = cpprob::sample(normal, true);
+    const auto bias = cpprob::sample(normal, true);
+    cpprob::predict(slope);
+    cpprob::predict(bias);
+
+    for (const auto& point : points) {
+        auto likelihood = normal_distribution<double>{slope * point.first + bias, 1};
+        cpprob::observe(likelihood, point.second);
+    }
+}
+
 template<std::size_t N>
 void hmm(const std::array<double, N> & observed_states)
 {

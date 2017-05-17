@@ -27,7 +27,6 @@ flatbuffers::FlatBufferBuilder Compilation::buff;
 std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
 
 bool Compilation::to_file;
-int Compilation::batch_size;
 std::string Compilation::dump_folder;
 
 zmq::socket_t Compilation::server (context, ZMQ_REP);
