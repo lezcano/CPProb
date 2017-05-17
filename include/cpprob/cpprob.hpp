@@ -13,12 +13,12 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include "cpprob/utils.hpp"
+#include "cpprob/ndarray.hpp"
+#include "cpprob/socket.hpp"
+#include "cpprob/state.hpp"
 #include "cpprob/trace.hpp"
 #include "cpprob/traits.hpp"
-#include "cpprob/state.hpp"
-#include "cpprob/socket.hpp"
-#include "cpprob/ndarray.hpp"
+#include "cpprob/utils.hpp"
 
 namespace cpprob {
 namespace detail {
@@ -164,7 +164,7 @@ void predict(const NDArray<double> &x);
 void set_state(StateType s);
 
 template<class Func>
-void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, const int n) {
+void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size) {
     set_state(StateType::compile);
     bool to_file = !dump_folder.empty();
 
@@ -175,14 +175,16 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
                       << "Please provide a valid folder.\n";
             std::exit (EXIT_FAILURE);
         }
-        Compilation::config_to_file(dump_folder, n);
+        Compilation::config_to_file(dump_folder);
     }
     else {
         Compilation::connect_server(tcp_addr);
     }
 
     while(true){
-        auto batch_size = Compilation::get_batch_size();
+        if (to_file) {
+            batch_size = Compilation::get_batch_size();
+        }
 
         for (int i = 0; i < batch_size; ++i){
             State::reset_trace();

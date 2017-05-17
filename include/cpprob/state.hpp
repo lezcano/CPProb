@@ -1,9 +1,9 @@
 #ifndef CPPROB_STATE_HPP
 #define CPPROB_STATE_HPP
 
-#include <unordered_map>
-#include <string>
 #include <fstream>
+#include <string>
+#include <unordered_map>
 
 #include "cpprob/trace.hpp"
 

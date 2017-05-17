@@ -7,12 +7,15 @@
 
 #include <zmq.hpp>
 
-#include "flatbuffers/infcomp_generated.h"
-#include "cpprob/ndarray.hpp"
-#include "cpprob/traits.hpp"
 #include "cpprob/trace.hpp"
+#include "cpprob/traits.hpp"
+#include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
+
+// Forward Declaration
+template<class T>
+class NDArray;
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
@@ -21,17 +24,16 @@ namespace cpprob{
 class Compilation {
 public:
     static void connect_server(const std::string & tcp_addr);
-    static int get_batch_size();
+    static std::size_t get_batch_size();
     static void add_trace(const TraceCompile & t);
     static void send_batch();
-    static void config_to_file(const std::string & dump_folder, const int n);
+    static void config_to_file(const std::string & dump_folder);
 private:
     // Static data
     static flatbuffers::FlatBufferBuilder buff;
     static std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> vec;
 
     static bool to_file;
-    static int batch_size;
     static std::string dump_folder;
 
     static zmq::socket_t server;

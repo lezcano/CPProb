@@ -25,6 +25,10 @@ namespace models {
 
 //-m infer -n 100 -o [(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)]
 void least_sqr(const std::vector<std::pair<double, double>>& points) {
+
+}
+template <std::size_t N>
+void least_sqr(const std::array<std::pair<double, double>, N>& points) {
     using boost::random::normal_distribution;
 
     static normal_distribution<double> normal{0, 10};
@@ -34,7 +38,7 @@ void least_sqr(const std::vector<std::pair<double, double>>& points) {
     cpprob::predict(slope);
     cpprob::predict(bias);
 
-    for (auto& point : points) {
+    for (const auto& point : points) {
         auto obs_distr = normal_distribution<double>{slope * point.first + bias, 1};
         cpprob::observe(obs_distr, point.second);
     }

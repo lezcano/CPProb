@@ -9,7 +9,6 @@
 
 #include <boost/any.hpp>
 
-#include "cpprob/trace.hpp"
 #include "cpprob/ndarray.hpp"
 #include "flatbuffers/infcomp_generated.h"
 

@@ -38,28 +38,22 @@ void Compilation::connect_server(const std::string& tcp_addr)
     to_file = false;
 }
 
-void Compilation::config_to_file(const std::string & dump_folder, const int n)
+void Compilation::config_to_file(const std::string & dump_folder)
 {
-    Compilation::batch_size = n;
     Compilation::dump_folder = dump_folder;
     to_file = true;
 }
 
-int Compilation::get_batch_size()
+std::size_t Compilation::get_batch_size()
 {
-    if (to_file) {
-        return batch_size;
-    }
-    else {
-        zmq::message_t request;
-        Compilation::server.recv(&request);
+    zmq::message_t request;
+    Compilation::server.recv(&request);
 
-        auto message = infcomp::protocol::GetMessage(request.data());
-        auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest *>(message->body());
+    auto message = infcomp::protocol::GetMessage(request.data());
+    auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest *>(message->body());
 
-        Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
-        return request_msg->num_traces();
-    }
+    Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
+    return request_msg->num_traces();
 }
 
 void Compilation::add_trace(const TraceCompile& t)
@@ -79,7 +73,7 @@ void Compilation::send_batch()
     if (to_file) {
         static auto rand_gen {boost::uuids::random_generator()};
 
-        // We alraedy know that dump_folder exists
+        // We already know that dump_folder exists
         auto file_name = dump_folder + "/" + boost::lexical_cast<std::string>(rand_gen());
         auto file = std::ofstream(file_name, std::ofstream::binary);
         if (!file.is_open()) {

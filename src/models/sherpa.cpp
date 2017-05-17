@@ -23,7 +23,7 @@
 namespace cpprob {
 namespace models {
 
-SherpaWrapper::SherpaWrapper() : generator_{new SHERPA::Sherpa}
+SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
 {
     jailbreak::instance().m_histo3d.clear();
     try {

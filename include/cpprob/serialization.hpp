@@ -3,9 +3,9 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <tuple>
-#include <map>
 #include <vector>
 
 namespace cpprob {

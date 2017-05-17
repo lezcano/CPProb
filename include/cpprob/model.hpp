@@ -13,8 +13,14 @@
 #include "cpprob/serialization.hpp"
 #include "cpprob/utils.hpp"
 #include "models/models.hpp"
-#include "models/sherpa.hpp"
 #include "models/sherpa_mini.hpp"
+
+// Forward Declaration
+namespace cpprob {
+namespace models {
+class SherpaWrapper;
+}
+}
 
 namespace cpprob {
 
