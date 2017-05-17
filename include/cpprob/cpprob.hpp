@@ -181,6 +181,7 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
         Compilation::connect_server(tcp_addr);
     }
 
+    int i = 0;
     while(true){
         if (!to_file) {
             batch_size = Compilation::get_batch_size();
@@ -198,6 +199,8 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
             Compilation::add_trace(State::get_trace_comp());
         }
         Compilation::send_batch();
+        std::cout << "Batch " << i << " generated." << std::endl;
+        ++i;
     }
 }
 
@@ -250,6 +253,7 @@ void generate_posterior(
 
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
+        std::cout << "Generating sample " << i << std::endl;
         State::reset_trace();
         // We just support either one tensorial observe or many scalar observes
         if (sizeof...(Args) == 1) {
