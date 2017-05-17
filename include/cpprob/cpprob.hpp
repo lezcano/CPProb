@@ -182,7 +182,7 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
     }
 
     while(true){
-        if (to_file) {
+        if (!to_file) {
             batch_size = Compilation::get_batch_size();
         }
 
