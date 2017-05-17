@@ -216,6 +216,7 @@ void importance_sampling(
 
     //double sum_w = 0;
     for (size_t i = 0; i < n; ++i) {
+        std::cout << "Generating sample " << i << std::endl;
         State::reset_trace();
 
         // TODO(Lezcano) Hack
