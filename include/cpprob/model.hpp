@@ -234,8 +234,9 @@ private:
 };
 
 template<class RealType>
-void print_stats_model(const Model<RealType> & m, decltype(&cpprob::models::gaussian_unknown_mean) f) {
-    if (f == cpprob::models::gaussian_unknown_mean) {
+void print_stats_model(const Model<RealType> & m, void (*f)(const RealType, const RealType)) {
+    if (f == &cpprob::models::gaussian_unknown_mean<RealType> ||
+        f == &cpprob::models::normal_rejection_sampling<RealType>) {
         std::cout << "Mean : " << m.mean(0, 0) << std::endl;
         std::cout << "Sigma : " << m.std(0, 0) << std::endl;
     }

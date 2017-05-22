@@ -7,19 +7,6 @@
 #include "cpprob/distributions/vmf.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
 
-/*
-void f() {
-    using boost::random::beta_distribution;
-    using boost::random::bernoulli_distribution;
-
-    static beta_distribution<double> beta{1, 1};
-    auto x = sample(beta);
-
-    bernoulli_distribution<double> ber{x};
-    observe(ber, 1.0);
-}
-*/
-
 namespace cpprob {
 namespace models {
 

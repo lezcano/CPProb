@@ -90,10 +90,12 @@ int main(int argc, char** argv) {
     #ifdef BUILD_SHERPA
     cpprob::models::SherpaWrapper f;
     #else
-    // auto f = &cpprob::models::linear_gaussian_1d<50>;
-    auto f = &cpprob::models::gaussian_unknown_mean;
-    // auto f = &cpprob::models::hmm<16>;
-    // auto f = &cpprob::models::sherpa_mini_wrapper;
+    using namespace cpprob::models;
+    auto f =  &normal_rejection_sampling<>;
+    // auto f = &linear_gaussian_1d<50>;
+    // auto f = &gaussian_unknown_mean<>;
+    // auto f = &hmm<16>;
+    // auto f = &sherpa_mini_wrapper;
     #endif
 
     if (mode == "compile") {

@@ -5,6 +5,7 @@
 #include "cpprob/ndarray.hpp"
 
 namespace cpprob {
+#include <iostream>
 
 void predict(const NDArray<double> &x) {
     if (State::current_state() == StateType::inference ||

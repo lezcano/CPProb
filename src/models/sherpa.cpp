@@ -46,12 +46,17 @@ SherpaWrapper::~SherpaWrapper()
 
 void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes) const
 {
-    cpprob::predict(jailbreak::instance().m_selected_channel_index);
-    cpprob::predict(jailbreak::instance().m_mother_momentum);
     const double OBS_WIDTH = 1.0;
-    auto sherpa_img = this->sherpa();
-    cpprob::multivariate_normal_distribution<double> obs_distr(cpprob::NDArray<double>(sherpa_img), OBS_WIDTH);
-    cpprob::observe(obs_distr, observes);
+    int channel_index;
+    std::vector<double> mother_momentum;
+    std::vector<std::vector<std::vector<double>>> img;
+
+    std::tie(channel_index, mother_momentum, img) = sherpa_pred_obs();
+
+    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(img), OBS_WIDTH);
+    cpprob::observe(likelihood, observes);
+    cpprob::predict(channel_index);
+    cpprob::predict(mother_momentum);
 }
 
 
