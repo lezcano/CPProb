@@ -1,10 +1,5 @@
-add_library(models SHARED models.cpp)
-target_link_libraries (models PUBLIC ${PROJECT_NAME})
-
-find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
-
-
 if(BUILD_SHERPA)
+    find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
     MESSAGE(STATUS "Linking to SHERPA")
     add_library(sherpa SHARED sherpa.cpp)
     target_link_libraries(sherpa PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
