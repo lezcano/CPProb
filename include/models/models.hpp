@@ -70,6 +70,7 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     using boost::random::normal_distribution;
     using boost::random::uniform_real_distribution;
     const RealType sigma = 0.01;
+    const int it = 0, max_it = 10000;
 
     // Sample from Normal Distr
     const auto maxval = boost::math::pdf(boost::math::normal_distribution<RealType>(1, sigma), 1);
@@ -77,12 +78,14 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     uniform_real_distribution<RealType> accept {0, 1};
     RealType mu;
 
-    while(true) {
+
+    while(it < max_it) {
         auto p = cpprob::sample(proposal, true);
         mu = cpprob::sample(accept, true);
         if (p < boost::math::pdf(boost::math::normal_distribution<RealType>(1, sigma), mu)/maxval) {
             break;
         }
+        ++it;
     }
 
     const RealType var = std::sqrt(2);
