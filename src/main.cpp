@@ -11,9 +11,12 @@
 #include "cpprob/model.hpp"
 #include "cpprob/traits.hpp"
 
+#ifdef BUILD_SHERPA
+#include "models/sherpa.hpp"
+#else
 #include "models/models.hpp"
 #include "models/sherpa_mini.hpp"
-#include "models/sherpa.hpp"
+#endif
 
 template <class... T>
 bool get_observes(const boost::program_options::variables_map & vm,
