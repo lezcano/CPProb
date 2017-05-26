@@ -8,7 +8,7 @@
 #include <zmq.hpp>
 
 #include "cpprob/trace.hpp"
-#include "cpprob/traits.hpp"
+#include "cpprob/distribution_utils.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{

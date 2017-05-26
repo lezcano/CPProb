@@ -8,7 +8,6 @@
 
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
-#include "cpprob/model.hpp"
 #include "cpprob/traits.hpp"
 
 #ifdef BUILD_SHERPA
@@ -52,11 +51,10 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help message")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular/estimate"),
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular"),
                                                                        "Compile: Compile a NN to use in inference mode.\n"
                                                                        "Infer: Perform compiled inference.\n"
                                                                        "Infer-Regular: Perform importance sampling with priors as proposals.\n"
-                                                                       "Estimate: Compute estimators on a posterior distribution..\n"
                                                                        "Dry Run: Execute the model without any inference algorithm.")
       ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
@@ -68,7 +66,7 @@ int main(int argc, char** argv) {
       ("dump_folder", po::value<std::string>(&dump_folder), "(Compilation) Dump traces into a file.")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference | Regular) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
-      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular | Estimate) Posterior distribution file.")
+      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular) Posterior distribution file.")
       ;
 
     po::variables_map vm;
@@ -89,16 +87,14 @@ int main(int argc, char** argv) {
         std::exit (EXIT_FAILURE);
     }
 
-    //TODO(Lezcano) Hack
     #ifdef BUILD_SHERPA
-    cpprob::models::SherpaWrapper f;
+    models::SherpaWrapper f;
     #else
-    using namespace cpprob::models;
-    auto f =  &normal_rejection_sampling<>;
-    // auto f = &linear_gaussian_1d<50>;
-    // auto f = &gaussian_unknown_mean<>;
-    // auto f = &hmm<16>;
+    // auto f =  &models::normal_rejection_sampling<>;
+    // auto f = &models::linear_gaussian_1d<50>;
+    // auto f = &models::gaussian_unknown_mean<>;
     // auto f = &sherpa_mini_wrapper;
+    auto f = &models::hmm<16>;
     #endif
 
     if (mode == "compile") {
@@ -112,14 +108,8 @@ int main(int argc, char** argv) {
             tcp_addr = "tcp://127.0.0.1:6666";
         }
 
-        // TODO(Lezcano) Hack
-        #ifdef BUILD_SHERPA
-        std::tuple<std::vector<std::vector<std::vector<double>>>> observes;
-        #else
-        // The return type of parse_file_param_f and parse_string_param_f is the same
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
         tuple_params_t observes;
-        #endif
 
         if (get_observes(vm, observes, observes_file, observes_str)) {
             cpprob::generate_posterior(f, observes, tcp_addr, posterior_file, n_samples);
@@ -134,14 +124,8 @@ int main(int argc, char** argv) {
     else if (mode == "infer-regular") {
         // The return type of parse_file_param_f and parse_string_param_f is the same
 
-        // TODO(Lezcano) Hack
-        #ifdef BUILD_SHERPA
-        std::tuple<std::vector<std::vector<std::vector<double>>>> observes;
-        #else
-        // The return type of parse_file_param_f and parse_string_param_f is the same
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
         tuple_params_t observes;
-        #endif
 
         if (get_observes(vm, observes, observes_file, observes_str)) {
             cpprob::importance_sampling(f, observes, posterior_file, n_samples);
@@ -152,24 +136,6 @@ int main(int argc, char** argv) {
             std::exit (EXIT_FAILURE);
         }
 
-    }
-    else if (mode == "estimate") {
-        if (vm.count("posterior_file") == 0u) {
-            std::cerr << "File with the posterior distribution not specified.\n"
-                      << "Pleas provide a \"--posterior_file\" argument.\n";
-            std::exit (EXIT_FAILURE);
-        }
-
-        std::ifstream file(posterior_file);
-        if (!file) {
-            std::cerr << "File " << posterior_file << " could not be opened.\n";
-            std::exit (EXIT_FAILURE);
-
-        }
-
-        cpprob::Model<> m;
-        m.load_points(file);
-        cpprob::print_stats_model(m, f);
     }
     else{
         std::cerr << "Incorrect mode.\n\n"

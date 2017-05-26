@@ -2,6 +2,8 @@
 
 #include <execinfo.h>
 #include <cxxabi.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <cstdlib>
 #include <numeric>
@@ -16,13 +18,46 @@
 
 namespace cpprob{
 
-boost::random::mt19937& get_rng(){
+boost::random::mt19937& get_rng()
+{
     static boost::random::mt19937 rng{detail::seeded_rng()};
     return rng;
 }
 
-std::string get_addr(){
-    constexpr int buf_size = 1000;
+std::string get_name_mangled (char* s)
+{
+    auto str = std::string(s);
+    auto first = str.find_last_of('(') + 1;
+    auto last = str.find_last_of(')');
+
+    return str.substr(first, last-first);
+}
+
+std::string get_name_demangled (char* s)
+{
+    auto str = std::string(s);
+    auto first = str.find_last_of('(') + 1;
+    auto last = str.find_last_of(')');
+
+    auto mas = str.find_last_of('+');
+
+    int status;
+    char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
+    if (status == 0) {
+        auto demangled = std::string(result);
+        free(result);
+        // Demangled function name + offset w.r.t the function frame
+        return demangled + str.substr(mas, last - mas);
+    }
+    else {
+        return "System call";
+    }
+}
+
+
+std::string get_addr()
+{
+    constexpr int buf_size = 100;
     static void *buffer[buf_size];
     char **strings;
 
@@ -35,81 +70,45 @@ std::string get_addr(){
 
     strings = backtrace_symbols(buffer, nptrs);
     if (strings == nullptr) {
-        perror("backtrace_symbols");
-        exit(EXIT_FAILURE);
+        std::perror("backtrace_symbols");
+        std::exit(EXIT_FAILURE);
     }
 
-    // Discard calls to sample / observe and subsequent calls
-    int i = 0;
+    // We will consider addresses in the range [begin, end]
+    int begin = -1, end = nptrs;
     std::string s;
+
+    // Discard calls inside the cpprob library
     do {
-        if (i == 4){
-            std::cerr << "sample_impl or predict not found." << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        s = std::string(strings[i]);
-        ++i;
-        // CHECK THIS
-    } while (s.find("sample_impl") == std::string::npos && s.find("predict") == std::string::npos);
-    s = std::string(strings[i]);
-    // AND THIS
-    if (s.find("cpprob") != std::string::npos &&
-        (s.find("sample") != std::string::npos ||
-         s.find("observe") != std::string::npos ||
-         s.find("importance_sampling") != std::string::npos ||
-         s.find("predict") != std::string::npos)){
-        ++i;
+        ++begin;
+        s = get_name_demangled(strings[begin]);
+    } while (s.find("cpprob::") != std::string::npos && begin != nptrs);
+
+    if (begin == nptrs){
+        std::cerr << "Entry function call to the cpprob library not found" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
-    // TODO(Lezcano) Hack
-    #ifdef BUILD_SHERPA
-    // Discard call to Get function
-    s = std::string(strings[i]);
-    if(s.find("Get") != std::string::npos){
-      ++i;
+
+    // Discard calls until the model is hit
+    do {
+        --end;
+        s = get_name_demangled(strings[end]);
+    } while (s.find("models::") == std::string::npos && end != 0);
+
+    if (end == 0){
+        std::cerr << "Entry call to model not found. Is the model in the namespace models?" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
-    #endif
 
-    auto get_name = [](char* s){
-        auto str = std::string(s);
-        auto first = str.find_last_of('(') + 1;
-        auto last = str.find_last_of(')');
 
-        auto mas = str.find_last_of('+');
-
-        // The +3 is to discard the characters
-        //auto first = s.find("[0x") + 3;
-        //auto last = s.find("]");
-        int status;
-        char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
-        auto demangled = std::string(result);
-        free(result);
-        // Demangled function name + offset w.r.t the function frame
-        return demangled + str.substr(mas, last-mas);
-
-        // Mangled option
-        //return str.substr(first, last-first);
-    };
-
-    // The -4 is to discard the call to _start and the call to __libc_start_main
-    // plus the two calls until the function is called
-    // plus the two calls to f_default_params, f_default_params_detail
-    std::string ret ("[");
-    // TODO(Lezcano) Hack
-    #ifdef BUILD_SHERPA
-    if (i < nptrs - 4){
-    #else
-    if (i < nptrs - 6){
-    #endif
-        ret += get_name(strings[i]);
-        ++i;
+    std::string ret = "[";
+    // Stack calls are reversed. strings[0] is get_addr()
+    if (begin <= end) {
+        ret += get_name_demangled(strings[end]);
+        --end;
     }
-    // TODO(Lezcano) Hack
-    #ifdef BUILD_SHERPA
-    for (auto j = i; j < nptrs - 4; j++) {
-    #else
-    for (auto j = i; j < nptrs - 6; j++) {
-    #endif
-        ret += ' ' + get_name(strings[j]);
+    for (auto i = end; i >= begin; i--){
+        ret += ' ' + get_name_demangled(strings[i]);
     }
     ret += ']';
     std::free(strings);

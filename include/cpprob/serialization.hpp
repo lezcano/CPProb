@@ -9,7 +9,6 @@
 #include <vector>
 
 namespace cpprob {
-namespace detail {
 
 // Forward declarations
 template<class CharT, class Traits, class U, class V>
@@ -256,20 +255,17 @@ std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> 
 }
 
 template<class... T, class CharT, class Traits, size_t... Indices>
-void
-parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
+void parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
 {
     (void)std::initializer_list<int>{ (is >> std::get<Indices>(tup), 0)... };
 }
-
-} // end namespace detail
 
 template <class... T>
 bool parse_file(const std::string& path, std::tuple<T...>& tup)
 {
     std::ifstream file(path);
     if (file) {
-        detail::parse_stream(file, tup, std::make_index_sequence<sizeof...(T)>());
+        parse_stream(file, tup, std::make_index_sequence<sizeof...(T)>());
     }
     else {
         std::cerr << "File " << path << " could not be opened.\n";
@@ -281,7 +277,7 @@ template <class... T>
 bool parse_string(const std::string& param, std::tuple<T...>& tup)
 {
     std::istringstream iss(param);
-    detail::parse_stream(iss, tup, std::make_index_sequence<sizeof...(T)>());
+    parse_stream(iss, tup, std::make_index_sequence<sizeof...(T)>());
     return !iss.fail();
 }
 

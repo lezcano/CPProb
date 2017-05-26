@@ -16,11 +16,6 @@
 
 #include <boost/type_traits/has_less.hpp>
 
-#include <boost/function_types/parameter_types.hpp>
-#include <boost/function_types/result_type.hpp>
-#include <boost/function_types/function_arity.hpp>
-
-
 namespace cpprob {
 namespace detail {
 
@@ -38,22 +33,6 @@ T get_zero (T)
     return T(0);
 }
 
-using boost::function_types::result_type;
-
-// TODO(Lezcano) Use cpprob::parameter_types_t to avoid duplicate code
-template<class F, size_t... Indices>
-typename result_type<F>::type
-call_f_default_params_detail(const F& f, std::index_sequence<Indices...>)
-{
-    return f(std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type>()...);
-}
-
-template <class F, class... Args, size_t... Indices>
-typename result_type<F>::type
-call_f_tuple_detail(const F& f, const std::tuple<Args...>& args, std::index_sequence<Indices...>)
-{
-    return f(std::get<Indices>(args)...);
-}
 
 
 // Idea from
@@ -69,23 +48,6 @@ std::enable_if_t<N != 0, T> seeded_rng()
 }
 
 } // end namespace detail
-
-template <class F>
-typename boost::function_types::result_type<F>::type
-call_f_default_params(const F& f)
-{
-    return detail::call_f_default_params_detail(f, std::make_index_sequence<boost::function_types::function_arity<F>::value>());
-}
-
-
-template <class F, class... Args>
-typename boost::function_types::result_type<F>::type
-call_f_tuple(const F& f, const std::tuple<Args...>& args)
-{
-    static_assert(sizeof...(Args) == boost::function_types::function_arity<F>::value,
-                  "Number of arguments and arity of function do not agree.");
-    return detail::call_f_tuple_detail(f, args, std::make_index_sequence<boost::function_types::function_arity<F>::value>());
-}
 
 
 std::string get_addr();

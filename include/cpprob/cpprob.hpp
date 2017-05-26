@@ -6,6 +6,7 @@
 #include <cstdlib> // std::exit
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <string>
 #include <utility>
@@ -13,6 +14,7 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include "cpprob/any.hpp"
 #include "cpprob/ndarray.hpp"
 #include "cpprob/socket.hpp"
 #include "cpprob/state.hpp"
@@ -159,7 +161,7 @@ void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type 
     }
 }
 
-void predict(const NDArray<double> &x);
+void predict(const cpprob::any & x, const std::string & addr = "");
 
 void set_state(StateType s);
 
@@ -190,12 +192,7 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
         for (std::size_t i = 0; i < batch_size; ++i){
             State::reset_trace();
 
-            // TODO(Lezcano) Hack
-            #ifdef BUILD_SHERPA
-            f(std::vector<std::vector<std::vector<double>>>());
-            #else
             call_f_default_params(f);
-            #endif
             Compilation::add_trace(State::get_trace_comp());
         }
         Compilation::send_batch();
@@ -222,12 +219,7 @@ void importance_sampling(
         std::cout << "Generating sample " << i << std::endl;
         State::reset_trace();
 
-        // TODO(Lezcano) Hack
-        #ifdef BUILD_SHERPA
-        f(std::get<0>(observes));
-        #else
         call_f_tuple(f, observes);
-        #endif
 
         auto t = State::get_trace_pred();
         out_file << std::scientific << t << '\n';
@@ -257,10 +249,12 @@ void generate_posterior(
         State::reset_trace();
         // We just support either one tensorial observe or many scalar observes
         if (sizeof...(Args) == 1) {
-            Inference::send_observe_init(NDArray<>(std::get<0>(observes)));
+            auto observe = std::get<0>(observes);
+            Inference::send_observe_init(NDArray<>(std::begin(observe), std::end(observe)));
         }
         else {
-            Inference::send_observe_init(detail::to_vec<double>(observes));
+            auto obs_vec = detail::to_vec<double>(observes);
+            Inference::send_observe_init(NDArray<>(obs_vec.begin(), obs_vec.end()));
         }
 
         // TODO(Lezcano) Hack

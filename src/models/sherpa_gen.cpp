@@ -8,10 +8,10 @@
 
 int main(int argc,char* argv[])
 {
-    using namespace cpprob::detail;
+    using namespace cpprob;
     cpprob::State::set(cpprob::StateType::dryrun);
 
-    cpprob::models::SherpaWrapper s;
+    models::SherpaWrapper s;
 
     if (argc != 3) {
         std::cerr << "Please specify the output file and the number of particles\n";

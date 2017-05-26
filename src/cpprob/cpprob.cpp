@@ -1,17 +1,24 @@
 #include "cpprob/cpprob.hpp"
 
+
 #include "cpprob/utils.hpp"
+#include "cpprob/any.hpp"
 #include "cpprob/state.hpp"
 #include "cpprob/ndarray.hpp"
 
 namespace cpprob {
 #include <iostream>
 
-void predict(const NDArray<double> &x) {
+void predict(const cpprob::any & x, const std::string & addr)
+{
     if (State::current_state() == StateType::inference ||
         State::current_state() == StateType::importance_sampling) {
-        auto addr = get_addr();
-        State::add_predict(addr, x);
+        if (addr.empty()) {
+            State::add_predict(get_addr(), x);
+        }
+        else {
+            State::add_predict(addr, x);
+        }
     }
 }
 

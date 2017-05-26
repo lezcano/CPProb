@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "cpprob/serialization.hpp"
+#include "cpprob/traits.hpp"
 
 namespace cpprob {
 
@@ -50,11 +51,11 @@ public:
         #endif
     }
 
-    template<class U>
-    NDArray(const std::vector<U> &v)
+    template<class Iter>
+    NDArray(Iter begin, Iter end)
     {
-        compute_shape(v, 0);
-        values_ = flatten(v, 0);
+        compute_shape(begin, end, 0);
+        values_ = flatten(begin, end, 0);
     }
 
     // Casting to a different inner type
@@ -233,7 +234,6 @@ public:
                                                 NDArray<T>>::value >>
     friend NDArray<T> supremum (Iter begin, Iter end)
     {
-        using namespace cpprob::detail; // print utilities
         if (begin == end) {
             return NDArray<T>();
         }
@@ -257,7 +257,6 @@ public:
     friend std::basic_ostream< CharT, Traits > &
     operator<<(std::basic_ostream< CharT, Traits > & os, const NDArray & v)
     {
-        using namespace detail; // operator << for containers
         if (v.shape_.size() == 1 && v.shape_[0] == 1) {
             os << v.values_[0];
             return os;
@@ -275,7 +274,6 @@ public:
     friend std::basic_istream< CharT, Traits > &
     operator>>(std::basic_istream< CharT, Traits > & is, NDArray & v)
     {
-        using namespace detail; // operator >> for containers
         CharT ch;
         T scalar;
 
@@ -339,45 +337,58 @@ public:
     }
 
 private:
-    template<class U,
-            class = std::enable_if_t<std::is_constructible<T, U>::value>>
-    void compute_shape(const std::vector<U> & v, int i)
+    template<class Iter>
+    std::enable_if_t<std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value,
+    void>
+    compute_shape(Iter begin, Iter end, int depth)
     {
-        if (static_cast<int>(shape_.size()) <= i)
-            shape_.emplace_back(v.size());
-        else if (shape_[i] < static_cast<int>(v.size()))
-            shape_[i] = v.size();
+        auto size = std::distance(begin, end);
+        // If it's the first time that we enter the function, we extend the size
+        // If not, we update it
+        if (static_cast<int>(shape_.size()) <= depth)
+            shape_.emplace_back(size);
+        else if (shape_[depth] < static_cast<int>(size))
+            shape_[depth] = size;
     }
 
-    // i is the dimension that we are processing
-    template<class U>
-    void compute_shape(const std::vector<std::vector<U>> & v, int i)
+    template<class Iter>
+    std::enable_if_t<
+        // Check if the Iter type corresponds to an iterator that points to an iterable object
+        is_iterable<typename std::iterator_traits<Iter>::value_type>::value,
+    void>
+    compute_shape(Iter begin, Iter end, int depth)
     {
-        if (static_cast<int>(shape_.size()) <= i)
-            shape_.emplace_back(v.size());
-        else if (static_cast<int>(v.size()) > shape_[i])
-            shape_[i] = v.size();
-        for (const auto& e : v)
-            compute_shape(e, i+1);
+        auto size = std::distance(begin, end);
+        if (static_cast<int>(shape_.size()) <= depth)
+            shape_.emplace_back(size);
+        else if (static_cast<int>(size) > shape_[depth])
+            shape_[depth] = size;
+        for (; begin != end; ++begin)
+            compute_shape(std::begin(*begin), std::end(*begin), depth+1);
     }
 
-    template<class U,
-            class = std::enable_if_t<std::is_constructible<T, U>::value>>
-    std::vector<T> flatten(const std::vector<U> & v, int)
+    template<class Iter>
+    std::enable_if_t<
+        std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value,
+    std::vector<T>>
+    flatten(Iter begin, Iter end, int)
     {
-        auto ret = v;
+        std::vector<T> ret (std::make_move_iterator(begin), std::make_move_iterator(end));
         ret.resize(shape_.back());
-        return std::vector<T>(std::make_move_iterator(ret.begin()), std::make_move_iterator(ret.end()));
+        return ret;
     }
 
-    template<class U>
-    auto flatten(const std::vector<std::vector<U>> & v, int i)
+    template<class Iter>
+    std::enable_if_t<
+        is_iterable<typename std::iterator_traits<Iter>::value_type>::value,
+    std::vector<T>>
+    flatten(Iter begin, Iter end, int depth)
     {
-        auto size_tensor_i = std::accumulate(shape_.begin()+i, shape_.end(), 1, std::multiplies<int>());
+        auto size_tensor_i = std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<int>());
 
-        decltype(flatten(v.front(), i+1)) ret;
-        for (const auto &e : v) {
-            auto init_e = flatten(e, i+1);
+        std::vector<T> ret;
+        for (; begin != end; ++begin) {
+            auto init_e = flatten(std::begin(*begin), std::end(*begin), depth+1);
             ret.insert(ret.end(), std::make_move_iterator(init_e.begin()), std::make_move_iterator(init_e.end()));
         }
         ret.resize(size_tensor_i);

@@ -9,6 +9,7 @@
 
 #include <boost/any.hpp>
 
+#include "cpprob/any.hpp"
 #include "cpprob/ndarray.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
@@ -64,7 +65,7 @@ class TracePredicts {
 public:
     double log_w() const;
 
-    void add_predict(int id, const NDArray<double>& x);
+    void add_predict(int id, const cpprob::any & x);
 
     void increment_cum_log_prob(double log_p);
 
@@ -72,13 +73,12 @@ public:
     friend std::basic_ostream< CharT, Traits > &
     operator<<(std::basic_ostream< CharT, Traits > & os, const TracePredicts & t)
     {
-        using namespace detail; // operator << for containers
         return os << std::make_pair(t.predict_, t.log_w_);
     }
 
 private:
     // Attributes
-    std::vector<std::pair<int, NDArray<double>>> predict_;
+    std::vector<std::pair<int, cpprob::any>> predict_;
     double log_w_ = 0;
 };
 

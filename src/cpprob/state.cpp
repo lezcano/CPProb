@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 
+
+#include "cpprob/any.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/trace.hpp"
 
@@ -94,7 +96,7 @@ int State::register_addr_predict(const std::string& addr)
     return State::ids_predict.emplace(addr, static_cast<int>(State::ids_predict.size())).first->second;
 }
 
-void State::add_predict(const std::string& addr, const NDArray<double>& x)
+void State::add_predict(const std::string& addr, const cpprob::any &x)
 {
     auto id = register_addr_predict(addr);
     State::t_pred.add_predict(id, x);

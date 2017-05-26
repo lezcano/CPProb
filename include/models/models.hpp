@@ -13,7 +13,6 @@
 
 #include "cpprob/cpprob.hpp"
 
-namespace cpprob {
 namespace models {
 
 template<class RealType>
@@ -96,10 +95,6 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     cpprob::predict(mu);
 }
 
-
-
-
-
 template<std::size_t N>
 void hmm(const std::array<double, N> & observed_states)
 {
@@ -127,6 +122,4 @@ void hmm(const std::array<double, N> & observed_states)
 void least_sqr(const std::vector<std::pair<double, double>> & points);
 void all_distr();
 } // end namespace models
-} // end namespace cpprob
-
 #endif  // INCLUDE_MODELS_HPP_

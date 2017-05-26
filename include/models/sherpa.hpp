@@ -1,5 +1,5 @@
-#ifndef CPPROB_SHERPA_HPP
-#define CPPROB_SHERPA_HPP
+#ifndef SHERPA_HPP
+#define SHERPA_HPP
 
 #include <vector>
 
@@ -7,7 +7,6 @@ namespace SHERPA {
 	class Sherpa;
 }
 
-namespace cpprob {
 namespace models {
 
     class SherpaWrapper {
@@ -29,5 +28,4 @@ namespace models {
         SHERPA::Sherpa* generator_;
     };
 } // end namespace modeles
-} // end namespace cpprob
-#endif //CPPROB_SHERPA_HPP
+#endif //SHERPA_HPP

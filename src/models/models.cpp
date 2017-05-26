@@ -7,7 +7,6 @@
 #include "cpprob/distributions/vmf.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
 
-namespace cpprob {
 namespace models {
 
 
@@ -54,4 +53,3 @@ void all_distr() {
 }
 
 } // end namespace models
-} // end namespace cpprob

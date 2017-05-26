@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "cpprob/any.hpp"
 #include "cpprob/trace.hpp"
 
 namespace cpprob {
@@ -52,7 +53,7 @@ private:
     static void add_observe(const NDArray<double>& x);
 
     static int register_addr_predict(const std::string& addr);
-    static void add_predict(const std::string& addr, const NDArray<double>& x);
+    static void add_predict(const std::string& addr, const cpprob::any & x);
 
     static int time_index();
     static void increment_time();
@@ -66,7 +67,7 @@ private:
     template<template <class ...> class Distr, class ...Params>
     friend void observe(Distr<Params ...>& distr, typename Distr<Params ...>::result_type x);
 
-    friend void predict(const NDArray<double>& x);
+    friend void predict(const cpprob::any & x, const std::string & addr);
 };
 }  // namespace cpprob
 

@@ -6,13 +6,13 @@
 #include <cpprob/distributions/vmf.hpp>
 #include <cpprob/distributions/multivariate_normal.hpp>
 #include <cpprob/cpprob.hpp>
+#include <cpprob/state.hpp>
 #include <cpprob/ndarray.hpp>
 #include <math.h>
 #include "YODA/Histo2D.h"
 #include "Rivet/Math/Vector4.hh"
 
 
-namespace cpprob {
 namespace models {
 
 std::pair<double, std::vector<std::vector<double> > > energy_deposits(const Rivet::FourMomentum &mom) {
@@ -38,10 +38,10 @@ std::pair<double, std::vector<std::vector<double> > > energy_deposits(const Rive
 std::vector<Rivet::FourMomentum> select() {
 	boost::random::uniform_real_distribution<double> real_uniform{0, 4};
 	double select_ran = cpprob::sample(real_uniform, true);
-	int select = int(select_ran);
-	cpprob::predict(select);
+	int select = static_cast<int>(select_ran);
+	cpprob::predict(select, "Channel");
 
-	if (State::current_state() == StateType::dryrun)
+	if (cpprob::State::current_state() == cpprob::StateType::dryrun)
         std::cout << "Selected channel " << select << std::endl;
 
 	auto v0 = Rivet::FourMomentum::mkXYZE(3.12206631, 0.18609799, -0.13257316, 3.16910447);
@@ -90,9 +90,8 @@ void sherpa_mini_wrapper(const std::vector<double> &test_image) {
 	std::vector<double> sherpa_img = sherpa_mini();
 	double OBS_WIDTH = 0.01;
 	const std::vector<int> dim{100, 100};
-	cpprob::multivariate_normal_distribution<double> obs_distr(NDArray<double>(sherpa_img, dim), OBS_WIDTH);
-	cpprob::observe(obs_distr, NDArray<double>(test_image, dim));
+	cpprob::multivariate_normal_distribution<double> obs_distr(cpprob::NDArray<double>(sherpa_img, dim), OBS_WIDTH);
+	cpprob::observe(obs_distr, cpprob::NDArray<double>(test_image, dim));
 }
 
 } // end namespace models
-} // end namespace cpprob

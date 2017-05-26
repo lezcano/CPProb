@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 #include "cpprob/cpprob.hpp"
-#include "cpprob/model.hpp"
+#include "../../deprecated/model.hpp"
 #include "cpprob/ndarray.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/state.hpp"
@@ -11,7 +11,7 @@
 
 int main(int argc,char* argv[])
 {
-    using namespace cpprob::detail;
+    using namespace cpprob;
     cpprob::State::set(cpprob::StateType::dryrun);
 
     cpprob::models::SherpaWrapper s;

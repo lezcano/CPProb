@@ -2,12 +2,14 @@
 
 #include <exception>
 #include <string>
+
 #include <boost/any.hpp>
 
+#include "cpprob/any.hpp"
 #include "cpprob/distributions/vmf.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
 
-#include "cpprob/traits.hpp"
+#include "cpprob/distribution_utils.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob {
@@ -45,7 +47,7 @@ double TracePredicts::log_w() const
     return log_w_;
 }
 
-void TracePredicts::add_predict(int id, const NDArray<double> &x)
+void TracePredicts::add_predict(int id, const cpprob::any &x)
 {
     predict_.emplace_back(id, x);
 }
@@ -102,11 +104,12 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
     }
     else if (type == infcomp::protocol::Distribution::VMF){
         auto distr = boost::any_cast<vmf_distribution<>>(distr_any);
-        auto mu = NDArray<double>(distr.mu());
+        auto mu = distr.mu();
+        auto mu_nd = NDArray<double>(mu.begin(), mu.end());
         return infcomp::protocol::CreateVMF(buff,
                                   infcomp::protocol::CreateNDArray(buff,
-                                                         buff.CreateVector<double>(mu.values()),
-                                                         buff.CreateVector<int32_t>(mu.shape())),
+                                                         buff.CreateVector<double>(mu_nd.values()),
+                                                         buff.CreateVector<int32_t>(mu_nd.shape())),
                                   distr.kappa()).Union();
     }
     else if (type == infcomp::protocol::Distribution::Poisson){
@@ -120,15 +123,17 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
     }
     else if (type == infcomp::protocol::Distribution::MultivariateNormal){
         auto distr = boost::any_cast<multivariate_normal_distribution<>>(distr_any);
-        auto mean = NDArray<double>(distr.mean());
-        auto sigma = NDArray<double>(distr.sigma());
+        auto mean = distr.mean();
+        auto sigma = distr.sigma();
+        auto mean_nd = NDArray<double>(mean.begin(), mean.end());
+        auto sigma_nd = NDArray<double>(sigma.begin(), sigma.end());
         return infcomp::protocol::CreateMultivariateNormal(buff,
                                                  infcomp::protocol::CreateNDArray(buff,
-                                                                        buff.CreateVector<double>(mean.values()),
-                                                                        buff.CreateVector<int32_t>(mean.shape())),
+                                                                        buff.CreateVector<double>(mean_nd.values()),
+                                                                        buff.CreateVector<int32_t>(mean_nd.shape())),
                                                  infcomp::protocol::CreateNDArray(buff,
-                                                                        buff.CreateVector<double>(sigma.values()),
-                                                                        buff.CreateVector<int32_t>(sigma.shape()))
+                                                                        buff.CreateVector<double>(sigma_nd.values()),
+                                                                        buff.CreateVector<int32_t>(sigma_nd.shape()))
         ).Union();
     }
     else if (type == infcomp::protocol::Distribution::NONE){
