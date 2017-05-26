@@ -10,10 +10,11 @@ if(BUILD_SHERPA)
 
     add_executable(sherpa_statistics sherpa_statistics.cpp)
     target_link_libraries(sherpa_statistics PUBLIC ${PROJECT_NAME} sherpa)
-else()
-    # Due to the ñapa, sherpa_mini does not work when using BUILD_SHERPA
+
     add_library(sherpa_mini SHARED sherpa_mini.cpp)
 
     add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
     target_link_libraries(sherpa_mini_gen PUBLIC ${PROJECT_NAME} ${Boost_LIBRARIES} sherpa_mini)
+else()
+    add_library(models SHARED models.cpp)
 endif()

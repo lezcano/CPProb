@@ -223,9 +223,9 @@ endif()
 
 if (BUILD_SHERPA)
     add_definitions(-DBUILD_SHERPA)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
 include_directories(include)
 add_subdirectory(src)
 

@@ -94,7 +94,8 @@ int main(int argc, char** argv) {
     // auto f = &models::linear_gaussian_1d<50>;
     // auto f = &models::gaussian_unknown_mean<>;
     // auto f = &sherpa_mini_wrapper;
-    auto f = &models::hmm<16>;
+    // auto f = &models::hmm<16>;
+    auto f = &models::model;
     #endif
 
     if (mode == "compile") {

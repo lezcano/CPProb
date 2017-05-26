@@ -15,6 +15,11 @@
 
 namespace models {
 
+////////////////////////////////////////////////////////////////////////////////
+//                                  MODIFY ME                                 //
+////////////////////////////////////////////////////////////////////////////////
+void model(const std::array<double, 16> & obs);
+
 template<class RealType>
 void gaussian_unknown_mean(const RealType y1, const RealType y2)
 {
