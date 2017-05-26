@@ -2,6 +2,7 @@
 #define INCLUDE_NDARRAY_HPP
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <exception>
 #include <functional>
@@ -50,6 +51,15 @@ public:
         }
         #endif
     }
+
+    template<class U,
+            class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    NDArray(const std::vector<U> & values) : NDArray(values.begin(), values.end()) {}
+
+    template<class U,
+             std::size_t N,
+             class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    NDArray(const std::array<U, N> & values) : NDArray(values.begin(), values.end()) {}
 
     template<class Iter>
     NDArray(Iter begin, Iter end)

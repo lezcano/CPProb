@@ -6,7 +6,7 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
     The class cpprob::any is exactly boost::spirit::hold_any but without an
-    explicit constructor.
+    explicit constructor and sfinae in hold_any constructor to simulate a constexpr if
     The class boost::spirit::hold_any is built based on the any class
     published here: http://www.codeproject.com/cpp/dynamic_typing.asp. It adds
     support for std streaming operator<<() and operator>>().
@@ -29,8 +29,11 @@
 
 #include <stdexcept>
 #include <typeinfo>
+#include <type_traits>
 #include <algorithm>
 #include <iosfwd>
+
+#include "cpprob/serialization.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
@@ -148,12 +151,14 @@ namespace cpprob {
                 static std::basic_istream<Char>&
                 stream_in(std::basic_istream<Char>& i, void** obj)
                 {
+                    using cpprob::operator>>;// ADL operator>> overload
                     i >> **reinterpret_cast<T**>(obj);
                     return i;
                 }
                 static std::basic_ostream<Char>&
                 stream_out(std::basic_ostream<Char>& o, void* const* obj)
                 {
+                    using cpprob::operator<<; // ADL operator<< overload
                     o << **reinterpret_cast<T* const*>(obj);
                     return o;
                 }
@@ -218,14 +223,17 @@ namespace cpprob {
     public:
         // constructors
         template <typename T>
-        basic_hold_any(T const& x)
+        basic_hold_any(T const& x, const std::enable_if_t<cpprob::detail::get_table<T>::is_small::value> * = nullptr)
           : table(cpprob::detail::get_table<T>::template get<Char>()), object(0)
         {
-            if (cpprob::detail::get_table<T>::is_small::value)
-                new (&object) T(x);
-            else
-                object = new T(x);
+            new (&object) T(x);
         }
+
+        // constexpr if for c++17 would be fantastic
+        template <typename T>
+        basic_hold_any(T const& x, const std::enable_if_t<!cpprob::detail::get_table<T>::is_small::value> * = nullptr)
+                : table(cpprob::detail::get_table<T>::template get<Char>()), object(new T(x))
+        { }
 
         basic_hold_any()
           : table(cpprob::detail::get_table<cpprob::detail::empty>::template get<Char>()),
