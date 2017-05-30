@@ -14,12 +14,6 @@
 #include "cpprob/cpprob.hpp"
 
 namespace models {
-
-////////////////////////////////////////////////////////////////////////////////
-//                                  MODIFY ME                                 //
-////////////////////////////////////////////////////////////////////////////////
-void model(const std::array<double, 16> & obs);
-
 template<class RealType>
 void gaussian_unknown_mean(const RealType y1, const RealType y2)
 {
@@ -46,25 +40,6 @@ void linear_gaussian_1d (const std::array<double, N> & obs)
         cpprob::predict(state);
         normal_distribution<> likelihood {state, 1};
         cpprob::observe(likelihood, obs[i]);
-    }
-}
-
-//-m infer -n 100 -o [(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)]
-template <std::size_t N>
-void least_sqr(const std::array<std::pair<double, double>, N>& points)
-{
-    using boost::random::normal_distribution;
-
-    static normal_distribution<double> normal{0, 10};
-
-    const auto slope = cpprob::sample(normal, true);
-    const auto bias = cpprob::sample(normal, true);
-    cpprob::predict(slope);
-    cpprob::predict(bias);
-
-    for (const auto& point : points) {
-        auto likelihood = normal_distribution<double>{slope * point.first + bias, 1};
-        cpprob::observe(likelihood, point.second);
     }
 }
 
@@ -127,7 +102,6 @@ void hmm(const std::array<double, N> & observed_states)
     }
 }
 
-void least_sqr(const std::vector<std::pair<double, double>> & points);
 void all_distr();
 } // end namespace models
 #endif  // INCLUDE_MODELS_HPP_

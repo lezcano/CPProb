@@ -347,6 +347,7 @@ public:
     }
 
 private:
+    // Base type
     template<class Iter>
     std::enable_if_t<std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value,
     void>
@@ -361,6 +362,7 @@ private:
             shape_[depth] = size;
     }
 
+    // Iterable type
     template<class Iter>
     std::enable_if_t<
         // Check if the Iter type corresponds to an iterator that points to an iterable object

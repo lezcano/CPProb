@@ -9,15 +9,6 @@
 
 namespace models {
 
-////////////////////////////////////////////////////////////////////////////////
-//                                  MODIFY ME                                 //
-////////////////////////////////////////////////////////////////////////////////
-void model(const std::array<double, 16> & obs)
-{
-    hmm<16>(obs);
-}
-
-
 void all_distr() {
     using cpprob::sample;
     using cpprob::predict;
