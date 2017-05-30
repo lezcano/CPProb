@@ -1,5 +1,6 @@
 #include "cpprob/state.hpp"
 
+#include <iomanip>
 #include <string>
 #include <unordered_map>
 
@@ -109,10 +110,9 @@ void State::increment_cum_log_prob(double log_p)
 
 void State::serialize_ids_pred(std::ofstream & out_file)
 {
-    using namespace detail;
     std::vector<std::string> addresses(State::ids_predict.size());
     for(const auto& kv : State::ids_predict)
-        addresses[kv.second] = kv.first;
+        addresses[kv.second] = '"' + kv.first + '"';
     out_file << addresses;
 }
 

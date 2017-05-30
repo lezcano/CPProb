@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     // auto f = &sherpa_mini_wrapper;
     // auto f = &models::hmm<16>;
     // auto f = &models::model;
-    auto f = &poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
+    auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
     #endif
 
     if (mode == "compile") {
@@ -119,7 +119,8 @@ int main(int argc, char** argv) {
         }
         else {
             std::cerr << "Could not parse the arguments.\n"
-                      << "Use spaces to separate the arguments and elements of an aggregate type.\n";
+                      << "Please use spaces to separate the arguments and elements of an aggregate type.\n"
+                      << "If using the -o option, please surround the arguments by quotes.\n";
             std::exit (EXIT_FAILURE);
         }
 
