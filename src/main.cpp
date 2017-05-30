@@ -90,13 +90,12 @@ int main(int argc, char** argv) {
 
     #ifdef BUILD_SHERPA
     models::SherpaWrapper f;
+    // auto f = &sherpa_mini_wrapper;
     #else
     // auto f = &models::normal_rejection_sampling<>;
     // auto f = &models::linear_gaussian_1d<50>;
     // auto f = &models::gaussian_unknown_mean<>;
-    // auto f = &sherpa_mini_wrapper;
     // auto f = &models::hmm<16>;
-    // auto f = &models::model;
     auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
     #endif
 
