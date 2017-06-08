@@ -236,7 +236,7 @@ std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> 
         is >> val;
         if(is.fail())
             break;
-        val.insert(std::move(val));
+        map.insert(std::move(val));
     } while (true);
 
     // Remark: This accepts vectors not properly specified like

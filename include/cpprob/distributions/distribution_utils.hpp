@@ -15,10 +15,10 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/distributions/beta.hpp>
 
-#include "distributions/min_max_discrete.hpp"
-#include "distributions/min_max_continuous.hpp"
-#include "distributions/vmf.hpp"
-#include "distributions/multivariate_normal.hpp"
+#include "min_max_discrete.hpp"
+#include "min_max_continuous.hpp"
+#include "vmf.hpp"
+#include "multivariate_normal.hpp"
 
 #include "cpprob/ndarray.hpp"
 

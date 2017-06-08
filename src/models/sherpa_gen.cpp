@@ -9,7 +9,7 @@
 int main(int argc,char* argv[])
 {
     using namespace cpprob;
-    cpprob::State::set(cpprob::StateType::dryrun);
+    State::set(StateType::dryrun);
 
     models::SherpaWrapper s;
 

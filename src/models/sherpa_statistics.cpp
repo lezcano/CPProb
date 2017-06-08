@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 #include "cpprob/cpprob.hpp"
-#include "../../deprecated/model.hpp"
+#include "cpprob/post_process/model.hpp"
 #include "cpprob/ndarray.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/state.hpp"

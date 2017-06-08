@@ -24,7 +24,7 @@ boost::random::mt19937& get_rng()
     return rng;
 }
 
-std::string get_name_mangled (char* s)
+std::string get_name_mangled (const char* s)
 {
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
@@ -33,7 +33,7 @@ std::string get_name_mangled (char* s)
     return str.substr(first, last-first);
 }
 
-std::string get_name_demangled (char* s)
+std::string get_name_demangled (const char* s)
 {
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
@@ -45,12 +45,12 @@ std::string get_name_demangled (char* s)
     char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
     if (status == 0) {
         auto demangled = std::string(result);
-        free(result);
-        // Demangled function name + offset w.r.t the function frame
+        std::free(result);
+        // Demangled function name + offset w.r.t the function return address
         return demangled + str.substr(mas, last - mas);
     }
     else {
-        return "System call";
+        return get_name_mangled(s);
     }
 }
 

@@ -3,12 +3,13 @@
 
 #include <exception>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <zmq.hpp>
 
 #include "cpprob/trace.hpp"
-#include "cpprob/distribution_utils.hpp"
+#include "cpprob/distributions/distribution_utils.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
@@ -21,32 +22,32 @@ class NDArray;
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class Compilation {
+class SocketCompile {
 public:
     static void connect_server(const std::string & tcp_addr);
+    static void config_file(const std::string & dump_folder);
+
     static std::size_t get_batch_size();
-    static void add_trace(const TraceCompile & t);
-    static void send_batch();
-    static void config_to_file(const std::string & dump_folder);
+
 private:
-    // Static data
-    static flatbuffers::FlatBufferBuilder buff;
-    static std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> vec;
+    // Static Attributes
+    static zmq::socket_t server_;
+    static std::string dump_folder_;
 
-    static bool to_file;
-    static std::string dump_folder;
-
-    static zmq::socket_t server;
-
+    // Friends
+    friend class StateCompile;
+    static void send_batch(const std::vector<TraceCompile> & traces);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////          Inference            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class Inference {
+class SocketInfer {
 public:
     static void connect_client(const std::string& tcp_addr);
+    static void config_file(const std::string & dump_file);
+
     static void send_observe_init(const NDArray<double> & data);
 
     template<template <class ...> class Distr, class ...Params>
@@ -62,11 +63,11 @@ public:
 
         zmq::message_t request (buff.GetSize());
         memcpy (request.data(), buff.GetBufferPointer(), buff.GetSize());
-        client.send(request);
+        client_.send(request);
         buff.Clear();
 
         zmq::message_t reply;
-        client.recv (&reply);
+        client_.recv (&reply);
 
         auto message = infcomp::protocol::GetMessage(reply.data());
         auto reply_msg = static_cast<const infcomp::protocol::ProposalReply*>(message->body());
@@ -78,7 +79,15 @@ public:
     }
 
 private:
-    static zmq::socket_t client;
+    friend class StateInfer;
+
+    static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix);
+
+    static void dump_ids(const std::unordered_map<std::string, int> & ids_predict);
+    static void delete_file(const std::string & suffix);
+
+    static zmq::socket_t client_;
+    static std::string dump_file_;
 };
 }       // namespace cpprob
 #endif  // INCLUDE_SOCKET_HPP_

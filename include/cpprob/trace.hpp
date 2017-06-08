@@ -1,84 +1,52 @@
 #ifndef INCLUDE_TRACE_HPP_
 #define INCLUDE_TRACE_HPP_
 
-#include <vector>
-#include <iostream>
-#include <fstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
-
-#include <boost/any.hpp>
+#include <vector>
 
 #include "cpprob/any.hpp"
 #include "cpprob/ndarray.hpp"
+#include "cpprob/sample.hpp"
+
 #include "flatbuffers/infcomp_generated.h"
 
 namespace cpprob{
-
-class Sample{
-public:
-    Sample() = default;
-
-    Sample(const std::string& sample_address,
-           int sample_instance,
-           const infcomp::protocol::Distribution& proposal_type,
-           const boost::any& proposal_distr,
-           int time_index = 0,
-           NDArray<double> value = 0);
-
-    void set_value(const NDArray<double>& value);
-
-    flatbuffers::Offset<infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder& buff) const;
-
-private:
-
-    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder& buff,
-                                         const boost::any& distr,
-                                         infcomp::protocol::Distribution type) const;
-
-    std::string sample_address_{};
-    int sample_instance_{0};
-    infcomp::protocol::Distribution proposal_type_;
-    boost::any proposal_distr_;
-    int time_index_{0};
-    NDArray<double> value_{0};
-};
-
 class TraceCompile {
 public:
 
     flatbuffers::Offset<infcomp::protocol::Trace> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
 private:
-
     // Friends
-    friend class State;
+    friend class StateCompile;
 
     // Attributes
     int time_index_ = 1;
-    std::vector<int> sample_instance_;
+    std::unordered_map<std::string, int> sample_instance_;
     std::vector<Sample> samples_;
     std::vector<NDArray<double>> observes_;
 };
 
-class TracePredicts {
+class TraceInfer {
 public:
-    double log_w() const;
 
-    void add_predict(int id, const cpprob::any & x);
-
-    void increment_cum_log_prob(double log_p);
-
-    template<class CharT, class Traits>
-    friend std::basic_ostream< CharT, Traits > &
-    operator<<(std::basic_ostream< CharT, Traits > & os, const TracePredicts & t)
-    {
-        return os << std::make_pair(t.predict_, t.log_w_);
-    }
+    static int register_addr_predict(const std::string& addr);
 
 private:
+    // Friends
+    friend class StateInfer;
+
+    // Static Members
+    static std::unordered_map<std::string, int> ids_predict_;
+
     // Attributes
-    std::vector<std::pair<int, cpprob::any>> predict_;
+    // We have to separate them so we can dump them in different files.
+    // We still use cpprob::any so we do not lose precision
+    std::vector<std::pair<int, cpprob::any>> predict_int_;
+    std::vector<std::pair<int, cpprob::any>> predict_real_;
+    std::vector<std::pair<int, cpprob::any>> predict_any_;
     double log_w_ = 0;
 };
 

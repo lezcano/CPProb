@@ -52,13 +52,10 @@ public:
         #endif
     }
 
-    template<class U,
-            class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    template<class U>
     NDArray(const std::vector<U> & values) : NDArray(values.begin(), values.end()) {}
 
-    template<class U,
-             std::size_t N,
-             class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    template<class U, std::size_t N>
     NDArray(const std::array<U, N> & values) : NDArray(values.begin(), values.end()) {}
 
     template<class Iter>
@@ -78,12 +75,19 @@ public:
     }
 
     // Casting for scalars
+    bool is_scalar() const
+    {
+        return shape_.size() == 1 && shape_.front() == 1;
+    }
+
     explicit operator T() const
     {
-        if (shape_.size() == 1 && shape_.front() == 1) {
+        if (is_scalar()) {
             return values_.front();
         }
-        throw std::bad_cast();
+        else {
+            throw std::bad_cast();
+        }
     }
 
     // Casting for scalars
@@ -92,7 +96,9 @@ public:
         if (shape_.size() == 1) {
             return values_;
         }
-        throw std::bad_cast("The NDArray is not a vector.");
+        else {
+            throw std::bad_cast();
+        }
     }
 
     // Iterator utilities

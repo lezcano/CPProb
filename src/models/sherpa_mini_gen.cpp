@@ -5,7 +5,7 @@
 #include "models/sherpa_mini.hpp"
 
 int main(){
-    using namespace cpprob; // I/O vectors
-    cpprob::State::set(cpprob::StateType::dryrun);
+    using namespace cpprob;
+    State::set(StateType::dryrun);
     std::cout << models::sherpa_mini() << std::endl;
 }

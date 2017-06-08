@@ -1,9 +1,10 @@
 #ifndef INCLUDE_MODELS_HPP_
 #define INCLUDE_MODELS_HPP_
 
-#include <vector>
-#include <utility>
 #include <array>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/uniform_smallint.hpp>
@@ -20,26 +21,26 @@ void gaussian_unknown_mean(const RealType y1, const RealType y2)
     using boost::random::normal_distribution;
     normal_distribution<RealType> prior {1, 5};
     const RealType mu = cpprob::sample(prior, true);
-    cpprob::predict(mu);
     const RealType var = 2;
 
     normal_distribution<RealType> obs_distr {mu, var};
     cpprob::observe(obs_distr, y1);
     cpprob::observe(obs_distr, y2);
+    cpprob::predict(mu, "Mu");
 }
 
 template<std::size_t N>
-void linear_gaussian_1d (const std::array<double, N> & obs)
+void linear_gaussian_1d (const std::array<double, N> & observations)
 {
     using boost::random::normal_distribution;
 
     double state = 0;
-    for (std::size_t i = 0; i < obs.size(); ++i) {
+    for (const auto obs : observations) {
         normal_distribution<> transition_distr {state, 1};
         state = cpprob::sample(transition_distr, true);
-        cpprob::predict(state);
         normal_distribution<> likelihood {state, 1};
-        cpprob::observe(likelihood, obs[i]);
+        cpprob::observe(likelihood, obs);
+        cpprob::predict(state, "State");
     }
 }
 
@@ -75,7 +76,7 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     normal_distribution<RealType> likelihood {mu, sigma};
     cpprob::observe(likelihood, y1);
     cpprob::observe(likelihood, y2);
-    cpprob::predict(mu);
+    cpprob::predict(mu, "Mu");
 }
 
 template<std::size_t N>
@@ -86,19 +87,19 @@ void hmm(const std::array<double, N> & observed_states)
     using boost::random::uniform_smallint;
 
     constexpr int k = 3;
-    static std::array<double, k> state_mean {-1, 0, 1};
-    static std::array<std::array<double, k>, k> T {{{ 0.1,  0.5,  0.4 },
-                                                    { 0.2,  0.2,  0.6 },
-                                                    { 0.15, 0.15, 0.7 }}};
+    static std::array<double, k> state_mean {{-1, 0, 1}};
+    static std::array<std::array<double, k>, k> T {{{{ 0.1,  0.5,  0.4 }},
+                                                    {{ 0.2,  0.2,  0.6 }},
+                                                    {{ 0.15, 0.15, 0.7 }}}};
     uniform_smallint<> prior {0, 2};
     auto state = cpprob::sample(prior, true);
-    cpprob::predict(state);
-    for (const auto & obs_state : observed_states) {
+    cpprob::predict(state, "Initial state");
+    for (const auto obs : observed_states) {
         discrete_distribution<> transition_distr {T[state].begin(), T[state].end()};
         state = cpprob::sample(transition_distr, true);
-        cpprob::predict(state);
+        cpprob::predict(state, "State");
         normal_distribution<> likelihood {state_mean[state], 1};
-        cpprob::observe(likelihood, obs_state);
+        cpprob::observe(likelihood, obs);
     }
 }
 

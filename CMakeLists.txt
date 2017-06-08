@@ -167,7 +167,7 @@ endif()
 ##############################################################################
 
 # Setup include paths. More include paths can be added in subdirectories.
-add_definitions("-DBOOST_SYSTEM_NO_DEPRECATED")
+add_definitions(-DBOOST_SYSTEM_NO_DEPRECATED)
 set(Boost_COMPONENTS_FOR_BUILD program_options serialization filesystem)
 find_package(Boost COMPONENTS ${Boost_COMPONENTS_FOR_BUILD})
 if (NOT Boost_FOUND)

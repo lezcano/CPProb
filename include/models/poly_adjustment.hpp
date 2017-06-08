@@ -16,8 +16,8 @@ template<class RealType>
 std::vector<RealType> generate_polynomial(std::size_t degree) {
     boost::random::normal_distribution<RealType> prior{0, 10};
     std::vector<RealType> ret(degree + 1);
-    for (std::size_t i = 0; i <= degree; ++i) {
-        ret[i] = cpprob::sample(prior, true);
+    for (auto& coef : ret) {
+        coef = cpprob::sample(prior, true);
     }
     return ret;
 }
@@ -38,8 +38,8 @@ void poly_adjustment(const std::array<std::array<RealType, 2>, N> &points) {
         boost::random::normal_distribution<RealType> likelihood{eval_poly(poly, point[0]), 1};
         cpprob::observe(likelihood, point[1]);
     }
-    for (std::size_t i = 0; i < poly.size(); ++i) {
-        cpprob::predict(poly[i], "Coefficient " + std::to_string(i));
+    for (const auto coef : poly) {
+        cpprob::predict(coef, "Coefficient");
     }
 }
 

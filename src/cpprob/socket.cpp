@@ -1,16 +1,18 @@
 #include "cpprob/socket.hpp"
 
+#include <cstdio>       // std::remove
+#include <exception>    // std::terminate
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <cstdio>       // std::fwrite
-#include <exception>    // std::terminate
 
+#include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include "cpprob/trace.hpp"
+
 #include "flatbuffers/infcomp_generated.h"
 
 
@@ -23,85 +25,85 @@ namespace cpprob {
 zmq::context_t context (1);
 
 // Static data
-flatbuffers::FlatBufferBuilder Compilation::buff;
-std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> Compilation::vec;
+zmq::socket_t SocketCompile::server_ (context, ZMQ_REP);
+std::string SocketCompile::dump_folder_;
 
-bool Compilation::to_file;
-std::string Compilation::dump_folder;
-
-zmq::socket_t Compilation::server (context, ZMQ_REP);
-
-void Compilation::connect_server(const std::string& tcp_addr)
+void SocketCompile::connect_server(const std::string & tcp_addr)
 {
-    Compilation::server.bind (tcp_addr);
-    to_file = false;
+    server_.bind(tcp_addr);
+    dump_folder_.clear();
 }
 
-void Compilation::config_to_file(const std::string & dump_folder)
+void SocketCompile::config_file(const std::string & dump_folder)
 {
-    Compilation::dump_folder = dump_folder;
-    to_file = true;
+    dump_folder_ = dump_folder;
+    //server_.close();
 }
 
-std::size_t Compilation::get_batch_size()
+std::size_t SocketCompile::get_batch_size()
 {
     zmq::message_t request;
-    Compilation::server.recv(&request);
+    server_.recv(&request);
 
     auto message = infcomp::protocol::GetMessage(request.data());
     auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest *>(message->body());
 
-    Compilation::vec.reserve(static_cast<size_t>(request_msg->num_traces()));
     return request_msg->num_traces();
 }
 
-void Compilation::add_trace(const TraceCompile& t)
+void SocketCompile::send_batch(const std::vector<TraceCompile> & traces_vector)
 {
-    Compilation::vec.emplace_back(t.pack(Compilation::buff));;
-}
+    static flatbuffers::FlatBufferBuilder buff;
 
-void Compilation::send_batch()
-{
-    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &vec);
+    std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> fbb_traces;
+    std::transform(traces_vector.begin(), traces_vector.end(), std::back_inserter(fbb_traces),
+                   [](const auto & trace) { return trace.pack(buff); });
+
+    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &fbb_traces);
     auto msg = infcomp::protocol::CreateMessage(
-            Compilation::buff,
+            buff,
             infcomp::protocol::MessageBody::TracesFromPriorReply,
             traces.Union());
-    Compilation::buff.Finish(msg);
+    buff.Finish(msg);
 
-    if (to_file) {
+    if (!dump_folder_.empty()) {
         static auto rand_gen {boost::uuids::random_generator()};
 
         // We already know that dump_folder exists
-        auto file_name = dump_folder + "/" + boost::lexical_cast<std::string>(rand_gen());
+        auto file_name = dump_folder_ + "/" + boost::lexical_cast<std::string>(rand_gen());
         auto file = std::ofstream(file_name, std::ofstream::binary);
         if (!file.is_open()) {
             std::cerr << "File \"" << file_name << "\" could not be open.\n";
             std::terminate();
         }
-        file.write(reinterpret_cast<char *>(Compilation::buff.GetBufferPointer()), Compilation::buff.GetSize());
+        file.write(reinterpret_cast<char *>(buff.GetBufferPointer()), buff.GetSize());
     }
     else {
-        zmq::message_t reply(Compilation::buff.GetSize());
-        memcpy(reply.data(), Compilation::buff.GetBufferPointer(), Compilation::buff.GetSize());
-        Compilation::server.send(reply);
+        zmq::message_t reply(buff.GetSize());
+        memcpy(reply.data(), buff.GetBufferPointer(), buff.GetSize());
+        server_.send(reply);
     }
-
-    Compilation::buff.Clear();
-    Compilation::vec.clear();
-
+    buff.Clear();
 }
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////          Inference            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-zmq::socket_t Inference::client (context, ZMQ_REQ);
+zmq::socket_t SocketInfer::client_ (context, ZMQ_REQ);
+std::string SocketInfer::dump_file_;
 
-void Inference::connect_client(const std::string& tcp_addr){
-    Inference::client.connect (tcp_addr);
+void SocketInfer::connect_client(const std::string& tcp_addr)
+{
+    client_.connect(tcp_addr);
+    dump_file_.clear();
 }
 
-void Inference::send_observe_init(const NDArray<double> & data) {
+void SocketInfer::config_file(const std::string & dump_file)
+{
+    dump_file_ = dump_file;
+}
+
+void SocketInfer::send_observe_init(const NDArray<double> & data) {
     static flatbuffers::FlatBufferBuilder buff;
 
     auto observe_init = infcomp::protocol::CreateObservesInitRequest(
@@ -117,17 +119,44 @@ void Inference::send_observe_init(const NDArray<double> & data) {
 
     buff.Finish(msg);
     zmq::message_t request (buff.GetSize());
-    memcpy (request.data(), buff.GetBufferPointer(), buff.GetSize());
-    Inference::client.send (request);
+    memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
+    client_.send(request);
     buff.Clear();
 
     // TODO (Lezcano) Is this answer is unnecessary?
     zmq::message_t reply;
-    Inference::client.recv (&reply);
+    client_.recv (&reply);
 
     auto message = infcomp::protocol::GetMessage(reply.data());
     auto reply_msg = static_cast<const infcomp::protocol::ObservesInitReply*>(message->body());
-    if(!reply_msg->success())
+    if(!reply_msg->success()) {
         std::cerr << "Invalid command" << std::endl;
+    }
 }
+
+void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict)
+{
+    std::ofstream out_file {dump_file_ + "_ids"};
+    std::vector<std::string> addresses(ids_predict.size());
+    for(const auto& kv : ids_predict) {
+        addresses[kv.second] = '"' + kv.first + '"';
+    }
+    for(const auto & address : addresses) {
+        out_file << address << std::endl;
+    }
+}
+
+void SocketInfer::dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix)
+{
+    std::ofstream f {dump_file_ + suffix};
+    f.precision(std::numeric_limits<double>::digits10);
+    f << std::scientific << std::make_pair(predicts, log_w) << std::endl;
+}
+
+void SocketInfer::delete_file(const std::string & suffix)
+{
+    auto file_name = dump_file_ + suffix;
+    std::remove(file_name.c_str());
+}
+
 }  // namespace cpprob

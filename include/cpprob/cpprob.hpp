@@ -21,12 +21,13 @@
 #include "cpprob/trace.hpp"
 #include "cpprob/traits.hpp"
 #include "cpprob/utils.hpp"
+#include "cpprob/distributions/distribution_utils.hpp"
 
 namespace cpprob {
 namespace detail {
 
 // Forward declarations
-template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+template<class T, class U, class>
 std::vector<T> to_vec(U value);
 template<class T, class U, class V>
 std::vector<T> to_vec(const std::pair<U, V> & pair);
@@ -97,52 +98,54 @@ std::vector<T> to_vec(const std::tuple<Args...> & args){
 
 template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe) {
-    typename Distr<Params ...>::result_type x;
+    typename Distr<Params ...>::result_type x{};
     std::string addr = get_addr();
-    auto id = State::register_addr_sample(addr);
 
-    if (State::current_state() == StateType::compile) {
+    if (State::state() == StateType::compile) {
         x = distr(get_rng());
 
         if(from_observe){
-            State::add_observe(x);
+            StateCompile::add_observe(x);
         }
         else{
-            State::add_sample(Sample{addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum,
-                                     default_distr(distr), State::time_index(), x});
+            StateCompile::add_sample(Sample{addr, proposal<Distr, Params...>::type_enum, default_distr(distr),
+                                     x, StateCompile::sample_instance(addr), StateCompile::time_index()});
         }
+        StateCompile::increment_time();
+
     }
-    else if  (State::current_state() == StateType::importance_sampling) {
+    else if  (State::state() == StateType::importance_sampling) {
         x = distr(get_rng());
-        State::increment_cum_log_prob(logpdf(distr, x));
+        StateInfer::increment_log_prob(logpdf(distr, x));
     }
-    else {
-        State::curr_sample = Sample(addr, State::sample_instance(id), proposal<Distr, Params...>::type_enum, default_distr(distr));
+    else if (State::state() == StateType::inference){
+        StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
 
         try {
-            auto proposal = Inference::get_proposal<Distr, Params...>(State::curr_sample, State::prev_sample);
+            auto proposal = SocketInfer::get_proposal<Distr, Params...>(StateInfer::curr_sample_, StateInfer::prev_sample_);
 
             x = proposal(get_rng());
 
-            State::increment_cum_log_prob(logpdf(distr, x) - logpdf(proposal, x));
+            StateInfer::increment_log_prob(logpdf(distr, x) - logpdf(proposal, x));
         }
         catch (const std::runtime_error &) {
             x = distr(get_rng());
-            // We do not increment the log_probability of the trace since p(x)/p(x) = 1
+            // No need to increment the log_probability of the trace since p(x)/p(x) = 1
         }
 
-        State::curr_sample.set_value(x);
-        State::prev_sample = std::move(State::curr_sample);
+        StateInfer::curr_sample_.set_value(x);
+        StateInfer::prev_sample_ = std::move(StateInfer::curr_sample_);
     }
-
-    State::increment_time();
+    else {
+        std::cerr << "Incorrect branch in sample_impl!!" << std::endl;
+    }
 
     return x;
 }
 
 template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool control = false) {
-    if (!control || State::current_state() == StateType::dryrun){
+    if (!control || State::state() == StateType::dryrun){
         return distr(get_rng());
     }
     else {
@@ -152,23 +155,32 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
 
 template<template <class ...> class Distr, class ...Params>
 void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x) {
-    if (State::current_state() == StateType::compile){
+    if (State::compile()){
         sample_impl(distr, true);
     }
-    else if (State::current_state() == StateType::inference ||
-             State::current_state() == StateType::importance_sampling){
-        State::increment_cum_log_prob(logpdf(distr, x));
+    else if (State::inference()) {
+        StateInfer::increment_log_prob(logpdf(distr, x));
     }
 }
 
-void predict(const cpprob::any & x, const std::string & addr = "");
-
-void set_state(StateType s);
+// Declared in state.hpp in class StateCompile with addr=""
+template<class T>
+void predict(const T & x, const std::string & addr)
+{
+    if (State::inference()) {
+        if (addr.empty()) {
+            StateInfer::add_predict(x, get_addr());
+        }
+        else {
+            StateInfer::add_predict(x, addr);
+        }
+    }
+}
 
 template<class Func>
 void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size) {
-    set_state(StateType::compile);
-    bool to_file = !dump_folder.empty();
+    State::set(StateType::compile);
+    const bool to_file = !dump_folder.empty();
 
     if (to_file) {
         const boost::filesystem::path path_dump_folder (dump_folder);
@@ -177,56 +189,41 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
                       << "Please provide a valid folder.\n";
             std::exit (EXIT_FAILURE);
         }
-        Compilation::config_to_file(dump_folder);
+        SocketCompile::config_file(dump_folder);
     }
     else {
-        Compilation::connect_server(tcp_addr);
+        SocketCompile::connect_server(tcp_addr);
     }
 
-    int i = 0;
-    while(true){
+    for (std::size_t i = 0; /* Forever */ ; ++i) {
+        std::cout << "Generating batch " << i << std::endl;
         if (!to_file) {
-            batch_size = Compilation::get_batch_size();
+            batch_size = SocketCompile::get_batch_size();
         }
 
-        for (std::size_t i = 0; i < batch_size; ++i){
-            State::reset_trace();
-
+        for (std::size_t i = 0; i < batch_size; ++i) {
+            StateCompile::new_trace();
             call_f_default_params(f);
-            Compilation::add_trace(State::get_trace_comp());
+            StateCompile::add_trace();
         }
-        Compilation::send_batch();
-        std::cout << "Batch " << i << " generated." << std::endl;
-        ++i;
+        StateCompile::send_batch();
     }
 }
 
-// TODO (Lezcano) Solve this
-// Almost copied from generate_posterior() :(
-template<class Func, class... Args>
-void importance_sampling(
-        const Func & f,
-        const std::tuple<Args...> & observes,
-        const std::string & file_name,
-        size_t n){
-    set_state(StateType::importance_sampling);
-
-    std::ofstream out_file(file_name);
-    out_file.precision(std::numeric_limits<double>::digits10);
-
-    //double sum_w = 0;
-    for (size_t i = 0; i < n; ++i) {
-        std::cout << "Generating sample " << i << std::endl;
-        State::reset_trace();
-
-        call_f_tuple(f, observes);
-
-        auto t = State::get_trace_pred();
-        out_file << std::scientific << t << '\n';
+namespace detail {
+    // We just support either one tensorial observe or many scalar observes
+    template<class... Args>
+    std::enable_if_t<sizeof...(Args) == 1, void>
+    send_observe_init(const std::tuple<Args...> & observes) {
+        SocketInfer::send_observe_init(std::get<0>(observes));
     }
-    std::ofstream ids_file(file_name + "_ids");
-    State::serialize_ids_pred(ids_file);
-}
+
+    template<class... Args>
+    std::enable_if_t<sizeof...(Args) != 1, void>
+    send_observe_init(const std::tuple<Args...> & observes) {
+        SocketInfer::send_observe_init(detail::to_vec<double>(observes));
+    }
+} // end namespace detail
 
 template<class Func, class... Args>
 void generate_posterior(
@@ -234,41 +231,34 @@ void generate_posterior(
         const std::tuple<Args...> & observes,
         const std::string & tcp_addr,
         const std::string & file_name,
-        size_t n){
+        std::size_t n,
+        const StateType state){
     static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
 
-    set_state(StateType::inference);
-    Inference::connect_client(tcp_addr);
-
-    std::ofstream out_file(file_name);
-    out_file.precision(std::numeric_limits<double>::digits10);
-
-    //double sum_w = 0;
-    for (size_t i = 0; i < n; ++i) {
-        std::cout << "Generating sample " << i << std::endl;
-        State::reset_trace();
-        // We just support either one tensorial observe or many scalar observes
-        if (sizeof...(Args) == 1) {
-            auto observe = std::get<0>(observes);
-            Inference::send_observe_init(NDArray<>(std::begin(observe), std::end(observe)));
-        }
-        else {
-            auto obs_vec = detail::to_vec<double>(observes);
-            Inference::send_observe_init(NDArray<>(obs_vec.begin(), obs_vec.end()));
-        }
-
-        // TODO(Lezcano) Hack
-        #ifdef BUILD_SHERPA
-        f(std::get<0>(observes));
-        #else
-        call_f_tuple(f, observes);
-        #endif
-
-        auto t = State::get_trace_pred();
-        out_file << std::scientific << t << '\n';
+    State::set(state);
+    if (State::state() == StateType::inference) {
+        SocketInfer::connect_client(tcp_addr);
     }
-    std::ofstream ids_file(file_name + "_ids");
-    State::serialize_ids_pred(ids_file);
+
+    SocketInfer::config_file(file_name);
+
+    for (std::size_t i = 0; i < n; ++i) {
+        std::cout << "Generating trace " << i << std::endl;
+        StateInfer::new_trace();
+
+        if (State::state() == StateType::inference) {
+            // TODO(Lezcano) C++17 This should be done with an if constexpr
+            detail::send_observe_init(observes);
+        }
+
+        call_f_tuple(f, observes);
+        StateInfer::add_trace();
+
+        //auto t = StateInfer::trace();
+        //out_file << std::scientific << t << '\n';
+    }
+    StateInfer::finish();
 }
-}       // namespace cpprob
+
+} // end namespace cpprob
 #endif //INCLUDE_CPPROB_HPP

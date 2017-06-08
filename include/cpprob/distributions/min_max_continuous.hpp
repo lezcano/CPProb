@@ -47,7 +47,7 @@ public:
         {
             auto a = distr_.alpha();
             auto b = distr_.beta();
-            return min + (max - min)*((a - 1)/(a + b - 2));
+            return min_ + (max_ - min_)*((a - 1)/(a + b - 2));
         }
 
         RealType k() const

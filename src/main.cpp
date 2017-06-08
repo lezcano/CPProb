@@ -8,7 +8,9 @@
 
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
+#include "cpprob/state.hpp"
 #include "cpprob/traits.hpp"
+#include "cpprob/postprocess/stats_printer.hpp"
 
 #ifdef BUILD_SHERPA
 #include "models/sherpa.hpp"
@@ -43,31 +45,30 @@ bool get_observes(const boost::program_options::variables_map & vm,
 }
 
 
-int main(int argc, char** argv) {
+int main(int argc, const char* const* argv) {
     namespace po = boost::program_options;
 
     std::string mode, tcp_addr, observes_file, observes_str, posterior_file, dump_folder;
-    size_t n_samples;
+    std::size_t n_samples;
 
     po::options_description desc("Options");
     desc.add_options()
       ("help,h", "Print help message")
-      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/dryrun/infer-regular"),
+      ("mode,m", po::value<std::string>(&mode)->required()->value_name("compile/infer/infer-regular/estimate/dryrun"),
                                                                        "Compile: Compile a NN to use in inference mode.\n"
                                                                        "Infer: Perform compiled inference.\n"
-                                                                       "Infer-Regular: Perform importance sampling with priors as proposals.\n"
+                                                                       "Infer-Regular: Perform sequential importance sampling with priors as proposals.\n"
+                                                                       "Estimate: Compute some estimators of a posterior.\n"
                                                                        "Dry Run: Execute the model without any inference algorithm.")
-      ("n_samples,n", po::value<size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
+      ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
                                                         "Defaults:\n"
                                                         "  Compile:   tcp://0.0.0.0:5555\n"
-                                                        "  Inference: tcp://127.0.0.1:6666\n"
-                                                        "  Dry Run:   None\n"
-                                                        "  Regular:   None")
+                                                        "  Inference: tcp://127.0.0.1:6666")
       ("dump_folder", po::value<std::string>(&dump_folder), "(Compilation) Dump traces into a file.")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference | Regular) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
-      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular) Posterior distribution file.")
+      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular | Estimate) Posterior distribution file.")
       ;
 
     po::variables_map vm;
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
         }
         cpprob::compile(f, tcp_addr, dump_folder, n_samples);
     }
-    else if (mode == "infer") {
+    else if (mode == "infer" || mode == "infer-regular") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://127.0.0.1:6666";
         }
@@ -114,7 +115,19 @@ int main(int argc, char** argv) {
         tuple_params_t observes;
 
         if (get_observes(vm, observes, observes_file, observes_str)) {
-            cpprob::generate_posterior(f, observes, tcp_addr, posterior_file, n_samples);
+            cpprob::StateType state =
+                    [](const std::string & mode) {
+                        if (mode == "infer") {
+                            return cpprob::StateType::inference;
+                        }
+                        else if (mode == "infer-regular") {
+                            return cpprob::StateType::importance_sampling;
+                        }
+                        else {
+                            std::exit (EXIT_FAILURE);
+                        }
+                    }(mode);
+            cpprob::generate_posterior(f, observes, tcp_addr, posterior_file, n_samples, state);
         }
         else {
             std::cerr << "Could not parse the arguments.\n"
@@ -124,21 +137,13 @@ int main(int argc, char** argv) {
         }
 
     }
-    else if (mode == "infer-regular") {
-        // The return type of parse_file_param_f and parse_string_param_f is the same
-
-        using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
-        tuple_params_t observes;
-
-        if (get_observes(vm, observes, observes_file, observes_str)) {
-            cpprob::importance_sampling(f, observes, posterior_file, n_samples);
-        }
-        else {
-            std::cerr << "Could not parse the arguments.\n"
-                      << "Use spaces to separate the arguments and elements of an aggregate type.\n";
-            std::exit (EXIT_FAILURE);
-        }
-
+    else if (mode == "estimate") {
+        cpprob::Printer p;
+        p.load(posterior_file);
+        p.print(std::cout);
+    }
+    else if (mode == "dryrun") {
+        cpprob::call_f_default_params(f);
     }
     else{
         std::cerr << "Incorrect mode.\n\n"

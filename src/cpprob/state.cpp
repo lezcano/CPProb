@@ -2,118 +2,170 @@
 
 #include <iomanip>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 
 
 #include "cpprob/any.hpp"
 #include "cpprob/serialization.hpp"
+#include "cpprob/socket.hpp"
 #include "cpprob/trace.hpp"
 
 namespace cpprob {
 
-TraceCompile State::t_comp;
-TracePredicts State::t_pred;
-StateType State::state;
-std::unordered_map<std::string, int> State::ids_sample;
-std::unordered_map<std::string, int> State::ids_predict;
-Sample State::prev_sample;
-Sample State::curr_sample;
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////          State             //////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-
-void State::reset_trace()
-{
-    t_comp = TraceCompile();
-    t_pred = TracePredicts();
-    prev_sample = Sample();
-    curr_sample = Sample();
-}
-
-TraceCompile State::get_trace_comp()
-{
-    return t_comp;
-}
-
-TracePredicts State::get_trace_pred()
-{
-    return t_pred;
-}
+StateType State::state_;
 
 void State::set(StateType s)
 {
-    state = s;
-    reset_ids();
+    state_ = s;
+    StateCompile::new_trace();
+    StateInfer::new_trace();
+}
+bool State::compile ()
+{
+    return state_ == StateType::compile;
 }
 
-StateType State::current_state()
+bool State::inference ()
 {
-    return state;
+    return state_ == StateType::inference ||
+           state_ == StateType::importance_sampling;
+
 }
 
-void State::reset_ids()
+StateType State::state()
 {
-    ids_predict.clear();
-    ids_sample.clear();
+    return state_;
 }
 
-int State::sample_instance(int id)
+void State::new_model()
 {
-    return State::t_comp.sample_instance_[id];
+    StateCompile::new_model();
+    StateInfer::new_model();
 }
 
-int State::register_addr_sample(const std::string& addr)
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////        Compilation            ////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+TraceCompile StateCompile::trace_;
+std::vector<TraceCompile> StateCompile::batch_;
+
+void StateCompile::add_trace()
 {
-    auto id = State::ids_sample.emplace(addr, static_cast<int>(State::ids_sample.size())).first->second;
-    if (static_cast<int>(State::t_comp.sample_instance_.size()) <= id){
-        State::t_comp.sample_instance_.resize(static_cast<size_t>(id) + 1);
+    batch_.emplace_back(std::move(trace_));
+}
+
+void StateCompile::send_batch()
+{
+    SocketCompile::send_batch(batch_);
+    batch_.clear();
+}
+
+void StateCompile::new_model()
+{
+    StateCompile::new_trace();
+    batch_.clear();
+}
+
+void StateCompile::new_trace()
+{
+    trace_ = TraceCompile();
+}
+
+void StateCompile::add_sample(const Sample& s)
+{
+    StateCompile::trace_.samples_.emplace_back(s);
+}
+
+int StateCompile::sample_instance(const std::string & addr)
+{
+    // ids start in 1
+    return ++StateCompile::trace_.sample_instance_[addr];
+}
+
+int StateCompile::time_index()
+{
+    return StateCompile::trace_.time_index_;
+}
+
+void StateCompile::increment_time()
+{
+    ++StateCompile::trace_.time_index_;
+}
+
+void StateCompile::add_observe(const NDArray<double>& x)
+{
+    StateCompile::trace_.observes_.emplace_back(x);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////         Inference             ////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+TraceInfer StateInfer::trace_;
+Sample StateInfer::prev_sample_;
+Sample StateInfer::curr_sample_;
+bool StateInfer::all_int_empty = true;
+bool StateInfer::all_real_empty = true;
+bool StateInfer::all_any_empty = true;
+
+
+
+void StateInfer::new_model()
+{
+    new_trace();
+    TraceInfer::ids_predict_.clear();
+    clear_empty_flags();
+}
+
+void StateInfer::new_trace()
+{
+    prev_sample_ = Sample();
+    curr_sample_ = Sample();
+    trace_ = TraceInfer();
+}
+
+void StateInfer::clear_empty_flags()
+{
+    all_int_empty = true;
+    all_real_empty = true;
+    all_any_empty = true;
+}
+
+void StateInfer::add_trace()
+{
+    SocketInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, "_int");
+    SocketInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, "_real");
+    SocketInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, "_any");
+    all_int_empty &= trace_.predict_int_.size() == 0;
+    all_real_empty &= trace_.predict_real_.size() == 0;
+    all_any_empty &= trace_.predict_any_.size() == 0;
+}
+
+
+void StateInfer::finish()
+{
+    SocketInfer::dump_ids(TraceInfer::ids_predict_);
+    if (all_int_empty) {
+        SocketInfer::delete_file("_int");
     }
-    // First id is 1
-    // To change to zero change to post increment
-    ++State::t_comp.sample_instance_[id];
-    return id;
+    if (all_real_empty) {
+        SocketInfer::delete_file("_real");
+    }
+    if (all_any_empty) {
+        SocketInfer::delete_file("_any");
+    }
+    clear_empty_flags();
 }
 
-void State::add_sample(const Sample& s)
+void StateInfer::increment_log_prob(const double log_p)
 {
-    State::t_comp.samples_.emplace_back(s);
-}
-
-void State::add_observe(const NDArray<double>& x)
-{
-    State::t_comp.observes_.emplace_back(x);
-}
-
-int State::time_index()
-{
-    return State::t_comp.time_index_;
-}
-
-void State::increment_time()
-{
-    ++State::t_comp.time_index_;
-}
-
-int State::register_addr_predict(const std::string& addr)
-{
-    return State::ids_predict.emplace(addr, static_cast<int>(State::ids_predict.size())).first->second;
-}
-
-void State::add_predict(const std::string& addr, const cpprob::any &x)
-{
-    auto id = register_addr_predict(addr);
-    State::t_pred.add_predict(id, x);
-}
-
-void State::increment_cum_log_prob(double log_p)
-{
-    State::t_pred.increment_cum_log_prob(log_p);
-}
-
-void State::serialize_ids_pred(std::ofstream & out_file)
-{
-    std::vector<std::string> addresses(State::ids_predict.size());
-    for(const auto& kv : State::ids_predict)
-        addresses[kv.second] = '"' + kv.first + '"';
-    out_file << addresses;
+    trace_.log_w_ += log_p;
 }
 
 }  // namespace cpprob
