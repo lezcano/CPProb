@@ -22,20 +22,19 @@ public:
         x_logw_.emplace_back(std::make_pair(value, logw));
     }
 
+    void set_num_points(const std::size_t num_points)
+    {
+        num_points_ = num_points;
+    }
+
     std::map<T, WeightType> distribution() const
     {
         std::map<T, WeightType> ret;
 
-        for(const auto & point : x_logw_) {
-            auto result = ret.insert(point);
-            if (!result.second) {
-                result.first->second += point.second;
-            }
-        }
-
         auto log_norm = log_normalisation_constant();
-        for(auto & elem : ret) {
-            elem.second = std::exp(elem.second - log_norm);
+
+        for(const auto & point : x_logw_) {
+            ret[point.first] += std::exp(point.second - log_norm);
         }
         return ret;
     }
@@ -61,7 +60,7 @@ public:
 
         NDArray<WeightType> ret = get_zero(x_logw_.front().first);
         for(const auto & elem : x_logw_) {
-            ret += exp(elem.first - log_norm) * fast_pow(elem.second, n);
+            ret += exp(elem.second - log_norm) * fast_pow(elem.first, n);
         }
         return ret;
     }
@@ -145,6 +144,8 @@ private:
 
     // Attributes
     std::vector<std::pair<T, WeightType>> x_logw_; // [(value, log weight)]
+    std::size_t num_points_; // Exact number of points
+                             // The x_logw_ vector might be missing some points if some cpprob::predict statements are not hit in some runs
 };
 } // end namespace cpprob
 #endif //CPPROB_MODEL_HPP

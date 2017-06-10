@@ -148,7 +148,7 @@ void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_pred
 
 void SocketInfer::dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix)
 {
-    std::ofstream f {dump_file_ + suffix};
+    std::ofstream f {dump_file_ + suffix, std::ios::app};
     f.precision(std::numeric_limits<double>::digits10);
     f << std::scientific << std::make_pair(predicts, log_w) << std::endl;
 }

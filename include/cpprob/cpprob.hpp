@@ -245,9 +245,6 @@ void generate_posterior(
 
         call_f_tuple(f, observes);
         StateInfer::add_trace();
-
-        //auto t = StateInfer::trace();
-        //out_file << std::scientific << t << '\n';
     }
     StateInfer::finish();
 }

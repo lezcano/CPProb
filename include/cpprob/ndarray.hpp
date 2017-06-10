@@ -222,6 +222,7 @@ public:
     friend NDArray operator* (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) *= rhs; }
     friend NDArray operator* (const T lhs, const NDArray& rhs){ return NDArray(rhs) *= lhs; }
     friend NDArray operator* (const NDArray& lhs, const T rhs){ return NDArray(lhs) *= rhs; }
+    friend NDArray operator/ (const NDArray& lhs, const T rhs){ return NDArray(lhs) /= rhs; }
 
     friend NDArray<T> sqrt (const NDArray<T> & arr)
     {

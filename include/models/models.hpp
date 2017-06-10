@@ -19,9 +19,9 @@ template<class RealType = double>
 void gaussian_unknown_mean(const RealType y1, const RealType y2)
 {
     using boost::random::normal_distribution;
-    normal_distribution<RealType> prior {1, 5};
+    normal_distribution<RealType> prior {1, std::sqrt(5)};
     const RealType mu = cpprob::sample(prior, true);
-    const RealType var = 2;
+    const RealType var = std::sqrt(2);
 
     normal_distribution<RealType> obs_distr {mu, var};
     cpprob::observe(obs_distr, y1);
@@ -78,6 +78,26 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     cpprob::observe(likelihood, y2);
     cpprob::predict(mu, "Mu");
 }
+/*
+    Truth
+   [[ 0.3775 0.3092 0.3133]
+    [ 0.0416 0.4045 0.5539]
+    [ 0.0541 0.2552 0.6907]
+    [ 0.0455 0.2301 0.7244]
+    [ 0.1062 0.1217 0.7721]
+    [ 0.0714 0.1732 0.7554]
+    [ 0.9300 0.0001 0.0699]
+    [ 0.4577 0.0452 0.4971]
+    [ 0.0926 0.2169 0.6905]
+    [ 0.1014 0.1359 0.7626]
+    [ 0.0985 0.1575 0.744 ]
+    [ 0.1781 0.2198 0.6022]
+    [ 0.0000 0.9848 0.0152]
+    [ 0.1130 0.1674 0.7195]
+    [ 0.0557 0.1848 0.7595]
+    [ 0.2017 0.0472 0.7511]
+    [ 0.2545 0.0611 0.6844]]
+*/
 
 template<std::size_t N>
 void hmm(const std::array<double, N> & observed_states)

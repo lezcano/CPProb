@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <cstdlib>
+#include <csignal>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <boost/filesystem/operations.hpp>
@@ -21,29 +23,74 @@ void execute (const F & f,
               const std::size_t n_samples,
               const std::size_t batch_size,
               const std::string & tcp_addr_compile,
-              const std::string & tcp_addr_infer) {
-    if (compile) {
-        const auto dump_folder = model_name + "_traces";
-        using namespace boost::filesystem;
-        create_directory(path(dump_folder));
-        cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
+              const std::string & tcp_addr_infer,
+              const bool optirun) {
+    using namespace boost::filesystem;
+    const auto model_folder = model_name + "/";
+    const auto nn_folder = model_folder + "nn";
+
+    // Create folders
+    if (!exists(path(model_folder))) {
+        create_directory(path(model_folder));
+    }
+    if (!exists(nn_folder)) {
+        create_directory(path(nn_folder));
     }
 
-    const std::string csis_post = model_name + "_csis.post";
-    const std::string sis_post = model_name + "_sis.post";
+    if (compile) {
+        std::cout << "Compile" << std::endl;
+        const auto dump_folder = model_folder + "traces";
+        const path dump_folder_path{dump_folder};
+
+        if (!exists(dump_folder_path)) {
+            create_directory(path(dump_folder_path));
+            cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
+        }
+        else {
+            std::cerr << "Traces folder already exists. Traces not generated." << std::endl;
+        }
+
+
+        auto compile_command = "python -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
+                                                        " --batchSize " + std::to_string(batch_size) +
+                                                        " --validSize " + std::to_string(batch_size) +
+                                                        " --dir " + nn_folder +
+                                                        " --cuda";
+        if (optirun) {
+            compile_command = "optirun " + compile_command;
+        }
+        std::system(compile_command.c_str());
+    }
+
+    const std::string csis_post = model_folder + "csis.post";
+    const std::string sis_post = model_folder + "sis.post";
 
     if (infer || sis) {
-        const auto observes_file = model_name + ".obs";
+        std::cout << "Inference" << std::endl;
+        const auto observes_file = model_folder + "observes.obs";
 
         using tuple_params_t = cpprob::parameter_types_t<F, std::tuple>;
         tuple_params_t observes;
 
         if (cpprob::parse_file(observes_file, observes)) {
             if (infer) {
+                std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
                 const cpprob::StateType state = cpprob::StateType::inference;
+
+                auto infer_command = "python -m infcomp.infer --dir " + nn_folder +
+                                                            " --cuda";
+
+                if (optirun) {
+                    infer_command = "optirun " + infer_command;
+                }
+
+                std::thread thread_nn (&std::system, infer_command.c_str());
+
                 cpprob::generate_posterior(f, observes, tcp_addr_infer, csis_post, n_samples, state);
+                thread_nn.join();
             }
             if (sis) {
+                std::cout << "Sequential Importance Sampling (SIS)" << std::endl;
                 const cpprob::StateType state = cpprob::StateType::importance_sampling;
                 cpprob::generate_posterior(f, observes, tcp_addr_infer, sis_post, n_samples, state);
             }
@@ -51,11 +98,11 @@ void execute (const F & f,
 
     }
     if (estimate) {
+        std::cout << "Estimators of the Posterior" << std::endl;
         bool none_exist = true;
-        using namespace boost::filesystem;
         const path path_dump_folder (csis_post);
         auto print = [] (const std::string & file_name) {
-            if (exists(path(file_name))) {
+            if (exists(path(file_name + "_ids"))) {
                 cpprob::Printer p;
                 p.load(file_name);
                 p.print(std::cout);
@@ -77,7 +124,7 @@ void execute (const F & f,
 int main(int argc, const char* const* argv) {
 
     std::size_t n_samples, batch_size;
-    bool compile = false, infer = false, sis = false, estimate = false, all = false;
+    bool compile, infer, sis, estimate, all, optirun;
     std::string model, tcp_addr_compile, tcp_addr_infer;
     std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression"}};
 
@@ -97,8 +144,9 @@ int main(int argc, const char* const* argv) {
             ("all", "Execute all the options")
             ("batch_size", po::value<std::size_t>(&batch_size)->default_value(256))
             ("n_samples", po::value<std::size_t>(&n_samples)->default_value(1000), "Number of particles to be sampled from the posterior.")
-            ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.\n")
-            ("tcp_addr_infer", po::value<std::string>(&tcp_addr_infer)->default_value("tcp://127.0.0.1:6666"), "Address and port to connect with the NN at inference time.\n")
+            ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.")
+            ("tcp_addr_infer", po::value<std::string>(&tcp_addr_infer)->default_value("tcp://127.0.0.1:6666"), "Address and port to connect with the NN at inference time.")
+            ("optirun", "Execute python with optirun")
             ;
 
     po::variables_map vm;
@@ -123,6 +171,7 @@ int main(int argc, const char* const* argv) {
     sis = vm.count("sis");
     estimate = vm.count("estimate");
     all = vm.count("all");
+    optirun = vm.count("optirun");
 
     if (all && (compile || infer || sis || estimate)) {
         std::cerr << "Select all or some parts of the compilation, but not both."
@@ -138,23 +187,23 @@ int main(int argc, const char* const* argv) {
 
     if (model == model_names[0] /* unk_mean */) {
         auto f = &models::gaussian_unknown_mean<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer);
+        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[1] /* unk_mean rejection */) {
         auto f = &models::normal_rejection_sampling<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer);
+        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[2] /* linear gaussian walk */) {
         auto f = &models::linear_gaussian_1d<50>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer);
+        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[3] /* hmm */) {
         auto f = &models::hmm<16>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer);
+        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[4] /* linear regression */) {
         auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer);
+        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else{
         std::cerr << "Incorrect model.\n\n"

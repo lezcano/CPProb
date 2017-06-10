@@ -80,7 +80,7 @@ private:
             for (const auto & elem : predicts.first) {
                 auto& vec_distr = distributions[elem.first];
                 int& num_times_hit_predict = predict_instance[elem.first];
-                // Create new distribution for that predict statement
+                // Create new distribution for that predict statement if the vector of distributions is not long enough
                 if (num_times_hit_predict == static_cast<int>(vec_distr.size())) {
                     vec_distr.emplace_back(EmpiricalDistribution<T>());
                     vec_distr.back().add_point(elem.second, predicts.second);
@@ -91,6 +91,11 @@ private:
                 ++num_times_hit_predict;
             }
             ++num_points;
+        }
+        for (auto & addr_distrs : distributions) {
+            for (auto & distr : addr_distrs.second) {
+                distr.set_num_points(num_points);
+            }
         }
     }
 };
