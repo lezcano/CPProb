@@ -1,9 +1,9 @@
-#include <iostream>
-#include <tuple>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
+#include <tuple>
 
-#include <boost/function_types/parameter_types.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 
 #include "cpprob/cpprob.hpp"
@@ -61,7 +61,7 @@ int main(int argc, const char* const* argv) {
                                                                        "Estimate: Compute some estimators of a posterior.\n"
                                                                        "Dry Run: Execute the model without any inference algorithm.")
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
-      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the rnn.\n"
+      ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the NN.\n"
                                                         "Defaults:\n"
                                                         "  Compile:   tcp://0.0.0.0:5555\n"
                                                         "  Inference: tcp://127.0.0.1:6666")
@@ -75,13 +75,13 @@ int main(int argc, const char* const* argv) {
     try {
         po::store(po::parse_command_line(argc, argv, desc),  vm);
         if (vm.count("help") != 0u) {
-            std::cout << "CPProb Compiled Inference Library" << std::endl
+            std::cout << "CPProb Inference Library" << std::endl
                       << desc << std::endl;
             return 0;
         }
 
         po::notify(vm); // throws on error, so do after help in case
-        // there are any problems
+                        // there are any problems
     }
     catch(po::error& e) {
         std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
@@ -109,6 +109,13 @@ int main(int argc, const char* const* argv) {
     else if (mode == "infer" || mode == "infer-regular") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://127.0.0.1:6666";
+        }
+
+        const boost::filesystem::path path_dump_folder (dump_folder);
+        if (!boost::filesystem::exists(path_dump_folder)) {
+            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
+                      << "Please provide a valid folder.\n";
+            std::exit (EXIT_FAILURE);
         }
 
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
@@ -143,6 +150,7 @@ int main(int argc, const char* const* argv) {
         p.print(std::cout);
     }
     else if (mode == "dryrun") {
+        cpprob::State::set(cpprob::StateType::dryrun);
         cpprob::call_f_default_params(f);
     }
     else{

@@ -15,7 +15,7 @@
 #include "cpprob/cpprob.hpp"
 
 namespace models {
-template<class RealType>
+template<class RealType = double>
 void gaussian_unknown_mean(const RealType y1, const RealType y2)
 {
     using boost::random::normal_distribution;

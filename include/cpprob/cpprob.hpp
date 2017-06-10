@@ -12,8 +12,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/filesystem/operations.hpp>
-
 #include "cpprob/any.hpp"
 #include "cpprob/ndarray.hpp"
 #include "cpprob/socket.hpp"
@@ -27,7 +25,7 @@ namespace cpprob {
 namespace detail {
 
 // Forward declarations
-template<class T, class U, class>
+template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
 std::vector<T> to_vec(U value);
 template<class T, class U, class V>
 std::vector<T> to_vec(const std::pair<U, V> & pair);
@@ -39,7 +37,7 @@ template<class T, class U, std::size_t N>
 std::vector<T> to_vec(const std::array<U, N> & args);
 
 
-template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+template<class T, class U, class>
 std::vector<T> to_vec(U value)
 {
     return std::vector<T>({static_cast<T>(value)});
@@ -183,12 +181,6 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
     const bool to_file = !dump_folder.empty();
 
     if (to_file) {
-        const boost::filesystem::path path_dump_folder (dump_folder);
-        if (!boost::filesystem::exists(path_dump_folder)) {
-            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
-                      << "Please provide a valid folder.\n";
-            std::exit (EXIT_FAILURE);
-        }
         SocketCompile::config_file(dump_folder);
     }
     else {
