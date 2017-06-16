@@ -31,6 +31,8 @@ struct Poisson;
 
 struct UniformContinuous;
 
+struct Laplace;
+
 struct Sample;
 
 struct Trace;
@@ -120,8 +122,9 @@ enum class Distribution : uint8_t {
   Poisson = 7,
   UniformContinuous = 8,
   MultivariateNormal = 9,
+  Laplace = 10,
   MIN = NONE,
-  MAX = MultivariateNormal
+  MAX = Laplace
 };
 
 inline const char **EnumNamesDistribution() {
@@ -136,6 +139,7 @@ inline const char **EnumNamesDistribution() {
     "Poisson",
     "UniformContinuous",
     "MultivariateNormal",
+    "Laplace",
     nullptr
   };
   return names;
@@ -184,6 +188,10 @@ template<> struct DistributionTraits<UniformContinuous> {
 
 template<> struct DistributionTraits<MultivariateNormal> {
   static const Distribution enum_value = Distribution::MultivariateNormal;
+};
+
+template<> struct DistributionTraits<Laplace> {
+  static const Distribution enum_value = Distribution::Laplace;
 };
 
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
@@ -841,6 +849,76 @@ inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
   return builder_.Finish();
 }
 
+struct Laplace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_LOCATION = 4,
+    VT_PRIOR_SCALE = 6,
+    VT_PROPOSAL_LOCATION = 8,
+    VT_PROPOSAL_SCALE = 10
+  };
+  double prior_location() const {
+    return GetField<double>(VT_PRIOR_LOCATION, 0.0);
+  }
+  double prior_scale() const {
+    return GetField<double>(VT_PRIOR_SCALE, 0.0);
+  }
+  double proposal_location() const {
+    return GetField<double>(VT_PROPOSAL_LOCATION, 0.0);
+  }
+  double proposal_scale() const {
+    return GetField<double>(VT_PROPOSAL_SCALE, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_LOCATION) &&
+           VerifyField<double>(verifier, VT_PRIOR_SCALE) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_LOCATION) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_SCALE) &&
+           verifier.EndTable();
+  }
+};
+
+struct LaplaceBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_location(double prior_location) {
+    fbb_.AddElement<double>(Laplace::VT_PRIOR_LOCATION, prior_location, 0.0);
+  }
+  void add_prior_scale(double prior_scale) {
+    fbb_.AddElement<double>(Laplace::VT_PRIOR_SCALE, prior_scale, 0.0);
+  }
+  void add_proposal_location(double proposal_location) {
+    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_LOCATION, proposal_location, 0.0);
+  }
+  void add_proposal_scale(double proposal_scale) {
+    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_SCALE, proposal_scale, 0.0);
+  }
+  LaplaceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  LaplaceBuilder &operator=(const LaplaceBuilder &);
+  flatbuffers::Offset<Laplace> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<Laplace>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Laplace> CreateLaplace(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_location = 0.0,
+    double prior_scale = 0.0,
+    double proposal_location = 0.0,
+    double proposal_scale = 0.0) {
+  LaplaceBuilder builder_(_fbb);
+  builder_.add_proposal_scale(proposal_scale);
+  builder_.add_proposal_location(proposal_location);
+  builder_.add_prior_scale(prior_scale);
+  builder_.add_prior_location(prior_location);
+  return builder_.Finish();
+}
+
 struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TIME = 4,
@@ -1382,6 +1460,10 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
     }
     case Distribution::MultivariateNormal: {
       auto ptr = reinterpret_cast<const MultivariateNormal *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::Laplace: {
+      auto ptr = reinterpret_cast<const Laplace *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;
