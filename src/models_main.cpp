@@ -51,11 +51,11 @@ void execute (const F & f,
         }
 
 
-        auto compile_command = "python -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
-                                                        " --batchSize " + std::to_string(batch_size) +
-                                                        " --validSize " + std::to_string(batch_size) +
-                                                        " --dir " + nn_folder +
-                                                        " --cuda";
+        auto compile_command = "python3 -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
+                                                         " --batchSize " + std::to_string(batch_size) +
+                                                         " --validSize " + std::to_string(batch_size) +
+                                                         " --dir " + nn_folder +
+                                                         " --cuda";
         if (optirun) {
             compile_command = "optirun " + compile_command;
         }
@@ -77,8 +77,8 @@ void execute (const F & f,
                 std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
                 const cpprob::StateType state = cpprob::StateType::inference;
 
-                auto infer_command = "python -m infcomp.infer --dir " + nn_folder +
-                                                            " --cuda";
+                auto infer_command = "python3 -m infcomp.infer --dir " + nn_folder +
+                                                             " --cuda";
 
                 if (optirun) {
                     infer_command = "optirun " + infer_command;
