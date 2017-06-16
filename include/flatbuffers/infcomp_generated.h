@@ -13,25 +13,29 @@ struct Message;
 
 struct NDArray;
 
+struct Beta;
+
 struct Categorical;
 
 struct Discrete;
 
 struct Flip;
 
-struct Normal;
+struct Gamma;
 
-struct UniformDiscrete;
-
-struct VMF;
+struct Laplace;
 
 struct MultivariateNormal;
+
+struct Normal;
 
 struct Poisson;
 
 struct UniformContinuous;
 
-struct Laplace;
+struct UniformDiscrete;
+
+struct VMF;
 
 struct Sample;
 
@@ -113,33 +117,37 @@ bool VerifyMessageBodyVector(flatbuffers::Verifier &verifier, const flatbuffers:
 
 enum class Distribution : uint8_t {
   NONE = 0,
-  Categorical = 1,
-  Discrete = 2,
-  Flip = 3,
-  Normal = 4,
-  UniformDiscrete = 5,
-  VMF = 6,
-  Poisson = 7,
-  UniformContinuous = 8,
-  MultivariateNormal = 9,
-  Laplace = 10,
+  Beta = 1,
+  Categorical = 2,
+  Discrete = 3,
+  Flip = 4,
+  Gamma = 5,
+  Laplace = 6,
+  MultivariateNormal = 7,
+  Normal = 8,
+  Poisson = 9,
+  UniformContinuous = 10,
+  UniformDiscrete = 11,
+  VMF = 12,
   MIN = NONE,
-  MAX = Laplace
+  MAX = VMF
 };
 
 inline const char **EnumNamesDistribution() {
   static const char *names[] = {
     "NONE",
+    "Beta",
     "Categorical",
     "Discrete",
     "Flip",
+    "Gamma",
+    "Laplace",
+    "MultivariateNormal",
     "Normal",
-    "UniformDiscrete",
-    "VMF",
     "Poisson",
     "UniformContinuous",
-    "MultivariateNormal",
-    "Laplace",
+    "UniformDiscrete",
+    "VMF",
     nullptr
   };
   return names;
@@ -154,6 +162,10 @@ template<typename T> struct DistributionTraits {
   static const Distribution enum_value = Distribution::NONE;
 };
 
+template<> struct DistributionTraits<Beta> {
+  static const Distribution enum_value = Distribution::Beta;
+};
+
 template<> struct DistributionTraits<Categorical> {
   static const Distribution enum_value = Distribution::Categorical;
 };
@@ -166,16 +178,20 @@ template<> struct DistributionTraits<Flip> {
   static const Distribution enum_value = Distribution::Flip;
 };
 
+template<> struct DistributionTraits<Gamma> {
+  static const Distribution enum_value = Distribution::Gamma;
+};
+
+template<> struct DistributionTraits<Laplace> {
+  static const Distribution enum_value = Distribution::Laplace;
+};
+
+template<> struct DistributionTraits<MultivariateNormal> {
+  static const Distribution enum_value = Distribution::MultivariateNormal;
+};
+
 template<> struct DistributionTraits<Normal> {
   static const Distribution enum_value = Distribution::Normal;
-};
-
-template<> struct DistributionTraits<UniformDiscrete> {
-  static const Distribution enum_value = Distribution::UniformDiscrete;
-};
-
-template<> struct DistributionTraits<VMF> {
-  static const Distribution enum_value = Distribution::VMF;
 };
 
 template<> struct DistributionTraits<Poisson> {
@@ -186,12 +202,12 @@ template<> struct DistributionTraits<UniformContinuous> {
   static const Distribution enum_value = Distribution::UniformContinuous;
 };
 
-template<> struct DistributionTraits<MultivariateNormal> {
-  static const Distribution enum_value = Distribution::MultivariateNormal;
+template<> struct DistributionTraits<UniformDiscrete> {
+  static const Distribution enum_value = Distribution::UniformDiscrete;
 };
 
-template<> struct DistributionTraits<Laplace> {
-  static const Distribution enum_value = Distribution::Laplace;
+template<> struct DistributionTraits<VMF> {
+  static const Distribution enum_value = Distribution::VMF;
 };
 
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
@@ -308,6 +324,56 @@ inline flatbuffers::Offset<NDArray> CreateNDArrayDirect(
       _fbb,
       data ? _fbb.CreateVector<double>(*data) : 0,
       shape ? _fbb.CreateVector<int32_t>(*shape) : 0);
+}
+
+struct Beta FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PROPOSAL_MODE = 4,
+    VT_PROPOSAL_CERTAINTY = 6
+  };
+  double proposal_mode() const {
+    return GetField<double>(VT_PROPOSAL_MODE, 0.0);
+  }
+  double proposal_certainty() const {
+    return GetField<double>(VT_PROPOSAL_CERTAINTY, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_MODE) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_CERTAINTY) &&
+           verifier.EndTable();
+  }
+};
+
+struct BetaBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_proposal_mode(double proposal_mode) {
+    fbb_.AddElement<double>(Beta::VT_PROPOSAL_MODE, proposal_mode, 0.0);
+  }
+  void add_proposal_certainty(double proposal_certainty) {
+    fbb_.AddElement<double>(Beta::VT_PROPOSAL_CERTAINTY, proposal_certainty, 0.0);
+  }
+  BetaBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  BetaBuilder &operator=(const BetaBuilder &);
+  flatbuffers::Offset<Beta> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<Beta>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Beta> CreateBeta(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double proposal_mode = 0.0,
+    double proposal_certainty = 0.0) {
+  BetaBuilder builder_(_fbb);
+  builder_.add_proposal_certainty(proposal_certainty);
+  builder_.add_proposal_mode(proposal_mode);
+  return builder_.Finish();
 }
 
 struct Categorical FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -452,6 +518,200 @@ inline flatbuffers::Offset<Flip> CreateFlip(
   return builder_.Finish();
 }
 
+struct Gamma FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PROPOSAL_LOCATION = 4,
+    VT_PROPOSAL_SCALE = 6
+  };
+  double proposal_location() const {
+    return GetField<double>(VT_PROPOSAL_LOCATION, 0.0);
+  }
+  double proposal_scale() const {
+    return GetField<double>(VT_PROPOSAL_SCALE, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_LOCATION) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_SCALE) &&
+           verifier.EndTable();
+  }
+};
+
+struct GammaBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_proposal_location(double proposal_location) {
+    fbb_.AddElement<double>(Gamma::VT_PROPOSAL_LOCATION, proposal_location, 0.0);
+  }
+  void add_proposal_scale(double proposal_scale) {
+    fbb_.AddElement<double>(Gamma::VT_PROPOSAL_SCALE, proposal_scale, 0.0);
+  }
+  GammaBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  GammaBuilder &operator=(const GammaBuilder &);
+  flatbuffers::Offset<Gamma> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<Gamma>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Gamma> CreateGamma(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double proposal_location = 0.0,
+    double proposal_scale = 0.0) {
+  GammaBuilder builder_(_fbb);
+  builder_.add_proposal_scale(proposal_scale);
+  builder_.add_proposal_location(proposal_location);
+  return builder_.Finish();
+}
+
+struct Laplace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_LOCATION = 4,
+    VT_PRIOR_SCALE = 6,
+    VT_PROPOSAL_LOCATION = 8,
+    VT_PROPOSAL_SCALE = 10
+  };
+  double prior_location() const {
+    return GetField<double>(VT_PRIOR_LOCATION, 0.0);
+  }
+  double prior_scale() const {
+    return GetField<double>(VT_PRIOR_SCALE, 0.0);
+  }
+  double proposal_location() const {
+    return GetField<double>(VT_PROPOSAL_LOCATION, 0.0);
+  }
+  double proposal_scale() const {
+    return GetField<double>(VT_PROPOSAL_SCALE, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_LOCATION) &&
+           VerifyField<double>(verifier, VT_PRIOR_SCALE) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_LOCATION) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_SCALE) &&
+           verifier.EndTable();
+  }
+};
+
+struct LaplaceBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_location(double prior_location) {
+    fbb_.AddElement<double>(Laplace::VT_PRIOR_LOCATION, prior_location, 0.0);
+  }
+  void add_prior_scale(double prior_scale) {
+    fbb_.AddElement<double>(Laplace::VT_PRIOR_SCALE, prior_scale, 0.0);
+  }
+  void add_proposal_location(double proposal_location) {
+    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_LOCATION, proposal_location, 0.0);
+  }
+  void add_proposal_scale(double proposal_scale) {
+    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_SCALE, proposal_scale, 0.0);
+  }
+  LaplaceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  LaplaceBuilder &operator=(const LaplaceBuilder &);
+  flatbuffers::Offset<Laplace> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<Laplace>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Laplace> CreateLaplace(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_location = 0.0,
+    double prior_scale = 0.0,
+    double proposal_location = 0.0,
+    double proposal_scale = 0.0) {
+  LaplaceBuilder builder_(_fbb);
+  builder_.add_proposal_scale(proposal_scale);
+  builder_.add_proposal_location(proposal_location);
+  builder_.add_prior_scale(prior_scale);
+  builder_.add_prior_location(prior_location);
+  return builder_.Finish();
+}
+
+struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MEAN = 4,
+    VT_PRIOR_SIGMA = 6,
+    VT_PROPOSAL_MEAN = 8,
+    VT_PROPOSAL_SIGMA = 10
+  };
+  const NDArray *prior_mean() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_MEAN);
+  }
+  const NDArray *prior_sigma() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_SIGMA);
+  }
+  const NDArray *proposal_mean() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_MEAN);
+  }
+  const NDArray *proposal_sigma() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_SIGMA);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_MEAN) &&
+           verifier.VerifyTable(prior_mean()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_SIGMA) &&
+           verifier.VerifyTable(prior_sigma()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_MEAN) &&
+           verifier.VerifyTable(proposal_mean()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_SIGMA) &&
+           verifier.VerifyTable(proposal_sigma()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MultivariateNormalBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_mean(flatbuffers::Offset<NDArray> prior_mean) {
+    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_MEAN, prior_mean);
+  }
+  void add_prior_sigma(flatbuffers::Offset<NDArray> prior_sigma) {
+    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_SIGMA, prior_sigma);
+  }
+  void add_proposal_mean(flatbuffers::Offset<NDArray> proposal_mean) {
+    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_MEAN, proposal_mean);
+  }
+  void add_proposal_sigma(flatbuffers::Offset<NDArray> proposal_sigma) {
+    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_SIGMA, proposal_sigma);
+  }
+  MultivariateNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MultivariateNormalBuilder &operator=(const MultivariateNormalBuilder &);
+  flatbuffers::Offset<MultivariateNormal> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<MultivariateNormal>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<NDArray> prior_mean = 0,
+    flatbuffers::Offset<NDArray> prior_sigma = 0,
+    flatbuffers::Offset<NDArray> proposal_mean = 0,
+    flatbuffers::Offset<NDArray> proposal_sigma = 0) {
+  MultivariateNormalBuilder builder_(_fbb);
+  builder_.add_proposal_sigma(proposal_sigma);
+  builder_.add_proposal_mean(proposal_mean);
+  builder_.add_prior_sigma(prior_sigma);
+  builder_.add_prior_mean(prior_mean);
+  return builder_.Finish();
+}
+
 struct Normal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_PRIOR_MEAN = 4,
@@ -519,6 +779,126 @@ inline flatbuffers::Offset<Normal> CreateNormal(
   builder_.add_proposal_mean(proposal_mean);
   builder_.add_prior_std(prior_std);
   builder_.add_prior_mean(prior_mean);
+  return builder_.Finish();
+}
+
+struct Poisson FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_LAMBDA = 4,
+    VT_PROPOSAL_LAMBDA = 6
+  };
+  double prior_lambda() const {
+    return GetField<double>(VT_PRIOR_LAMBDA, 0.0);
+  }
+  double proposal_lambda() const {
+    return GetField<double>(VT_PROPOSAL_LAMBDA, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_LAMBDA) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_LAMBDA) &&
+           verifier.EndTable();
+  }
+};
+
+struct PoissonBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_lambda(double prior_lambda) {
+    fbb_.AddElement<double>(Poisson::VT_PRIOR_LAMBDA, prior_lambda, 0.0);
+  }
+  void add_proposal_lambda(double proposal_lambda) {
+    fbb_.AddElement<double>(Poisson::VT_PROPOSAL_LAMBDA, proposal_lambda, 0.0);
+  }
+  PoissonBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  PoissonBuilder &operator=(const PoissonBuilder &);
+  flatbuffers::Offset<Poisson> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<Poisson>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Poisson> CreatePoisson(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_lambda = 0.0,
+    double proposal_lambda = 0.0) {
+  PoissonBuilder builder_(_fbb);
+  builder_.add_proposal_lambda(proposal_lambda);
+  builder_.add_prior_lambda(prior_lambda);
+  return builder_.Finish();
+}
+
+struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MIN = 4,
+    VT_PRIOR_MAX = 6,
+    VT_PROPOSAL_MODE = 8,
+    VT_PROPOSAL_CERTAINTY = 10
+  };
+  double prior_min() const {
+    return GetField<double>(VT_PRIOR_MIN, 0.0);
+  }
+  double prior_max() const {
+    return GetField<double>(VT_PRIOR_MAX, 0.0);
+  }
+  double proposal_mode() const {
+    return GetField<double>(VT_PROPOSAL_MODE, 0.0);
+  }
+  double proposal_certainty() const {
+    return GetField<double>(VT_PROPOSAL_CERTAINTY, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_MIN) &&
+           VerifyField<double>(verifier, VT_PRIOR_MAX) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_MODE) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_CERTAINTY) &&
+           verifier.EndTable();
+  }
+};
+
+struct UniformContinuousBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_min(double prior_min) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MIN, prior_min, 0.0);
+  }
+  void add_prior_max(double prior_max) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0.0);
+  }
+  void add_proposal_mode(double proposal_mode) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_MODE, proposal_mode, 0.0);
+  }
+  void add_proposal_certainty(double proposal_certainty) {
+    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_CERTAINTY, proposal_certainty, 0.0);
+  }
+  UniformContinuousBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  UniformContinuousBuilder &operator=(const UniformContinuousBuilder &);
+  flatbuffers::Offset<UniformContinuous> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<UniformContinuous>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_min = 0.0,
+    double prior_max = 0.0,
+    double proposal_mode = 0.0,
+    double proposal_certainty = 0.0) {
+  UniformContinuousBuilder builder_(_fbb);
+  builder_.add_proposal_certainty(proposal_certainty);
+  builder_.add_proposal_mode(proposal_mode);
+  builder_.add_prior_max(prior_max);
+  builder_.add_prior_min(prior_min);
   return builder_.Finish();
 }
 
@@ -652,270 +1032,6 @@ inline flatbuffers::Offset<VMF> CreateVMF(
   builder_.add_prior_kappa(prior_kappa);
   builder_.add_proposal_mu(proposal_mu);
   builder_.add_prior_mu(prior_mu);
-  return builder_.Finish();
-}
-
-struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
-    VT_PRIOR_MEAN = 4,
-    VT_PRIOR_SIGMA = 6,
-    VT_PROPOSAL_MEAN = 8,
-    VT_PROPOSAL_SIGMA = 10
-  };
-  const NDArray *prior_mean() const {
-    return GetPointer<const NDArray *>(VT_PRIOR_MEAN);
-  }
-  const NDArray *prior_sigma() const {
-    return GetPointer<const NDArray *>(VT_PRIOR_SIGMA);
-  }
-  const NDArray *proposal_mean() const {
-    return GetPointer<const NDArray *>(VT_PROPOSAL_MEAN);
-  }
-  const NDArray *proposal_sigma() const {
-    return GetPointer<const NDArray *>(VT_PROPOSAL_SIGMA);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_MEAN) &&
-           verifier.VerifyTable(prior_mean()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_SIGMA) &&
-           verifier.VerifyTable(prior_sigma()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_MEAN) &&
-           verifier.VerifyTable(proposal_mean()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_SIGMA) &&
-           verifier.VerifyTable(proposal_sigma()) &&
-           verifier.EndTable();
-  }
-};
-
-struct MultivariateNormalBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_prior_mean(flatbuffers::Offset<NDArray> prior_mean) {
-    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_MEAN, prior_mean);
-  }
-  void add_prior_sigma(flatbuffers::Offset<NDArray> prior_sigma) {
-    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_SIGMA, prior_sigma);
-  }
-  void add_proposal_mean(flatbuffers::Offset<NDArray> proposal_mean) {
-    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_MEAN, proposal_mean);
-  }
-  void add_proposal_sigma(flatbuffers::Offset<NDArray> proposal_sigma) {
-    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_SIGMA, proposal_sigma);
-  }
-  MultivariateNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  MultivariateNormalBuilder &operator=(const MultivariateNormalBuilder &);
-  flatbuffers::Offset<MultivariateNormal> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
-    auto o = flatbuffers::Offset<MultivariateNormal>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<NDArray> prior_mean = 0,
-    flatbuffers::Offset<NDArray> prior_sigma = 0,
-    flatbuffers::Offset<NDArray> proposal_mean = 0,
-    flatbuffers::Offset<NDArray> proposal_sigma = 0) {
-  MultivariateNormalBuilder builder_(_fbb);
-  builder_.add_proposal_sigma(proposal_sigma);
-  builder_.add_proposal_mean(proposal_mean);
-  builder_.add_prior_sigma(prior_sigma);
-  builder_.add_prior_mean(prior_mean);
-  return builder_.Finish();
-}
-
-struct Poisson FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
-    VT_PRIOR_LAMBDA = 4,
-    VT_PROPOSAL_LAMBDA = 6
-  };
-  double prior_lambda() const {
-    return GetField<double>(VT_PRIOR_LAMBDA, 0.0);
-  }
-  double proposal_lambda() const {
-    return GetField<double>(VT_PROPOSAL_LAMBDA, 0.0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<double>(verifier, VT_PRIOR_LAMBDA) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_LAMBDA) &&
-           verifier.EndTable();
-  }
-};
-
-struct PoissonBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_prior_lambda(double prior_lambda) {
-    fbb_.AddElement<double>(Poisson::VT_PRIOR_LAMBDA, prior_lambda, 0.0);
-  }
-  void add_proposal_lambda(double proposal_lambda) {
-    fbb_.AddElement<double>(Poisson::VT_PROPOSAL_LAMBDA, proposal_lambda, 0.0);
-  }
-  PoissonBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  PoissonBuilder &operator=(const PoissonBuilder &);
-  flatbuffers::Offset<Poisson> Finish() {
-    const auto end = fbb_.EndTable(start_, 2);
-    auto o = flatbuffers::Offset<Poisson>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<Poisson> CreatePoisson(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    double prior_lambda = 0.0,
-    double proposal_lambda = 0.0) {
-  PoissonBuilder builder_(_fbb);
-  builder_.add_proposal_lambda(proposal_lambda);
-  builder_.add_prior_lambda(prior_lambda);
-  return builder_.Finish();
-}
-
-struct UniformContinuous FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
-    VT_PRIOR_MIN = 4,
-    VT_PRIOR_MAX = 6,
-    VT_PROPOSAL_MODE = 8,
-    VT_PROPOSAL_CERTAINTY = 10
-  };
-  double prior_min() const {
-    return GetField<double>(VT_PRIOR_MIN, 0.0);
-  }
-  double prior_max() const {
-    return GetField<double>(VT_PRIOR_MAX, 0.0);
-  }
-  double proposal_mode() const {
-    return GetField<double>(VT_PROPOSAL_MODE, 0.0);
-  }
-  double proposal_certainty() const {
-    return GetField<double>(VT_PROPOSAL_CERTAINTY, 0.0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<double>(verifier, VT_PRIOR_MIN) &&
-           VerifyField<double>(verifier, VT_PRIOR_MAX) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_MODE) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_CERTAINTY) &&
-           verifier.EndTable();
-  }
-};
-
-struct UniformContinuousBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_prior_min(double prior_min) {
-    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MIN, prior_min, 0.0);
-  }
-  void add_prior_max(double prior_max) {
-    fbb_.AddElement<double>(UniformContinuous::VT_PRIOR_MAX, prior_max, 0.0);
-  }
-  void add_proposal_mode(double proposal_mode) {
-    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_MODE, proposal_mode, 0.0);
-  }
-  void add_proposal_certainty(double proposal_certainty) {
-    fbb_.AddElement<double>(UniformContinuous::VT_PROPOSAL_CERTAINTY, proposal_certainty, 0.0);
-  }
-  UniformContinuousBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  UniformContinuousBuilder &operator=(const UniformContinuousBuilder &);
-  flatbuffers::Offset<UniformContinuous> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
-    auto o = flatbuffers::Offset<UniformContinuous>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    double prior_min = 0.0,
-    double prior_max = 0.0,
-    double proposal_mode = 0.0,
-    double proposal_certainty = 0.0) {
-  UniformContinuousBuilder builder_(_fbb);
-  builder_.add_proposal_certainty(proposal_certainty);
-  builder_.add_proposal_mode(proposal_mode);
-  builder_.add_prior_max(prior_max);
-  builder_.add_prior_min(prior_min);
-  return builder_.Finish();
-}
-
-struct Laplace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
-    VT_PRIOR_LOCATION = 4,
-    VT_PRIOR_SCALE = 6,
-    VT_PROPOSAL_LOCATION = 8,
-    VT_PROPOSAL_SCALE = 10
-  };
-  double prior_location() const {
-    return GetField<double>(VT_PRIOR_LOCATION, 0.0);
-  }
-  double prior_scale() const {
-    return GetField<double>(VT_PRIOR_SCALE, 0.0);
-  }
-  double proposal_location() const {
-    return GetField<double>(VT_PROPOSAL_LOCATION, 0.0);
-  }
-  double proposal_scale() const {
-    return GetField<double>(VT_PROPOSAL_SCALE, 0.0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<double>(verifier, VT_PRIOR_LOCATION) &&
-           VerifyField<double>(verifier, VT_PRIOR_SCALE) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_LOCATION) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_SCALE) &&
-           verifier.EndTable();
-  }
-};
-
-struct LaplaceBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_prior_location(double prior_location) {
-    fbb_.AddElement<double>(Laplace::VT_PRIOR_LOCATION, prior_location, 0.0);
-  }
-  void add_prior_scale(double prior_scale) {
-    fbb_.AddElement<double>(Laplace::VT_PRIOR_SCALE, prior_scale, 0.0);
-  }
-  void add_proposal_location(double proposal_location) {
-    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_LOCATION, proposal_location, 0.0);
-  }
-  void add_proposal_scale(double proposal_scale) {
-    fbb_.AddElement<double>(Laplace::VT_PROPOSAL_SCALE, proposal_scale, 0.0);
-  }
-  LaplaceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  LaplaceBuilder &operator=(const LaplaceBuilder &);
-  flatbuffers::Offset<Laplace> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
-    auto o = flatbuffers::Offset<Laplace>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<Laplace> CreateLaplace(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    double prior_location = 0.0,
-    double prior_scale = 0.0,
-    double proposal_location = 0.0,
-    double proposal_scale = 0.0) {
-  LaplaceBuilder builder_(_fbb);
-  builder_.add_proposal_scale(proposal_scale);
-  builder_.add_proposal_location(proposal_location);
-  builder_.add_prior_scale(prior_scale);
-  builder_.add_prior_location(prior_location);
   return builder_.Finish();
 }
 
@@ -1426,6 +1542,10 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
     case Distribution::NONE: {
       return true;
     }
+    case Distribution::Beta: {
+      auto ptr = reinterpret_cast<const Beta *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
     case Distribution::Categorical: {
       auto ptr = reinterpret_cast<const Categorical *>(obj);
       return verifier.VerifyTable(ptr);
@@ -1438,16 +1558,20 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
       auto ptr = reinterpret_cast<const Flip *>(obj);
       return verifier.VerifyTable(ptr);
     }
+    case Distribution::Gamma: {
+      auto ptr = reinterpret_cast<const Gamma *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::Laplace: {
+      auto ptr = reinterpret_cast<const Laplace *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::MultivariateNormal: {
+      auto ptr = reinterpret_cast<const MultivariateNormal *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
     case Distribution::Normal: {
       auto ptr = reinterpret_cast<const Normal *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Distribution::UniformDiscrete: {
-      auto ptr = reinterpret_cast<const UniformDiscrete *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Distribution::VMF: {
-      auto ptr = reinterpret_cast<const VMF *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Distribution::Poisson: {
@@ -1458,12 +1582,12 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
       auto ptr = reinterpret_cast<const UniformContinuous *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Distribution::MultivariateNormal: {
-      auto ptr = reinterpret_cast<const MultivariateNormal *>(obj);
+    case Distribution::UniformDiscrete: {
+      auto ptr = reinterpret_cast<const UniformDiscrete *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Distribution::Laplace: {
-      auto ptr = reinterpret_cast<const Laplace *>(obj);
+    case Distribution::VMF: {
+      auto ptr = reinterpret_cast<const VMF *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;
