@@ -49,6 +49,7 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
 {
     using boost::random::normal_distribution;
     using boost::random::uniform_real_distribution;
+    using boost::math::pdf;
 
     const RealType mu_prior = 1;
     const RealType sigma_prior = std::sqrt(5);
@@ -58,19 +59,17 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     int it = 0;
 
     // Sample from Normal Distr
-    const auto maxval = boost::math::pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu_prior);
-    uniform_real_distribution<RealType> proposal {-5*sigma_prior, 5*sigma_prior};
-    uniform_real_distribution<RealType> accept {0, 1};
+    const auto maxval = pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu_prior);
+    uniform_real_distribution<RealType> proposal {mu_prior - 5*sigma_prior, mu_prior + 5*sigma_prior};
+    uniform_real_distribution<RealType> accept {0, maxval};
     RealType mu;
 
-
-    while(it < max_it) {
-        auto p = cpprob::sample(proposal, true);
-        mu = cpprob::sample(accept, true);
-        if (p < boost::math::pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu)/maxval) {
+    while (it++ < max_it) {
+        mu = cpprob::sample(proposal, true);
+        if (cpprob::sample(accept) <
+            pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu)) {
             break;
         }
-        ++it;
     }
 
     normal_distribution<RealType> likelihood {mu, sigma};
