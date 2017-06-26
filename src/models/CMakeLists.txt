@@ -8,9 +8,6 @@ if(BUILD_SHERPA)
     add_executable(sherpa_gen sherpa_gen.cpp)
     target_link_libraries(sherpa_gen PUBLIC ${PROJECT_NAME} sherpa)
 
-    add_executable(sherpa_statistics sherpa_statistics.cpp)
-    target_link_libraries(sherpa_statistics PUBLIC ${PROJECT_NAME} sherpa)
-
     add_library(sherpa_mini SHARED sherpa_mini.cpp)
 
     add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
