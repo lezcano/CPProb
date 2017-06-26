@@ -20,7 +20,6 @@
 #include "cpprob/cpprob.hpp"
 #include "cpprob/ndarray.hpp"
 
-namespace cpprob {
 namespace models {
 
 SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
@@ -93,4 +92,3 @@ SherpaWrapper::sherpa_pred_obs() const
 }
 
 } // end namespace models
-} // end namespace cpprob
