@@ -114,7 +114,6 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
     }
     else if  (State::state() == StateType::importance_sampling) {
         x = distr(get_rng());
-        StateInfer::increment_log_prob(logpdf(distr, x));
     }
     else if (State::state() == StateType::inference){
         StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
@@ -126,9 +125,9 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
 
             StateInfer::increment_log_prob(logpdf(distr, x) - logpdf(proposal, x));
         }
+        // No proposal -> Default to prior as proposal
         catch (const std::runtime_error &) {
             x = distr(get_rng());
-            // No need to increment the log_probability of the trace since p(x)/p(x) = 1
         }
 
         StateInfer::curr_sample_.set_value(x);
