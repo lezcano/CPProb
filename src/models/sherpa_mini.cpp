@@ -41,7 +41,7 @@ std::vector<Rivet::FourMomentum> select() {
 	int select = static_cast<int>(select_ran);
 	cpprob::predict(select, "Channel");
 
-	if (cpprob::State::current_state() == cpprob::StateType::dryrun)
+	if (cpprob::State::state() == cpprob::StateType::dryrun)
         std::cout << "Selected channel " << select << std::endl;
 
 	auto v0 = Rivet::FourMomentum::mkXYZE(3.12206631, 0.18609799, -0.13257316, 3.16910447);
