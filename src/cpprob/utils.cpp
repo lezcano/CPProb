@@ -82,7 +82,7 @@ std::string get_addr()
     do {
         ++begin;
         s = get_name_demangled(strings[begin]);
-    } while (s.find("cpprob::") != std::string::npos && begin != nptrs);
+    } while (s.find("cpprob::") == 0 && begin != nptrs);
 
     if (begin == nptrs){
         std::cerr << "Entry function call to the cpprob library not found" << std::endl;
@@ -93,7 +93,7 @@ std::string get_addr()
     do {
         --end;
         s = get_name_demangled(strings[end]);
-    } while (s.find("models::") == std::string::npos && end != 0);
+    } while (s.find("models::") != 0 && end != 0);
 
     if (end == 0){
         std::cerr << "Entry call to model not found. Is the model in the namespace models?" << std::endl;
