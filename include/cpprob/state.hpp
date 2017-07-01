@@ -2,12 +2,17 @@
 #define CPPROB_STATE_HPP
 
 #include <fstream>
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "cpprob/any.hpp"
 #include "cpprob/sample.hpp"
+#include "cpprob/socket.hpp"
 #include "cpprob/trace.hpp"
+#include "cpprob/distributions/distribution_utils.hpp"
 
 namespace cpprob {
 
@@ -22,12 +27,16 @@ enum class StateType {
     importance_sampling
 };
 
-class StateCompile;
-class StateInfer;
-
-
 class State {
 public:
+    // Accept / Reject Sampling
+    static void start_rejection_sampling();
+
+    static void finish_rejection_sampling();
+
+    static bool rejection_sampling();
+
+    // State set / query
     static void set(StateType s);
 
     static bool compile ();
@@ -37,15 +46,15 @@ public:
     static StateType state();
 
     static void new_model();
+
 private:
     static StateType state_;
+    static bool rejection_sampling_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-class TraceCompile;
 
 template<class T>
 void predict(const T & x, const std::string & addr="");
@@ -73,6 +82,10 @@ private:
 
     static void add_observe(const NDArray<double> & x);
 
+    // Functions to handle accept / reject
+    static void start_rejection_sampling();
+    static void finish_rejection_sampling();
+
     // Friends
     template<template<class ...> class Distr, class ...Params>
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe);
@@ -82,11 +95,14 @@ private:
 
     template<class T>
     friend void predict(const T & x, const std::string & addr);
+
+    friend class State;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////         Inference             ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
 
 class StateInfer {
 public:
@@ -97,6 +113,37 @@ public:
     static void new_model();
 
 private:
+
+    template<template <class ...> class Distr, class ...Params>
+    class DistributionCache {
+    public:
+
+       static void emplace_hint(typename std::map<std::string, typename proposal<Distr, Params...>::type>::const_iterator hint,
+                                const std::string & addr,
+                                const typename proposal<Distr, Params...>::type & distr)
+        {
+            distributions_.emplace_hint(hint, std::make_pair(addr, distr));
+        }
+
+        static auto distribution(const std::string & addr)
+        {
+            return distributions_.lower_bound(addr);
+        }
+
+        static bool first_distribution()
+        {
+            return distributions_.empty();
+        }
+
+        static void clear()
+        {
+            distributions_.clear();
+        }
+
+    private:
+        static std::map<std::string, typename proposal<Distr, Params...>::type> distributions_;
+    };
+
     // Attributes
     static TraceInfer trace_;
     static Sample prev_sample_;
@@ -105,10 +152,42 @@ private:
     static bool all_int_empty;
     static bool all_real_empty;
     static bool all_any_empty;
+
+    // Functions to clear caches of sampling objects
+    static std::vector<std::function<void()>> clear_functions_;
     
     static void clear_empty_flags();
 
     static void increment_log_prob(const double log_p);
+
+    template<template <class ...> class Distr, class ...Params>
+    static typename proposal<Distr, Params ...>::type get_proposal()
+    {
+        if (!State::rejection_sampling()) {
+            return SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
+        }
+        else {
+            // If it is the first distribution Distr, Params, register the clear_function
+            if (DistributionCache<Distr, Params...>::first_distribution()) {
+                clear_functions_.emplace_back(&DistributionCache<Distr, Params...>::clear);
+            }
+
+            auto addr = curr_sample_.sample_address();
+            auto distr_iter = DistributionCache<Distr, Params...>::distribution(addr);
+
+            if (distr_iter->first == addr) {
+                return distr_iter->second;
+            }
+            else {
+                auto distr = SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
+                DistributionCache<Distr, Params...>::emplace_hint(distr_iter, addr, distr);
+                return distr;
+            }
+        }
+    }
+
+    // Functions to handle accept / reject
+    static void finish_rejection_sampling();
 
     template<class T>
     static std::enable_if_t<std::is_integral<T>::value, void>
@@ -143,7 +222,12 @@ private:
 
     template<class T>
     friend void predict(const T & x, const std::string & addr);
+
+    friend class State;
 };
+
+template<template <class ...> class Distr, class ...Params>
+std::map<std::string, typename proposal<Distr, Params...>::type> StateInfer::DistributionCache<Distr, Params...>::distributions_{};
 }  // namespace cpprob
 
 #endif //CPPROB_STATE_HPP

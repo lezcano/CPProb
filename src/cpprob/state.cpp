@@ -1,6 +1,7 @@
 #include "cpprob/state.hpp"
 
 #include <iomanip>
+#include <set>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -18,6 +19,7 @@ namespace cpprob {
 ////////////////////////////////////////////////////////////////////////////////
 
 StateType State::state_;
+bool State::rejection_sampling_ = false;
 
 void State::set(StateType s)
 {
@@ -25,6 +27,28 @@ void State::set(StateType s)
     StateCompile::new_trace();
     StateInfer::new_trace();
 }
+
+void State::start_rejection_sampling()
+{
+    rejection_sampling_ = true;
+}
+
+void State::finish_rejection_sampling()
+{
+    rejection_sampling_ = false;
+    if (state_ == StateType::compile) {
+        StateCompile::finish_rejection_sampling();
+    }
+    else if (state_ == StateType::inference) {
+        StateInfer::finish_rejection_sampling();
+    }
+}
+
+bool State::rejection_sampling()
+{
+    return rejection_sampling_;
+}
+
 bool State::compile ()
 {
     return state_ == StateType::compile;
@@ -79,7 +103,12 @@ void StateCompile::new_trace()
 
 void StateCompile::add_sample(const Sample& s)
 {
-    StateCompile::trace_.samples_.emplace_back(s);
+    if (State::rejection_sampling()) {
+        StateCompile::trace_.samples_rejection_.emplace_back(s);
+    }
+    else {
+        StateCompile::trace_.samples_.emplace_back(s);
+    }
 }
 
 int StateCompile::sample_instance(const std::string & addr)
@@ -103,6 +132,26 @@ void StateCompile::add_observe(const NDArray<double>& x)
     StateCompile::trace_.observes_.emplace_back(x);
 }
 
+// Accept / Reject sampling
+void StateCompile::finish_rejection_sampling()
+{
+    std::set<std::string> samples_processed;
+    std::vector<Sample> last_samples;
+    for (auto it = std::make_move_iterator(trace_.samples_rejection_.rbegin());
+              it != std::make_move_iterator(trace_.samples_rejection_.rend());
+              ++it) {
+        if (samples_processed.emplace(it->sample_address()).second) {
+            last_samples.emplace_back(*it);
+        }
+    }
+    trace_.samples_rejection_.clear();
+    for (auto it = std::make_move_iterator(last_samples.rbegin());
+         it != std::make_move_iterator(last_samples.rend());
+         ++it) {
+        trace_.samples_.emplace_back(*it);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////         Inference             ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +162,7 @@ Sample StateInfer::curr_sample_;
 bool StateInfer::all_int_empty = true;
 bool StateInfer::all_real_empty = true;
 bool StateInfer::all_any_empty = true;
-
+std::vector<std::function<void()>> StateInfer::clear_functions_;
 
 
 void StateInfer::new_model()
@@ -166,6 +215,14 @@ void StateInfer::finish()
 void StateInfer::increment_log_prob(const double log_p)
 {
     trace_.log_w_ += log_p;
+}
+
+void StateInfer::finish_rejection_sampling()
+{
+    for(const auto & f : clear_functions_) {
+        f();
+    }
+    clear_functions_.clear();
 }
 
 }  // namespace cpprob

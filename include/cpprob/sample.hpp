@@ -22,6 +22,8 @@ public:
 
     void set_value(const NDArray<double> &value);
 
+    std::string sample_address();
+
     flatbuffers::Offset <infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder &buff) const;
 
 private:

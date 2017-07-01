@@ -119,7 +119,7 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
         StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
 
         try {
-            auto proposal = SocketInfer::get_proposal<Distr, Params...>(StateInfer::curr_sample_, StateInfer::prev_sample_);
+            auto proposal = StateInfer::get_proposal<Distr, Params...>();
 
             x = proposal(get_rng());
 
@@ -173,6 +173,10 @@ void predict(const T & x, const std::string & addr)
         }
     }
 }
+
+void start_rejection_sampling();
+
+void finish_rejection_sampling();
 
 template<class Func>
 void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size) {
