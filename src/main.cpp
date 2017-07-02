@@ -104,18 +104,21 @@ int main(int argc, const char* const* argv) {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://0.0.0.0:5555";
         }
+
+        if (vm.count("dump_folder") != 0u) {
+            const boost::filesystem::path path_dump_folder(dump_folder);
+            if (!boost::filesystem::exists(path_dump_folder)) {
+                std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
+                          << "Please provide a valid folder.\n";
+                std::exit(EXIT_FAILURE);
+            }
+        }
+
         cpprob::compile(f, tcp_addr, dump_folder, n_samples);
     }
     else if (mode == "infer" || mode == "infer-regular") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://127.0.0.1:6666";
-        }
-
-        const boost::filesystem::path path_dump_folder (dump_folder);
-        if (!boost::filesystem::exists(path_dump_folder)) {
-            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
-                      << "Please provide a valid folder.\n";
-            std::exit (EXIT_FAILURE);
         }
 
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;
