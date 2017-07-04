@@ -189,25 +189,23 @@ private:
     // Functions to handle accept / reject
     static void finish_rejection_sampling();
 
-    template<class T>
-    static std::enable_if_t<std::is_integral<T>::value, void>
-    add_predict(const T & x, const std::string & addr)
+    // if constexpr would be nice...
+    template<class T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+    static void add_predict(const T & x, const std::string & addr)
     {
         auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_int_.emplace_back(id, x);
     }
 
-    template<class T>
-    static std::enable_if_t<std::is_floating_point<T>::value, void>
-    add_predict(const T & x, const std::string & addr)
+    template<class T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+    static void add_predict(const T & x, const std::string & addr)
     {
         auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_real_.emplace_back(id, x);
     }
 
-    template<class T>
-    static std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, void>
-    add_predict(const T & x, const std::string & addr)
+    template<class T, std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, int> = 0>
+    static void add_predict(const T & x, const std::string & addr)
     {
         auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_any_.emplace_back(id, x);

@@ -14,19 +14,15 @@
 namespace cpprob {
 
 
-template<class F>
-constexpr
-std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, std::size_t>
-num_args()
+template<class F, std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, int> = 0>
+constexpr std::size_t num_args()
 {
     return boost::function_types::function_arity<F>::value;
 }
 
 // The first argument is the this pointer
-template<class F>
-constexpr
-std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value, std::size_t>
-num_args()
+template<class F, std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value, int> = 0>
+constexpr std::size_t num_args()
 {
     return boost::function_types::function_arity<decltype(&F::operator())>::value - 1;
 }

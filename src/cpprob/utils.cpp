@@ -127,7 +127,6 @@ std::string get_addr() {
         ret += ' ' + get_name_demangled(strings[i]);
     }
     ret += ']';
-    std::cout << ret << std::endl;
     std::free(strings);
     return ret;
 }

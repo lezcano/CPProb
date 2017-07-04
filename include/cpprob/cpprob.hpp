@@ -25,7 +25,7 @@ namespace cpprob {
 namespace detail {
 
 // Forward declarations
-template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+template<class T, class U, int>
 std::vector<T> to_vec(U value);
 template<class T, class U, class V>
 std::vector<T> to_vec(const std::pair<U, V> & pair);
@@ -37,7 +37,7 @@ template<class T, class U, std::size_t N>
 std::vector<T> to_vec(const std::array<U, N> & args);
 
 
-template<class T, class U, class>
+template<class T, class U, std::enable_if_t<std::is_arithmetic<U>::value, int> = 0>
 std::vector<T> to_vec(U value)
 {
     return std::vector<T>({static_cast<T>(value)});
@@ -51,7 +51,6 @@ std::vector<T> iter_to_vec(Iter begin, Iter end)
     for(; begin != end; ++begin) {
         auto aux = to_vec<T>(*begin);
         ret.insert(ret.end(), aux.begin(), aux.end());
-
     }
     return ret;
 }
@@ -207,15 +206,13 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
 
 namespace detail {
     // We just support either one tensorial observe or many scalar observes
-    template<class... Args>
-    std::enable_if_t<sizeof...(Args) == 1, void>
-    send_observe_init(const std::tuple<Args...> & observes) {
+    template<class... Args, std::enable_if_t<sizeof...(Args) == 1, int> = 0>
+    void send_observe_init(const std::tuple<Args...> & observes) {
         SocketInfer::send_observe_init(std::get<0>(observes));
     }
 
-    template<class... Args>
-    std::enable_if_t<sizeof...(Args) != 1, void>
-    send_observe_init(const std::tuple<Args...> & observes) {
+    template<class... Args, std::enable_if_t<sizeof...(Args) != 1, int> = 0>
+    void send_observe_init(const std::tuple<Args...> & observes) {
         SocketInfer::send_observe_init(detail::to_vec<double>(observes));
     }
 } // end namespace detail

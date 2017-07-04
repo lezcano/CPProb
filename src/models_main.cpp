@@ -39,27 +39,20 @@ void execute (const F & f,
 
     if (compile) {
         std::cout << "Compile" << std::endl;
-        const auto dump_folder = model_folder + "traces";
-        const path dump_folder_path{dump_folder};
 
-        if (!exists(dump_folder_path)) {
-            create_directory(path(dump_folder_path));
-            cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
-        }
-        else {
-            std::cerr << "Traces folder already exists. Traces not generated." << std::endl;
-        }
-
-
-        auto compile_command = "python3 -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
-                                                         " --batchSize " + std::to_string(batch_size) +
+        auto compile_command = "python3 -m infcomp.compile --batchSize " + std::to_string(batch_size) +
                                                          " --validSize " + std::to_string(batch_size) +
                                                          " --dir " + nn_folder +
                                                          " --cuda";
         if (optirun) {
             compile_command = "optirun " + compile_command;
         }
-        std::system(compile_command.c_str());
+
+        std::thread thread_nn (&std::system, compile_command.c_str());
+
+        cpprob::compile(f, tcp_addr_compile, "", batch_size);
+
+        thread_nn.join();
     }
 
     const std::string csis_post = model_folder + "csis.post";
@@ -98,23 +91,23 @@ void execute (const F & f,
 
     }
     if (estimate) {
-        std::cout << "Estimators of the Posterior" << std::endl;
-        bool none_exist = true;
+        std::cout << "Posterior Distribution Estimators" << std::endl;
         const path path_dump_folder (csis_post);
         auto print = [] (const std::string & file_name) {
             if (exists(path(file_name + "_ids"))) {
                 cpprob::Printer p;
                 p.load(file_name);
                 p.print(std::cout);
-                return false;
-            }
-            else {
                 return true;
             }
+            else {
+                return false;
+            }
         };
-        none_exist &= print(csis_post);
-        none_exist &= print(sis_post);
-        if (none_exist) {
+        bool one_exists = false;
+        one_exists |= print(csis_post);
+        one_exists |= print(sis_post);
+        if (!one_exists) {
             std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found.";
         }
     }
