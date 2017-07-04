@@ -39,8 +39,8 @@ std::string get_name_demangled (const char* s)
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
     auto last = str.find_last_of(')');
-
     auto mas = str.find_last_of('+');
+
 
     int status;
     char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
@@ -61,7 +61,9 @@ bool in_namespace_models(const std::string & fun)
     // You also have spaces before a > when another > precedes it, but it's alright
     static std::regex r{"[^,] models::", std::regex::optimize};
     static std::smatch match;
-    return std::regex_search(fun, match, r);
+    // TODO(Lezcano) Hack to deal with models defined in functors.
+    // abi::__cxa_demangle does not add the return type when the function is a member funciton!!
+    return std::regex_search(fun, match, r) || fun.find("models::") == 0;
 }
 
 bool in_namespace_cpprob(const std::string & fun)

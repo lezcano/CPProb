@@ -48,9 +48,11 @@ void execute (const F & f,
             compile_command = "optirun " + compile_command;
         }
 
-        std::thread thread_nn (&std::system, compile_command.c_str());
+        std::thread thread_compile (&cpprob::compile<decltype(f)>, f, tcp_addr_compile, "", batch_size);
 
-        cpprob::compile(f, tcp_addr_compile, "", batch_size);
+        thread_compile.join();
+
+        std::thread thread_nn (&std::system, compile_command.c_str());
 
         thread_nn.join();
     }

@@ -29,6 +29,23 @@ void gaussian_unknown_mean(const RealType y1, const RealType y2)
     cpprob::predict(mu, "Mu");
 }
 
+
+template<class RealType = double>
+struct Gauss {
+    void operator()(const RealType y1, const RealType y2) const
+    {
+        using boost::random::normal_distribution;
+        normal_distribution<RealType> prior {1, std::sqrt(5)};
+        const RealType mu = cpprob::sample(prior, true);
+        const RealType var = std::sqrt(2);
+
+        normal_distribution<RealType> obs_distr {mu, var};
+        cpprob::observe(obs_distr, y1);
+        cpprob::observe(obs_distr, y2);
+        cpprob::predict(mu, "Mu");
+    }
+};
+
 template<std::size_t N>
 void linear_gaussian_1d (const std::array<double, N> & observations)
 {
