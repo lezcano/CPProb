@@ -67,7 +67,6 @@ private:
         }
 
         int num_points = 0;
-        std::string line;
         for (std::string line; std::getline(file, line);) {
             std::map<int, int> predict_instance;
             std::pair<std::vector<std::pair<int, T>>, double> predicts;

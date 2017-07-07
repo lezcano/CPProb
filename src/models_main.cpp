@@ -18,7 +18,7 @@
 
 template <class F>
 void execute (const F & f,
-              const bool compile, const bool infer, const bool sis, const bool estimate,
+              const bool generate_traces, const bool compile, const bool infer, const bool sis, const bool estimate,
               const std::string & model_name,
               const std::size_t n_samples,
               const std::size_t batch_size,
@@ -37,10 +37,27 @@ void execute (const F & f,
         create_directory(path(nn_folder));
     }
 
+    const auto dump_folder = model_folder + "traces";
+    const path dump_folder_path{dump_folder};
+
+    if (generate_traces) {
+        std::cout << "Generating Traces" << std::endl;
+        if (!exists(dump_folder_path)) {
+            create_directory(path(dump_folder_path));
+        }
+        cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
+    }
+
     if (compile) {
         std::cout << "Compile" << std::endl;
 
-        auto compile_command = "python3 -m infcomp.compile --batchSize " + std::to_string(batch_size) +
+        if (!exists(dump_folder_path)) {
+            std::cout << "Traces folder does not exist. Could not compile the NN." << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+
+        auto compile_command = "python3 -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
+                                                         " --batchSize " + std::to_string(batch_size) +
                                                          " --validSize " + std::to_string(batch_size) +
                                                          " --dir " + nn_folder +
                                                          " --cuda";
@@ -48,13 +65,7 @@ void execute (const F & f,
             compile_command = "optirun " + compile_command;
         }
 
-        std::thread thread_compile (&cpprob::compile<decltype(f)>, f, tcp_addr_compile, "", batch_size);
-
-        thread_compile.join();
-
-        std::thread thread_nn (&std::system, compile_command.c_str());
-
-        thread_nn.join();
+        std::system(compile_command.c_str());
     }
 
     const std::string csis_post = model_folder + "csis.post";
@@ -119,9 +130,9 @@ void execute (const F & f,
 int main(int argc, const char* const* argv) {
 
     std::size_t n_samples, batch_size;
-    bool compile, infer, sis, estimate, all, optirun;
+    bool generate_traces, compile, infer, sis, estimate, all, optirun;
     std::string model, tcp_addr_compile, tcp_addr_infer;
-    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression"}};
+    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d"}};
 
     std::string all_model_names = model_names[0];
     for (std::size_t i = 1; i < model_names.size(); ++i) {
@@ -132,6 +143,7 @@ int main(int argc, const char* const* argv) {
     po::options_description desc("Options");
     desc.add_options()
             ("model", po::value<std::string>(&model)->required()->value_name(all_model_names))
+            ("generate_traces", "Generate traces for compilation.")
             ("compile", "Execute compilation.")
             ("infer", "Execute compiled inference.")
             ("sis", "Execute sequential importance sampling.")
@@ -161,6 +173,7 @@ int main(int argc, const char* const* argv) {
         std::cerr << desc << std::endl;
         std::exit (EXIT_FAILURE);
     }
+    generate_traces = vm.count("generate_traces");
     compile = vm.count("compile");
     infer = vm.count("infer");
     sis = vm.count("sis");
@@ -174,6 +187,7 @@ int main(int argc, const char* const* argv) {
         std::exit (EXIT_FAILURE);
     }
     if (all) {
+        generate_traces = true;
         compile = true;
         infer = true;
         sis = true;
@@ -182,23 +196,27 @@ int main(int argc, const char* const* argv) {
 
     if (model == model_names[0] /* unk_mean */) {
         auto f = &models::gaussian_unknown_mean<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[1] /* unk_mean rejection */) {
         auto f = &models::normal_rejection_sampling<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[2] /* linear gaussian walk */) {
         auto f = &models::linear_gaussian_1d<50>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[3] /* hmm */) {
         auto f = &models::hmm<16>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else if (model == model_names[4] /* linear regression */) {
         auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+    }
+    else if (model == model_names[5] /* unk_mean 2d */) {
+        auto f = &models::gaussian_2d_unk_mean<>; // Linear adjustment (Deg = 1, Points = 6)
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
     }
     else{
         std::cerr << "Incorrect model.\n\n"

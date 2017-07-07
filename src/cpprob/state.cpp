@@ -137,14 +137,15 @@ void StateCompile::finish_rejection_sampling()
 {
     std::set<std::string> samples_processed;
     std::vector<Sample> last_samples;
-    for (auto it = std::make_move_iterator(trace_.samples_rejection_.rbegin());
-              it != std::make_move_iterator(trace_.samples_rejection_.rend());
-              ++it) {
-        if (samples_processed.emplace(it->sample_address()).second) {
-            last_samples.emplace_back(*it);
+    for (auto it = trace_.samples_rejection_.rbegin(); it != trace_.samples_rejection_.rend(); ++it) {
+        auto emplaced = samples_processed.emplace(it->sample_address());
+        // If it is the first time that we find that sample
+        if (emplaced.second) {
+            last_samples.emplace_back(std::move(*it));
         }
     }
     trace_.samples_rejection_.clear();
+    // TODO(Lezcano) Replace with resize + several moves
     for (auto it = std::make_move_iterator(last_samples.rbegin());
          it != std::make_move_iterator(last_samples.rend());
          ++it) {

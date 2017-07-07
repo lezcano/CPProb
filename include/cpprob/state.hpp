@@ -90,9 +90,6 @@ private:
     template<template<class ...> class Distr, class ...Params>
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe);
 
-    template<template <class ...> class Distr, class ...Params>
-    friend void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x);
-
     template<class T>
     friend void predict(const T & x, const std::string & addr);
 
@@ -204,6 +201,13 @@ private:
         trace_.predict_real_.emplace_back(id, x);
     }
 
+    template<class T>
+    static void add_predict(const NDArray<T> & x, const std::string & addr)
+    {
+        auto id = TraceInfer::register_addr_predict(addr);
+        trace_.predict_real_.emplace_back(id, x);
+    }
+
     template<class T, std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
@@ -216,7 +220,7 @@ private:
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe);
 
     template<template <class ...> class Distr, class ...Params>
-    friend void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x);
+    friend void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x);
 
     template<class T>
     friend void predict(const T & x, const std::string & addr);

@@ -41,7 +41,6 @@ std::string get_name_demangled (const char* s)
     auto last = str.find_last_of(')');
     auto mas = str.find_last_of('+');
 
-
     int status;
     char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
     if (status == 0) {
@@ -61,8 +60,8 @@ bool in_namespace_models(const std::string & fun)
     // You also have spaces before a > when another > precedes it, but it's alright
     static std::regex r{"[^,] models::", std::regex::optimize};
     static std::smatch match;
-    // TODO(Lezcano) Hack to deal with models defined in functors.
-    // abi::__cxa_demangle does not add the return type when the function is a member funciton!!
+    // TODO(Lezcano) Hack to deal with non templated functions
+    // abi::__cxa_demangle does not add the return type when the function is not a template!!
     return std::regex_search(fun, match, r) || fun.find("models::") == 0;
 }
 
@@ -72,7 +71,8 @@ bool in_namespace_cpprob(const std::string & fun)
     // You also have spaces before a > when another > precedes it, but it's alright
     static std::regex r{"[^,] cpprob::", std::regex::optimize};
     static std::smatch match;
-    return std::regex_search(fun, match, r);
+    // abi::__cxa_demangle does not add the return type when the function is not a template!!
+    return std::regex_search(fun, match, r) || fun.find("cpprob::") == 0;
 }
 
 std::string get_addr() {
@@ -93,11 +93,7 @@ std::string get_addr() {
         std::exit(EXIT_FAILURE);
     }
 
-    // We will consider addresses in the range [begin, end]
-    // Begin = 1 since the demangled name for get_addr is
-    // cpprob::get_addr[abi:cxx11]()
-    // so it does not show the std::string return type
-    int begin = 1, end = nptrs - 1;
+    int begin = 0, end = nptrs - 1;
 
     // Discard calls inside the cpprob library
     while (begin != nptrs && in_namespace_cpprob(get_name_demangled(strings[begin]))) {

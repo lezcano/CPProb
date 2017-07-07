@@ -77,7 +77,7 @@ std::vector<T> to_vec(const std::pair<U, V> & pair)
     return ret;
 }
 
-template<class T, class... Args, size_t... Indices>
+template<class T, class... Args, std::size_t... Indices>
 std::vector<T> to_vec_tuple(const std::tuple<Args...> & tup, std::index_sequence<Indices...>)
 {
     std::vector<T> ret;
@@ -150,7 +150,7 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
 }
 
 template<template <class ...> class Distr, class ...Params>
-void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x) {
+void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x) {
     if (State::compile()){
         sample_impl(distr, true);
     }
