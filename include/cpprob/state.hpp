@@ -1,10 +1,9 @@
 #ifndef CPPROB_STATE_HPP
 #define CPPROB_STATE_HPP
 
-#include <fstream>
-#include <functional>
+#include <map>
 #include <string>
-#include <unordered_map>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -45,8 +44,6 @@ public:
 
     static StateType state();
 
-    static void new_model();
-
 private:
     static StateType state_;
     static bool rejection_sampling_;
@@ -56,17 +53,14 @@ private:
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-template<class T>
-void predict(const T & x, const std::string & addr="");
-
 class StateCompile {
 public:
     static std::size_t get_batch_size();
-    static void add_trace();
-    static void send_batch();
+    static void start_trace();
+    static void finish_trace();
 
-    static void new_trace();
-    static void new_model();
+    static void start_batch();
+    static void finish_batch();
 
 private:
     // Attributes
@@ -90,9 +84,6 @@ private:
     template<template<class ...> class Distr, class ...Params>
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe);
 
-    template<class T>
-    friend void predict(const T & x, const std::string & addr);
-
     friend class State;
 };
 
@@ -103,11 +94,12 @@ private:
 
 class StateInfer {
 public:
-    static void add_trace();
-    static void finish();
 
-    static void new_trace();
-    static void new_model();
+    static void start_infer();
+    static void finish_infer();
+
+    static void start_trace();
+    static void finish_trace();
 
 private:
 
@@ -151,8 +143,8 @@ private:
     static bool all_any_empty;
 
     // Functions to clear caches of sampling objects
-    static std::vector<std::function<void()>> clear_functions_;
-    
+    static std::vector<void (*)()>clear_functions_;
+
     static void clear_empty_flags();
 
     static void increment_log_prob(const double log_p);
@@ -164,7 +156,7 @@ private:
             return SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
         }
         else {
-            // If it is the first distribution Distr, Params, register the clear_function
+            // If it is the first distribution<Distr, Params>, register the clear_function
             if (DistributionCache<Distr, Params...>::first_distribution()) {
                 clear_functions_.emplace_back(&DistributionCache<Distr, Params...>::clear);
             }
@@ -223,7 +215,7 @@ private:
     friend void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x);
 
     template<class T>
-    friend void predict(const T & x, const std::string & addr);
+    friend void predict(const T & x, const std::string & addr="");
 
     friend class State;
 };

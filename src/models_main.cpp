@@ -144,11 +144,11 @@ int main(int argc, const char* const* argv) {
     desc.add_options()
             ("model", po::value<std::string>(&model)->required()->value_name(all_model_names))
             ("generate_traces", "Generate traces for compilation.")
-            ("compile", "Execute compilation.")
-            ("infer", "Execute compiled inference.")
-            ("sis", "Execute sequential importance sampling.")
-            ("estimate", "Execute estimators.")
-            ("all", "Execute all the options")
+            ("compile", "Compilation.")
+            ("infer", "Compiled inference.")
+            ("sis", "Sequential importance sampling.")
+            ("estimate", "Estimators.")
+            ("all", "All the options")
             ("batch_size", po::value<std::size_t>(&batch_size)->default_value(256))
             ("n_samples", po::value<std::size_t>(&n_samples)->default_value(1000), "Number of particles to be sampled from the posterior.")
             ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.")
@@ -194,29 +194,28 @@ int main(int argc, const char* const* argv) {
         estimate = true;
     }
 
-    if (model == model_names[0] /* unk_mean */) {
-        auto f = &models::gaussian_unknown_mean<>;
+    auto execute_param = [&](const auto & f) {
         execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+    };
+
+    if (model == model_names[0] /* unk_mean */) {
+        execute_param(&models::gaussian_unknown_mean<>);
     }
     else if (model == model_names[1] /* unk_mean rejection */) {
-        auto f = &models::normal_rejection_sampling<>;
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::normal_rejection_sampling<>);
     }
     else if (model == model_names[2] /* linear gaussian walk */) {
-        auto f = &models::linear_gaussian_1d<50>;
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::linear_gaussian_1d<50>);
     }
     else if (model == model_names[3] /* hmm */) {
-        auto f = &models::hmm<16>;
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::hmm<16>);
     }
     else if (model == model_names[4] /* linear regression */) {
-        auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        // Linear adjustment (Deg = 1, Points = 6)
+        execute_param(&models::poly_adjustment<1, 6>);
     }
     else if (model == model_names[5] /* unk_mean 2d */) {
-        auto f = &models::gaussian_2d_unk_mean<>; // Linear adjustment (Deg = 1, Points = 6)
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::gaussian_2d_unk_mean<>);
     }
     else{
         std::cerr << "Incorrect model.\n\n"

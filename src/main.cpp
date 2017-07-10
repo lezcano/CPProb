@@ -58,7 +58,7 @@ int main(int argc, const char* const* argv) {
                                                                        "Compile: Compile a NN to use in inference mode.\n"
                                                                        "Infer: Perform compiled inference.\n"
                                                                        "Infer-Regular: Perform sequential importance sampling with priors as proposals.\n"
-                                                                       "Estimate: Compute some estimators of a posterior.\n"
+                                                                       "Estimate: Compute estimators of the posterior distribution.\n"
                                                                        "Dry Run: Execute the model without any inference algorithm.")
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the NN.\n"
