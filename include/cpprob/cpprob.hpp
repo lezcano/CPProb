@@ -89,13 +89,15 @@ std::vector<T> to_vec_tuple(const std::tuple<Args...> & tup, std::index_sequence
 }
 
 template<class T, class... Args>
-std::vector<T> to_vec(const std::tuple<Args...> & args){
+std::vector<T> to_vec(const std::tuple<Args...> & args)
+{
     return detail::to_vec_tuple<T, Args...>(args, std::make_index_sequence<sizeof...(Args)>());
 }
 } // end namespace detail
 
 template<template <class ...> class Distr, class ...Params>
-typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe) {
+typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe)
+{
     typename Distr<Params ...>::result_type x{};
     std::string addr = get_addr();
 
@@ -111,9 +113,6 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
         }
         StateCompile::increment_time();
 
-    }
-    else if  (State::state() == StateType::importance_sampling) {
-        x = distr(get_rng());
     }
     else if (State::state() == StateType::inference){
         StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
@@ -141,8 +140,11 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
 }
 
 template<template <class ...> class Distr, class ...Params>
-typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool control = false) {
-    if (!control || State::state() == StateType::dryrun){
+typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool control = false)
+{
+    if (!control ||
+        State::state() == StateType::dryrun ||
+        State::state() == StateType::importance_sampling){
         return distr(get_rng());
     }
     else {
@@ -151,7 +153,8 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
 }
 
 template<template <class ...> class Distr, class ...Params>
-void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x) {
+void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x)
+{
     if (State::compile()){
         sample_impl(distr, true);
     }
@@ -175,7 +178,8 @@ void predict(const T & x, const std::string & addr)
 }
 
 template<class Func>
-void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size) {
+void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size)
+{
     State::set(StateType::compile);
     const bool to_file = !dump_folder.empty();
 
@@ -203,15 +207,13 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
 
 namespace detail {
     // We just support either one tensorial observe or many scalar observes
-    template<class... Args>
-    std::enable_if_t<sizeof...(Args) == 1, void>
-    send_observe_init(const std::tuple<Args...> & observes) {
+    template<class... Args, std::enable_if_t<sizeof...(Args) == 1, int> = 0>
+    void send_observe_init(const std::tuple<Args...> & observes) {
         SocketInfer::send_observe_init(std::get<0>(observes));
     }
 
-    template<class... Args>
-    std::enable_if_t<sizeof...(Args) != 1, void>
-    send_observe_init(const std::tuple<Args...> & observes) {
+    template<class... Args, std::enable_if_t<sizeof...(Args) != 1, int> = 0>
+    void send_observe_init(const std::tuple<Args...> & observes) {
         SocketInfer::send_observe_init(detail::to_vec<double>(observes));
     }
 } // end namespace detail
@@ -223,7 +225,8 @@ void generate_posterior(
         const std::string & tcp_addr,
         const std::string & file_name,
         std::size_t n,
-        const StateType state){
+        const StateType state)
+{
     static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
 
     State::set(state);

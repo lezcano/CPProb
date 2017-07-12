@@ -139,7 +139,7 @@ private:
     friend typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe);
 
     template<template <class ...> class Distr, class ...Params>
-    friend void observe(Distr<Params ...> & distr, typename Distr<Params ...>::result_type x);
+    friend void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x);
 
     template<class T>
     friend void predict(const T & x, const std::string & addr);
