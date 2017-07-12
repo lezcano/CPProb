@@ -1,6 +1,5 @@
 #include "models/sherpa_mini.hpp"
 
-
 #include <iostream>
 #include <boost/random/normal_distribution.hpp>
 #include <cpprob/distributions/vmf.hpp>
@@ -11,7 +10,6 @@
 #include <math.h>
 #include "YODA/Histo2D.h"
 #include "Rivet/Math/Vector4.hh"
-
 
 namespace models {
 
@@ -27,7 +25,7 @@ std::pair<double, std::vector<std::vector<double> > > energy_deposits(const Rive
 	std::vector<std::vector<double> > distribution;
 	for (int i = 0; i < NSAMPLES; ++i) {
         // Discarding the shape...
-		distribution.push_back(cpprob::sample(multi).values());
+		distribution.emplace_back(cpprob::sample(multi).values());
 	}
 
 	double mini_e = mom.E() / NSAMPLES;

@@ -25,7 +25,7 @@ namespace cpprob {
 namespace detail {
 
 // Forward declarations
-template<class T, class U, class = std::enable_if_t<std::is_arithmetic<U>::value>>
+template<class T, class U, int>
 std::vector<T> to_vec(U value);
 template<class T, class U, class V>
 std::vector<T> to_vec(const std::pair<U, V> & pair);
@@ -37,7 +37,7 @@ template<class T, class U, std::size_t N>
 std::vector<T> to_vec(const std::array<U, N> & args);
 
 
-template<class T, class U, class>
+template<class T, class U, std::enable_if_t<std::is_arithmetic<U>::value, int> = 0>
 std::vector<T> to_vec(U value)
 {
     return std::vector<T>({static_cast<T>(value)});
@@ -51,7 +51,6 @@ std::vector<T> iter_to_vec(Iter begin, Iter end)
     for(; begin != end; ++begin) {
         auto aux = to_vec<T>(*begin);
         ret.insert(ret.end(), aux.begin(), aux.end());
-
     }
     return ret;
 }
@@ -78,7 +77,7 @@ std::vector<T> to_vec(const std::pair<U, V> & pair)
     return ret;
 }
 
-template<class T, class... Args, size_t... Indices>
+template<class T, class... Args, std::size_t... Indices>
 std::vector<T> to_vec_tuple(const std::tuple<Args...> & tup, std::index_sequence<Indices...>)
 {
     std::vector<T> ret;
@@ -118,7 +117,7 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
         StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
 
         try {
-            auto proposal = SocketInfer::get_proposal<Distr, Params...>(StateInfer::curr_sample_, StateInfer::prev_sample_);
+            auto proposal = StateInfer::get_proposal<Distr, Params...>();
 
             x = proposal(get_rng());
 
@@ -177,8 +176,15 @@ void predict(const T & x, const std::string & addr)
     }
 }
 
+void start_rejection_sampling();
+
+void finish_rejection_sampling();
+
 template<class Func>
-void compile(const Func & f, const std::string & tcp_addr, const std::string & dump_folder, std::size_t batch_size)
+void compile(const Func & f,
+             const std::string & tcp_addr,
+             const std::string & dump_folder,
+             std::size_t batch_size)
 {
     State::set(StateType::compile);
     const bool to_file = !dump_folder.empty();
@@ -192,30 +198,35 @@ void compile(const Func & f, const std::string & tcp_addr, const std::string & d
 
     for (std::size_t i = 0; /* Forever */ ; ++i) {
         std::cout << "Generating batch " << i << std::endl;
+        StateCompile::start_batch();
         if (!to_file) {
             batch_size = SocketCompile::get_batch_size();
         }
 
         for (std::size_t i = 0; i < batch_size; ++i) {
-            StateCompile::new_trace();
-            call_f_default_params(f);
-            StateCompile::add_trace();
+            StateCompile::start_trace();
+            (void) call_f_default_params(f);
+            StateCompile::finish_trace();
         }
-        StateCompile::send_batch();
+        StateCompile::finish_batch();
     }
 }
 
 namespace detail {
-    // We just support either one tensorial observe or many scalar observes
-    template<class... Args, std::enable_if_t<sizeof...(Args) == 1, int> = 0>
-    void send_observe_init(const std::tuple<Args...> & observes) {
-        SocketInfer::send_observe_init(std::get<0>(observes));
-    }
+// TODO(Lezcano) Hack to get around the fact that we do not support many multidimensional observes
+// TODO(Lezcano) C++17 This should be done with an if constexpr
+// We just support either one tensorial observe or many scalar observes
+template<class... Args, std::enable_if_t<sizeof...(Args) == 1, int> = 0>
+void send_observe_init(const std::tuple<Args...> & observes)
+{
+    SocketInfer::send_observe_init(std::get<0>(observes));
+}
 
-    template<class... Args, std::enable_if_t<sizeof...(Args) != 1, int> = 0>
-    void send_observe_init(const std::tuple<Args...> & observes) {
-        SocketInfer::send_observe_init(detail::to_vec<double>(observes));
-    }
+template<class... Args, std::enable_if_t<sizeof...(Args) != 1, int> = 0>
+void send_observe_init(const std::tuple<Args...> & observes)
+{
+    SocketInfer::send_observe_init(detail::to_vec<double>(observes));
+}
 } // end namespace detail
 
 template<class Func, class... Args>
@@ -230,6 +241,7 @@ void generate_posterior(
     static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
 
     State::set(state);
+    StateInfer::start_infer();
     if (State::state() == StateType::inference) {
         SocketInfer::connect_client(tcp_addr);
     }
@@ -238,17 +250,16 @@ void generate_posterior(
 
     for (std::size_t i = 0; i < n; ++i) {
         std::cout << "Generating trace " << i << std::endl;
-        StateInfer::new_trace();
+        StateInfer::start_trace();
 
         if (State::state() == StateType::inference) {
-            // TODO(Lezcano) C++17 This should be done with an if constexpr
             detail::send_observe_init(observes);
         }
 
-        call_f_tuple(f, observes);
-        StateInfer::add_trace();
+        (void) call_f_tuple(f, observes);
+        StateInfer::finish_trace();
     }
-    StateInfer::finish();
+    StateInfer::finish_infer();
 }
 
 } // end namespace cpprob

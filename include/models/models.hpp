@@ -13,6 +13,7 @@
 
 
 #include "cpprob/cpprob.hpp"
+#include "cpprob/distributions/multivariate_normal.hpp"
 
 namespace models {
 template<class RealType = double>
@@ -28,6 +29,36 @@ void gaussian_unknown_mean(const RealType y1, const RealType y2)
     cpprob::observe(obs_distr, y2);
     cpprob::predict(mu, "Mu");
 }
+
+
+template<class RealType=double>
+void gaussian_2d_unk_mean(const std::vector<RealType> y1)
+{
+    using boost::random::normal_distribution;
+    cpprob::multivariate_normal_distribution<> prior{{1,2}, {std::sqrt(5),std::sqrt(3)}};
+    const auto mu = cpprob::sample(prior, true);
+    const RealType var = std::sqrt(2);
+
+    cpprob::multivariate_normal_distribution<RealType> likelihood {mu.begin(), mu.end(), var};
+    cpprob::observe(likelihood, y1);
+    cpprob::predict(mu, "Mu");
+}
+
+template<class RealType = double>
+struct Gauss {
+    void operator()(const RealType y1, const RealType y2) const
+    {
+        using boost::random::normal_distribution;
+        normal_distribution<RealType> prior {1, std::sqrt(5)};
+        const RealType mu = cpprob::sample(prior, true);
+        const RealType var = std::sqrt(2);
+
+        normal_distribution<RealType> obs_distr {mu, var};
+        cpprob::observe(obs_distr, y1);
+        cpprob::observe(obs_distr, y2);
+        cpprob::predict(mu, "Mu");
+    }
+};
 
 template<std::size_t N>
 void linear_gaussian_1d (const std::array<double, N> & observations)
@@ -64,6 +95,7 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     uniform_real_distribution<RealType> accept {0, maxval};
     RealType mu;
 
+    cpprob::start_rejection_sampling();
     while (it++ < max_it) {
         mu = cpprob::sample(proposal, true);
         if (cpprob::sample(accept) <
@@ -71,6 +103,7 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
             break;
         }
     }
+    cpprob::finish_rejection_sampling();
 
     normal_distribution<RealType> likelihood {mu, sigma};
     cpprob::observe(likelihood, y1);
@@ -122,6 +155,6 @@ void hmm(const std::array<double, N> & observed_states)
     }
 }
 
-void all_distr();
+void all_distr(int, int);
 } // end namespace models
 #endif  // INCLUDE_MODELS_HPP_

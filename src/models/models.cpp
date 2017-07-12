@@ -9,7 +9,7 @@
 
 namespace models {
 
-void all_distr() {
+void all_distr(int, int) {
     using cpprob::sample;
     using cpprob::predict;
     using cpprob::observe;
@@ -37,12 +37,6 @@ void all_distr() {
     auto poiss_val = sample(poiss, true);
     predict(poiss_val);
     observe(poiss, poiss_val);
-
-    using cpprob::vmf_distribution;
-    vmf_distribution<> vmf{{1,2,3}, 3};
-    auto vmf_val = sample(vmf, true);
-    predict(vmf_val);
-    observe(vmf, vmf_val);
 
     using cpprob::multivariate_normal_distribution;
     multivariate_normal_distribution<> multi{{1,2,3,4}, {2,1,5,3}};

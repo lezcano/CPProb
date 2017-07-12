@@ -33,8 +33,7 @@ public:
 
     NDArray(T a) : values_{a}, shape_{1} {}
 
-    template<class U,
-            class = std::enable_if_t<std::is_constructible<T, U>::value>>
+    template<class U, std::enable_if_t<std::is_constructible<T, U>::value, int> = 0>
     NDArray(U a) : NDArray(T(a)) {}
 
     NDArray(std::vector<T> values, std::vector<int> shape) : values_(std::move(values)), shape_(std::move(shape))
@@ -67,7 +66,7 @@ public:
 
     // Casting to a different inner type
     template<class U,
-             class = std::enable_if_t<std::is_constructible<T, U>::value>>
+             std::enable_if_t<std::is_constructible<T, U>::value, int> = 0>
     explicit operator NDArray<U>() const
     {
         std::vector<U> ret_v(values_.begin(), values_.end());
@@ -245,10 +244,11 @@ public:
         return NDArray<T>(ret, arr.shape());
     }
 
-    template<class Iter, class = std::enable_if_t<
-                                        std::is_same<
-                                                typename std::iterator_traits<Iter>::value_type,
-                                                NDArray<T>>::value >>
+    template<class Iter, std::enable_if_t<
+                                std::is_same<
+                                        typename std::iterator_traits<Iter>::value_type,
+                                        NDArray<T>
+                                >::value, int> = 0>
     friend NDArray<T> supremum (Iter begin, Iter end)
     {
         if (begin == end) {
@@ -355,10 +355,8 @@ public:
 
 private:
     // Base type
-    template<class Iter>
-    std::enable_if_t<std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value,
-    void>
-    compute_shape(Iter begin, Iter end, int depth)
+    template<class Iter, std::enable_if_t<std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
+    void compute_shape(Iter begin, Iter end, int depth)
     {
         auto size = std::distance(begin, end);
         // If it's the first time that we enter the function, we extend the size
@@ -370,12 +368,9 @@ private:
     }
 
     // Iterable type
-    template<class Iter>
-    std::enable_if_t<
-        // Check if the Iter type corresponds to an iterator that points to an iterable object
-        is_iterable<typename std::iterator_traits<Iter>::value_type>::value,
-    void>
-    compute_shape(Iter begin, Iter end, int depth)
+    // Check if the Iter type corresponds to an iterator that points to an iterable object
+    template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
+    void compute_shape(Iter begin, Iter end, int depth)
     {
         auto size = std::distance(begin, end);
         if (static_cast<int>(shape_.size()) <= depth)
@@ -386,22 +381,16 @@ private:
             compute_shape(std::begin(*begin), std::end(*begin), depth+1);
     }
 
-    template<class Iter>
-    std::enable_if_t<
-        std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value,
-    std::vector<T>>
-    flatten(Iter begin, Iter end, int)
+    template<class Iter, std::enable_if_t< std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
+    std::vector<T> flatten(Iter begin, Iter end, int)
     {
         std::vector<T> ret (std::make_move_iterator(begin), std::make_move_iterator(end));
         ret.resize(shape_.back());
         return ret;
     }
 
-    template<class Iter>
-    std::enable_if_t<
-        is_iterable<typename std::iterator_traits<Iter>::value_type>::value,
-    std::vector<T>>
-    flatten(Iter begin, Iter end, int depth)
+    template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
+    std::vector<T> flatten(Iter begin, Iter end, int depth)
     {
         auto size_tensor_i = std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<int>());
 

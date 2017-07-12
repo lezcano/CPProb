@@ -67,7 +67,6 @@ private:
         }
 
         int num_points = 0;
-        std::string line;
         for (std::string line; std::getline(file, line);) {
             std::map<int, int> predict_instance;
             std::pair<std::vector<std::pair<int, T>>, double> predicts;
@@ -82,7 +81,7 @@ private:
                 int& num_times_hit_predict = predict_instance[elem.first];
                 // Create new distribution for that predict statement if the vector of distributions is not long enough
                 if (num_times_hit_predict == static_cast<int>(vec_distr.size())) {
-                    vec_distr.emplace_back(EmpiricalDistribution<T>());
+                    vec_distr.emplace_back();
                     vec_distr.back().add_point(elem.second, predicts.second);
                 }
                 else {

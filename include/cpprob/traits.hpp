@@ -14,19 +14,15 @@
 namespace cpprob {
 
 
-template<class F>
-constexpr
-std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, std::size_t>
-num_args()
+template<class F, std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, int> = 0>
+constexpr std::size_t num_args()
 {
     return boost::function_types::function_arity<F>::value;
 }
 
 // The first argument is the this pointer
-template<class F>
-constexpr
-std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value, std::size_t>
-num_args()
+template<class F, std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value, int> = 0>
+constexpr std::size_t num_args()
 {
     return boost::function_types::function_arity<decltype(&F::operator())>::value - 1;
 }
@@ -34,14 +30,14 @@ num_args()
 template<class F, template<class ...> class C, class = void, class = std::make_index_sequence<num_args<F>()>>
 struct parameter_types;
 
-template<class F, template<class ...> class C, size_t... Indices>
+template<class F, template<class ...> class C, std::size_t... Indices>
 struct parameter_types<F, C,
         std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value>,
         std::index_sequence<Indices...>> {
     using type = C<std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type> ...>;
 };
 
-template<class F, template<class ...> class C, size_t... Indices>
+template<class F, template<class ...> class C, std::size_t... Indices>
 struct parameter_types<F, C,
         std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value>,
         std::index_sequence<Indices...>> {
@@ -80,12 +76,12 @@ using is_iterable = decltype(detail::is_iterable_impl<T>(0));
 namespace detail {
 using boost::function_types::result_type;
 
-template<class F, size_t... Indices>
+template<class F, std::size_t... Indices>
 auto call_f_default_params_detail(const F &f, std::index_sequence<Indices...>) {
     return f(std::get<Indices>(parameter_types_t<F>())...);
 }
 
-template<class F, class... Args, size_t... Indices>
+template<class F, class... Args, std::size_t... Indices>
 auto call_f_tuple_detail(const F &f, const std::tuple<Args...> &args, std::index_sequence<Indices...>) {
     return f(std::get<Indices>(args)...);
 }

@@ -30,7 +30,15 @@ Sample::Sample(const std::string& sample_address,
         sample_instance_{sample_instance},
         time_index_{time_index} { }
 
-void Sample::set_value(const NDArray<double>& value){ value_ = value; }
+void Sample::set_value(const NDArray<double>& value)
+{
+    value_ = value;
+}
+
+std::string Sample::sample_address()
+{
+    return sample_address_;
+}
 
 flatbuffers::Offset<infcomp::protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilder& buff) const{
     return infcomp::protocol::CreateSample(

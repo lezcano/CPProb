@@ -58,7 +58,7 @@ int main(int argc, const char* const* argv) {
                                                                        "Compile: Compile a NN to use in inference mode.\n"
                                                                        "Infer: Perform compiled inference.\n"
                                                                        "Infer-Regular: Perform sequential importance sampling with priors as proposals.\n"
-                                                                       "Estimate: Compute some estimators of a posterior.\n"
+                                                                       "Estimate: Compute estimators of the posterior distribution.\n"
                                                                        "Dry Run: Execute the model without any inference algorithm.")
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(Compile + --dump_folder | Inference) Number of particles to be sampled.")
       ("tcp_addr,a", po::value<std::string>(&tcp_addr), "Address and port to connect with the NN.\n"
@@ -97,25 +97,29 @@ int main(int argc, const char* const* argv) {
     // auto f = &models::linear_gaussian_1d<50>;
     // auto f = &models::gaussian_unknown_mean<>;
     // auto f = &models::hmm<16>;
-    auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
+    // auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
+    models::Gauss<> f{};
     #endif
 
     if (mode == "compile") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://0.0.0.0:5555";
         }
+
+        if (vm.count("dump_folder") != 0u) {
+            const boost::filesystem::path path_dump_folder(dump_folder);
+            if (!boost::filesystem::exists(path_dump_folder)) {
+                std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
+                          << "Please provide a valid folder.\n";
+                std::exit(EXIT_FAILURE);
+            }
+        }
+
         cpprob::compile(f, tcp_addr, dump_folder, n_samples);
     }
     else if (mode == "infer" || mode == "infer-regular") {
         if (tcp_addr.empty()) {
             tcp_addr = "tcp://127.0.0.1:6666";
-        }
-
-        const boost::filesystem::path path_dump_folder (dump_folder);
-        if (!boost::filesystem::exists(path_dump_folder)) {
-            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
-                      << "Please provide a valid folder.\n";
-            std::exit (EXIT_FAILURE);
         }
 
         using tuple_params_t = cpprob::parameter_types_t<decltype(f), std::tuple>;

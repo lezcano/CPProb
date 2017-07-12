@@ -19,15 +19,13 @@
 namespace cpprob {
 namespace detail {
 
-template<class Iter, class = std::enable_if_t<
-        boost::has_less<
-                typename std::iterator_traits<Iter>::value_type>::value>>
+template<class Iter, std::enable_if_t< boost::has_less< typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
 typename std::iterator_traits<Iter>::value_type supremum (Iter begin, Iter end)
 {
     return *std::max_element(begin, end);
 }
 
-template<class T, class = std::enable_if_t< std::is_arithmetic<T>::value> >
+template<class T, std::enable_if_t< std::is_arithmetic<T>::value, int> = 0>
 T get_zero (T)
 {
     return T(0);
@@ -37,8 +35,8 @@ T get_zero (T)
 
 // Idea from
 // http://codereview.stackexchange.com/questions/109260/seed-stdmt19937-from-stdrandom-device/109266#109266
-template<class T = boost::random::mt19937, std::size_t N = T::state_size>
-std::enable_if_t<N != 0, T> seeded_rng()
+template<class T = boost::random::mt19937, std::size_t N = T::state_size, std::enable_if_t<N != 0, int> = 0>
+T seeded_rng()
 {
     std::array<typename T::result_type, N> random_data;
     std::random_device rd;

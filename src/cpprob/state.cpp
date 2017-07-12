@@ -1,6 +1,7 @@
 #include "cpprob/state.hpp"
 
 #include <iomanip>
+#include <set>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -18,13 +19,34 @@ namespace cpprob {
 ////////////////////////////////////////////////////////////////////////////////
 
 StateType State::state_;
+bool State::rejection_sampling_ = false;
 
 void State::set(StateType s)
 {
     state_ = s;
-    StateCompile::new_trace();
-    StateInfer::new_trace();
 }
+
+void State::start_rejection_sampling()
+{
+    rejection_sampling_ = true;
+}
+
+void State::finish_rejection_sampling()
+{
+    rejection_sampling_ = false;
+    if (state_ == StateType::compile) {
+        StateCompile::finish_rejection_sampling();
+    }
+    else if (state_ == StateType::inference) {
+        StateInfer::finish_rejection_sampling();
+    }
+}
+
+bool State::rejection_sampling()
+{
+    return rejection_sampling_;
+}
+
 bool State::compile ()
 {
     return state_ == StateType::compile;
@@ -42,12 +64,6 @@ StateType State::state()
     return state_;
 }
 
-void State::new_model()
-{
-    StateCompile::new_model();
-    StateInfer::new_model();
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,31 +71,34 @@ void State::new_model()
 TraceCompile StateCompile::trace_;
 std::vector<TraceCompile> StateCompile::batch_;
 
-void StateCompile::add_trace()
+void StateCompile::start_batch()
 {
-    batch_.emplace_back(std::move(trace_));
+    batch_.clear();
 }
 
-void StateCompile::send_batch()
+void StateCompile::finish_batch()
 {
     SocketCompile::send_batch(batch_);
-    batch_.clear();
 }
 
-void StateCompile::new_model()
-{
-    StateCompile::new_trace();
-    batch_.clear();
-}
-
-void StateCompile::new_trace()
+void StateCompile::start_trace()
 {
     trace_ = TraceCompile();
 }
 
+void StateCompile::finish_trace()
+{
+    batch_.emplace_back(std::move(trace_));
+}
+
 void StateCompile::add_sample(const Sample& s)
 {
-    StateCompile::trace_.samples_.emplace_back(s);
+    if (State::rejection_sampling()) {
+        StateCompile::trace_.samples_rejection_.emplace_back(s);
+    }
+    else {
+        StateCompile::trace_.samples_.emplace_back(s);
+    }
 }
 
 int StateCompile::sample_instance(const std::string & addr)
@@ -103,6 +122,27 @@ void StateCompile::add_observe(const NDArray<double>& x)
     StateCompile::trace_.observes_.emplace_back(x);
 }
 
+// Accept / Reject sampling
+void StateCompile::finish_rejection_sampling()
+{
+    std::set<std::string> samples_processed;
+    std::vector<Sample> last_samples;
+    for (auto it = trace_.samples_rejection_.rbegin(); it != trace_.samples_rejection_.rend(); ++it) {
+        auto emplaced = samples_processed.emplace(it->sample_address());
+        // If it is the first time that we find that sample
+        if (emplaced.second) {
+            last_samples.emplace_back(std::move(*it));
+        }
+    }
+    trace_.samples_rejection_.clear();
+    // TODO(Lezcano) Replace with resize + several moves
+    for (auto it = std::make_move_iterator(last_samples.rbegin());
+         it != std::make_move_iterator(last_samples.rend());
+         ++it) {
+        trace_.samples_.emplace_back(*it);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////         Inference             ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,42 +153,16 @@ Sample StateInfer::curr_sample_;
 bool StateInfer::all_int_empty = true;
 bool StateInfer::all_real_empty = true;
 bool StateInfer::all_any_empty = true;
+std::vector<void (*)()> StateInfer::clear_functions_;
 
-
-
-void StateInfer::new_model()
+void StateInfer::start_infer()
 {
-    new_trace();
     TraceInfer::ids_predict_.clear();
     clear_empty_flags();
 }
 
-void StateInfer::new_trace()
-{
-    prev_sample_ = Sample();
-    curr_sample_ = Sample();
-    trace_ = TraceInfer();
-}
 
-void StateInfer::clear_empty_flags()
-{
-    all_int_empty = true;
-    all_real_empty = true;
-    all_any_empty = true;
-}
-
-void StateInfer::add_trace()
-{
-    SocketInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, "_int");
-    SocketInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, "_real");
-    SocketInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, "_any");
-    all_int_empty &= trace_.predict_int_.size() == 0;
-    all_real_empty &= trace_.predict_real_.size() == 0;
-    all_any_empty &= trace_.predict_any_.size() == 0;
-}
-
-
-void StateInfer::finish()
+void StateInfer::finish_infer()
 {
     SocketInfer::dump_ids(TraceInfer::ids_predict_);
     if (all_int_empty) {
@@ -163,9 +177,43 @@ void StateInfer::finish()
     clear_empty_flags();
 }
 
+
+void StateInfer::start_trace()
+{
+    prev_sample_ = Sample();
+    curr_sample_ = Sample();
+    trace_ = TraceInfer();
+}
+
+void StateInfer::finish_trace()
+{
+    SocketInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, "_int");
+    SocketInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, "_real");
+    SocketInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, "_any");
+    all_int_empty &= trace_.predict_int_.size() == 0;
+    all_real_empty &= trace_.predict_real_.size() == 0;
+    all_any_empty &= trace_.predict_any_.size() == 0;
+}
+
+void StateInfer::clear_empty_flags()
+{
+    all_int_empty = true;
+    all_real_empty = true;
+    all_any_empty = true;
+}
+
+
 void StateInfer::increment_log_prob(const double log_p)
 {
     trace_.log_w_ += log_p;
+}
+
+void StateInfer::finish_rejection_sampling()
+{
+    for(const auto & f : clear_functions_) {
+        f();
+    }
+    clear_functions_.clear();
 }
 
 }  // namespace cpprob

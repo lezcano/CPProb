@@ -8,8 +8,7 @@
 
 int main(int argc,char* argv[])
 {
-    using namespace cpprob;
-    State::set(StateType::dryrun);
+    cpprob::State::set(cpprob::StateType::dryrun);
 
     models::SherpaWrapper s;
 
@@ -25,7 +24,7 @@ int main(int argc,char* argv[])
     std::ofstream file_mom(outputfilename + "_mom.txt");
     std::ofstream file_obs(outputfilename + "_obs.txt");
     for (int i = 0; i < n; ++i) {
-        auto tup = s.sherpa_pred_obs();
+        auto tup = s.sherpa();
         file_chan << std::get<0>(tup) << std::endl;
         file_mom <<  std::get<1>(tup) << std::endl;
         file_obs <<  std::get<2>(tup) << std::endl;

@@ -5,14 +5,15 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <cstdlib>
-#include <numeric>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iterator>
 #include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <numeric>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <boost/random/random_device.hpp>
 
@@ -38,7 +39,6 @@ std::string get_name_demangled (const char* s)
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
     auto last = str.find_last_of(')');
-
     auto mas = str.find_last_of('+');
 
     int status;
@@ -54,9 +54,28 @@ std::string get_name_demangled (const char* s)
     }
 }
 
-
-std::string get_addr()
+bool in_namespace_models(const std::string & fun)
 {
+    // The only spaces before a word in a demangled name are in the arguments and in the name function
+    // You also have spaces before a > when another > precedes it, but it's alright
+    static std::regex r{"[^,] models::", std::regex::optimize};
+    static std::smatch match;
+    // TODO(Lezcano) Hack to deal with non templated functions
+    // abi::__cxa_demangle does not add the return type when the function is not a template!!
+    return std::regex_search(fun, match, r) || fun.find("models::") == 0;
+}
+
+bool in_namespace_cpprob(const std::string & fun)
+{
+    // The only spaces before a word in a demangled name are in the arguments and in the name function
+    // You also have spaces before a > when another > precedes it, but it's alright
+    static std::regex r{"[^,] cpprob::", std::regex::optimize};
+    static std::smatch match;
+    // abi::__cxa_demangle does not add the return type when the function is not a template!!
+    return std::regex_search(fun, match, r) || fun.find("cpprob::") == 0;
+}
+
+std::string get_addr() {
     constexpr int buf_size = 100;
     static void *buffer[buf_size];
     char **strings;
@@ -74,35 +93,30 @@ std::string get_addr()
         std::exit(EXIT_FAILURE);
     }
 
-    // We will consider addresses in the range [begin, end]
-    int begin = -1, end = nptrs;
-    std::string s;
+    int begin = 0, end = nptrs - 1;
 
     // Discard calls inside the cpprob library
-    do {
+    while (begin != nptrs && in_namespace_cpprob(get_name_demangled(strings[begin]))) {
         ++begin;
-        s = get_name_demangled(strings[begin]);
-    } while (s.find("cpprob::") != std::string::npos && begin != nptrs);
+    }
 
     if (begin == nptrs){
         std::cerr << "Entry function call to the cpprob library not found" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-    // Discard calls until the model is hit
-    do {
+    // Discard calls outside of the models namespace
+    while (end != -1 && !in_namespace_models(get_name_demangled(strings[end]))) {
         --end;
-        s = get_name_demangled(strings[end]);
-    } while (s.find("models::") == std::string::npos && end != 0);
+    }
 
-    if (end == 0){
+    if (end == -1){
         std::cerr << "Entry call to model not found. Is the model in the namespace models?" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-
     std::string ret = "[";
-    // Stack calls are reversed. strings[0] is get_addr()
+    // Stack calls are reversed. strings[0] is the current function call get_addr()
     if (begin <= end) {
         ret += get_name_demangled(strings[end]);
         --end;

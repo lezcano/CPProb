@@ -26,6 +26,7 @@ private:
     int time_index_ = 1;
     std::unordered_map<std::string, int> sample_instance_;
     std::vector<Sample> samples_;
+    std::vector<Sample> samples_rejection_;
     std::vector<NDArray<double>> observes_;
 };
 

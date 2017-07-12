@@ -18,7 +18,7 @@
 
 template <class F>
 void execute (const F & f,
-              const bool compile, const bool infer, const bool sis, const bool estimate,
+              const bool generate_traces, const bool compile, const bool infer, const bool sis, const bool estimate,
               const std::string & model_name,
               const std::size_t n_samples,
               const std::size_t batch_size,
@@ -37,19 +37,24 @@ void execute (const F & f,
         create_directory(path(nn_folder));
     }
 
-    if (compile) {
-        std::cout << "Compile" << std::endl;
-        const auto dump_folder = model_folder + "traces";
-        const path dump_folder_path{dump_folder};
+    const auto dump_folder = model_folder + "traces";
+    const path dump_folder_path{dump_folder};
 
+    if (generate_traces) {
+        std::cout << "Generating Traces" << std::endl;
         if (!exists(dump_folder_path)) {
             create_directory(path(dump_folder_path));
-            cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
         }
-        else {
-            std::cerr << "Traces folder already exists. Traces not generated." << std::endl;
-        }
+        cpprob::compile(f, tcp_addr_compile, dump_folder, batch_size);
+    }
 
+    if (compile) {
+        std::cout << "Compile" << std::endl;
+
+        if (!exists(dump_folder_path)) {
+            std::cout << "Traces folder does not exist. Could not compile the NN." << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
 
         auto compile_command = "python3 -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
                                                          " --batchSize " + std::to_string(batch_size) +
@@ -59,6 +64,7 @@ void execute (const F & f,
         if (optirun) {
             compile_command = "optirun " + compile_command;
         }
+
         std::system(compile_command.c_str());
     }
 
@@ -98,23 +104,23 @@ void execute (const F & f,
 
     }
     if (estimate) {
-        std::cout << "Estimators of the Posterior" << std::endl;
-        bool none_exist = true;
+        std::cout << "Posterior Distribution Estimators" << std::endl;
         const path path_dump_folder (csis_post);
         auto print = [] (const std::string & file_name) {
             if (exists(path(file_name + "_ids"))) {
                 cpprob::Printer p;
                 p.load(file_name);
                 p.print(std::cout);
-                return false;
-            }
-            else {
                 return true;
             }
+            else {
+                return false;
+            }
         };
-        none_exist &= print(csis_post);
-        none_exist &= print(sis_post);
-        if (none_exist) {
+        bool one_exists = false;
+        one_exists |= print(csis_post);
+        one_exists |= print(sis_post);
+        if (!one_exists) {
             std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found.";
         }
     }
@@ -124,9 +130,9 @@ void execute (const F & f,
 int main(int argc, const char* const* argv) {
 
     std::size_t n_samples, batch_size;
-    bool compile, infer, sis, estimate, all, optirun;
+    bool generate_traces, compile, infer, sis, estimate, all, optirun;
     std::string model, tcp_addr_compile, tcp_addr_infer;
-    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression"}};
+    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d"}};
 
     std::string all_model_names = model_names[0];
     for (std::size_t i = 1; i < model_names.size(); ++i) {
@@ -137,11 +143,12 @@ int main(int argc, const char* const* argv) {
     po::options_description desc("Options");
     desc.add_options()
             ("model", po::value<std::string>(&model)->required()->value_name(all_model_names))
-            ("compile", "Execute compilation.")
-            ("infer", "Execute compiled inference.")
-            ("sis", "Execute sequential importance sampling.")
-            ("estimate", "Execute estimators.")
-            ("all", "Execute all the options")
+            ("generate_traces", "Generate traces for compilation.")
+            ("compile", "Compilation.")
+            ("infer", "Compiled inference.")
+            ("sis", "Sequential importance sampling.")
+            ("estimate", "Estimators.")
+            ("all", "All the options")
             ("batch_size", po::value<std::size_t>(&batch_size)->default_value(256))
             ("n_samples", po::value<std::size_t>(&n_samples)->default_value(1000), "Number of particles to be sampled from the posterior.")
             ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.")
@@ -166,6 +173,7 @@ int main(int argc, const char* const* argv) {
         std::cerr << desc << std::endl;
         std::exit (EXIT_FAILURE);
     }
+    generate_traces = vm.count("generate_traces");
     compile = vm.count("compile");
     infer = vm.count("infer");
     sis = vm.count("sis");
@@ -179,31 +187,35 @@ int main(int argc, const char* const* argv) {
         std::exit (EXIT_FAILURE);
     }
     if (all) {
+        generate_traces = true;
         compile = true;
         infer = true;
         sis = true;
         estimate = true;
     }
 
+    auto execute_param = [&](const auto & f) {
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+    };
+
     if (model == model_names[0] /* unk_mean */) {
-        auto f = &models::gaussian_unknown_mean<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::gaussian_unknown_mean<>);
     }
     else if (model == model_names[1] /* unk_mean rejection */) {
-        auto f = &models::normal_rejection_sampling<>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::normal_rejection_sampling<>);
     }
     else if (model == model_names[2] /* linear gaussian walk */) {
-        auto f = &models::linear_gaussian_1d<50>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::linear_gaussian_1d<50>);
     }
     else if (model == model_names[3] /* hmm */) {
-        auto f = &models::hmm<16>;
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        execute_param(&models::hmm<16>);
     }
     else if (model == model_names[4] /* linear regression */) {
-        auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
-        execute(f, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+        // Linear adjustment (Deg = 1, Points = 6)
+        execute_param(&models::poly_adjustment<1, 6>);
+    }
+    else if (model == model_names[5] /* unk_mean 2d */) {
+        execute_param(&models::gaussian_2d_unk_mean<>);
     }
     else{
         std::cerr << "Incorrect model.\n\n"
