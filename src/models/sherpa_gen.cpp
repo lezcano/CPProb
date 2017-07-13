@@ -8,7 +8,8 @@
 
 int main(int argc,char* argv[])
 {
-    cpprob::State::set(cpprob::StateType::dryrun);
+    using namespace cpprob; // serialization
+    State::set(StateType::dryrun);
 
     models::SherpaWrapper s;
 

@@ -33,7 +33,6 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> 
 template<class CharT, class Traits, class Key, class Value>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map);
 
-
 template<class CharT, class Traits, class U, class V>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair)
@@ -280,6 +279,5 @@ bool parse_string(const std::string& param, std::tuple<T...>& tup)
     parse_stream(iss, tup, std::make_index_sequence<sizeof...(T)>());
     return !iss.fail();
 }
-
 } // end namespace cpprob
 #endif //INCLUDE_SERIALIZATION_HPP

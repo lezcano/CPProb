@@ -28,7 +28,7 @@ SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
     jailbreak::instance().m_histo3d.clear();
     try {
         const int sherpa_argc = 7;
-        const char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
+        char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
         generator_->InitializeTheRun(sherpa_argc, sherpa_argv);
         generator_->InitializeTheEventHandler();
     }
@@ -51,7 +51,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     std::vector<double> mother_momentum;
     std::vector<std::vector<std::vector<double>>> img;
 
-    std::tie(channel_index, mother_momentum, img) = sherpa_pred_obs();
+    std::tie(channel_index, mother_momentum, img) = sherpa();
 
     cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(img), OBS_WIDTH);
     cpprob::observe(likelihood, observes);
