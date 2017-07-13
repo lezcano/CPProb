@@ -46,7 +46,7 @@ private:
     // We have to separate them so we can dump them in different files.
     // We still use cpprob::any so we do not lose precision
     std::vector<std::pair<int, cpprob::any>> predict_int_;
-    std::vector<std::pair<int, cpprob::any>> predict_real_;
+    std::vector<std::pair<int, cpprob::NDArray<double>>> predict_real_; // Dynamic loading of libraries + type erasure don't play along
     std::vector<std::pair<int, cpprob::any>> predict_any_;
     double log_w_ = 0;
 };

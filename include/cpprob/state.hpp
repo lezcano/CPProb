@@ -186,21 +186,18 @@ private:
         trace_.predict_int_.emplace_back(id, x);
     }
 
-    template<class T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+    template<class T, std::enable_if_t<!std::is_integral<T>::value &&
+                                        std::is_constructible<NDArray<double>, T>::value
+                                        , int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
         auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_real_.emplace_back(id, x);
     }
 
-    template<class T>
-    static void add_predict(const NDArray<T> & x, const std::string & addr)
-    {
-        auto id = TraceInfer::register_addr_predict(addr);
-        trace_.predict_real_.emplace_back(id, x);
-    }
-
-    template<class T, std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, int> = 0>
+    template<class T, std::enable_if_t<!std::is_integral<T>::value &&
+                                       !std::is_constructible<NDArray<double>, T>::value
+                                       , int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
         auto id = TraceInfer::register_addr_predict(addr);

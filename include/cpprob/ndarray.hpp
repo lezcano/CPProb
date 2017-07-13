@@ -270,9 +270,8 @@ public:
         return ret;
     }
 
-    template<class CharT>
-    friend std::basic_ostream<CharT> &
-    operator<<(std::basic_ostream<CharT> & os, const NDArray & v)
+
+    friend std::ostream& operator<<(std::ostream & os, const NDArray & v)
     {
         if (v.shape_.size() == 1 && v.shape_[0] == 1) {
             os << v.values_[0];

@@ -8,6 +8,8 @@
 
 #include <zmq.hpp>
 
+#include "cpprob/ndarray.hpp"
+#include "cpprob/serialization.hpp"
 #include "cpprob/trace.hpp"
 #include "cpprob/distributions/distribution_utils.hpp"
 #include "flatbuffers/infcomp_generated.h"
@@ -81,9 +83,18 @@ public:
 private:
     friend class StateInfer;
 
-    static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix);
+    template<class T>
+    static void dump_predicts(const std::vector<std::pair<int, T>> & predicts, const double log_w, const std::string & suffix)
+    {
+        std::ofstream f {dump_file_ + suffix, std::ios::app};
+        std::cout << dump_file_ + suffix << std::endl;
+        f.precision(std::numeric_limits<double>::digits10);
+        f << std::scientific << std::make_pair(predicts, log_w) << std::endl;
+    }
+
 
     static void dump_ids(const std::unordered_map<std::string, int> & ids_predict);
+
     static void delete_file(const std::string & suffix);
 
     static zmq::socket_t client_;
