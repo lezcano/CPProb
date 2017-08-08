@@ -139,7 +139,7 @@ void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_pred
     std::ofstream out_file {dump_file_ + "_ids"};
     std::vector<std::string> addresses(ids_predict.size());
     for(const auto& kv : ids_predict) {
-        addresses[kv.second] = '"' + kv.first + '"';
+        addresses[kv.second] = kv.first;
     }
     for(const auto & address : addresses) {
         out_file << address << std::endl;

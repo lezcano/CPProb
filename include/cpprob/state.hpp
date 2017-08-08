@@ -1,6 +1,7 @@
 #ifndef CPPROB_STATE_HPP
 #define CPPROB_STATE_HPP
 
+#include <iostream> // debug
 #include <map>
 #include <string>
 #include <type_traits>
@@ -103,36 +104,6 @@ public:
 
 private:
 
-    template<template <class ...> class Distr, class ...Params>
-    class DistributionCache {
-    public:
-
-       static void emplace_hint(typename std::map<std::string, typename proposal<Distr, Params...>::type>::const_iterator hint,
-                                const std::string & addr,
-                                const typename proposal<Distr, Params...>::type & distr)
-        {
-            distributions_.emplace_hint(hint, std::make_pair(addr, distr));
-        }
-
-        static auto distribution(const std::string & addr)
-        {
-            return distributions_.lower_bound(addr);
-        }
-
-        static bool first_distribution()
-        {
-            return distributions_.empty();
-        }
-
-        static void clear()
-        {
-            distributions_.clear();
-        }
-
-    private:
-        static std::map<std::string, typename proposal<Distr, Params...>::type> distributions_;
-    };
-
     // Attributes
     static TraceInfer trace_;
     static Sample prev_sample_;
@@ -156,20 +127,25 @@ private:
             return SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
         }
         else {
+            static std::map<std::string, typename proposal<Distr, Params...>::type> cache;
             // If it is the first distribution<Distr, Params>, register the clear_function
-            if (DistributionCache<Distr, Params...>::first_distribution()) {
-                clear_functions_.emplace_back(&DistributionCache<Distr, Params...>::clear);
+            if (cache.empty()) {
+                // Hacky idea to create a callback function to a member function of a static object
+                struct ClearFunction {
+                    static void clear () { cache.clear(); }
+                };
+                clear_functions_.emplace_back(&ClearFunction::clear);
             }
 
-            auto addr = curr_sample_.sample_address();
-            auto distr_iter = DistributionCache<Distr, Params...>::distribution(addr);
+            const auto addr = curr_sample_.sample_address();
+            auto distr_iter = cache.lower_bound(addr);
 
             if (distr_iter->first == addr) {
                 return distr_iter->second;
             }
             else {
-                auto distr = SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
-                DistributionCache<Distr, Params...>::emplace_hint(distr_iter, addr, distr);
+                const auto distr = SocketInfer::get_proposal<Distr, Params...>(curr_sample_, prev_sample_);
+                cache.emplace_hint(distr_iter, std::make_pair(addr, distr));
                 return distr;
             }
         }
@@ -182,28 +158,28 @@ private:
     template<class T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
-        auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_int_.emplace_back(id, x);
     }
 
     template<class T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
-        auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_real_.emplace_back(id, x);
     }
 
     template<class T>
     static void add_predict(const NDArray<T> & x, const std::string & addr)
     {
-        auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_real_.emplace_back(id, x);
     }
 
     template<class T, std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, int> = 0>
     static void add_predict(const T & x, const std::string & addr)
     {
-        auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(addr);
         trace_.predict_any_.emplace_back(id, x);
     }
 
@@ -220,8 +196,6 @@ private:
     friend class State;
 };
 
-template<template <class ...> class Distr, class ...Params>
-std::map<std::string, typename proposal<Distr, Params...>::type> StateInfer::DistributionCache<Distr, Params...>::distributions_{};
 }  // namespace cpprob
 
 #endif //CPPROB_STATE_HPP

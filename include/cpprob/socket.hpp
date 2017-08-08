@@ -61,13 +61,13 @@ public:
 
         buff.Finish(msg);
 
-        zmq::message_t request (buff.GetSize());
-        memcpy (request.data(), buff.GetBufferPointer(), buff.GetSize());
+        zmq::message_t request {buff.GetSize()};
+        memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
         client_.send(request);
         buff.Clear();
 
         zmq::message_t reply;
-        client_.recv (&reply);
+        client_.recv(&reply);
 
         auto message = infcomp::protocol::GetMessage(reply.data());
         auto reply_msg = static_cast<const infcomp::protocol::ProposalReply*>(message->body());

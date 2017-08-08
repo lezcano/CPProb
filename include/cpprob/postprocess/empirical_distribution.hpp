@@ -22,16 +22,16 @@ public:
         x_logw_.emplace_back(std::make_pair(value, logw));
     }
 
-    void set_num_points(const std::size_t num_points)
+    std::size_t num_points() const
     {
-        num_points_ = num_points;
+        return x_logw_.size();
     }
 
     std::map<T, WeightType> distribution() const
     {
         std::map<T, WeightType> ret;
 
-        auto log_norm = log_normalisation_constant();
+        const auto log_norm = log_normalisation_constant();
 
         for(const auto & point : x_logw_) {
             ret[point.first] += std::exp(point.second - log_norm);
@@ -144,8 +144,6 @@ private:
 
     // Attributes
     std::vector<std::pair<T, WeightType>> x_logw_; // [(value, log weight)]
-    std::size_t num_points_; // Exact number of points
-                             // The x_logw_ vector might be missing some points if some cpprob::predict statements are not hit in some runs
 };
 } // end namespace cpprob
 #endif //CPPROB_MODEL_HPP

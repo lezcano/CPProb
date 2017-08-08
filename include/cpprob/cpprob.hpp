@@ -98,7 +98,7 @@ template<template <class ...> class Distr, class ...Params>
 typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, const bool from_observe)
 {
     typename Distr<Params ...>::result_type x{};
-    std::string addr = get_addr();
+    std::string addr {get_addr()};
 
     if (State::state() == StateType::compile) {
         x = distr(get_rng());
@@ -118,7 +118,6 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
 
         try {
             auto proposal = StateInfer::get_proposal<Distr, Params...>();
-
             x = proposal(get_rng());
 
             StateInfer::increment_log_prob(logpdf(distr, x) - logpdf(proposal, x));

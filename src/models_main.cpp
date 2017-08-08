@@ -51,21 +51,36 @@ void execute (const F & f,
     if (compile) {
         std::cout << "Compile" << std::endl;
 
-        if (!exists(dump_folder_path)) {
-            std::cout << "Traces folder does not exist. Could not compile the NN." << std::endl;
-            std::exit(EXIT_FAILURE);
+        bool online_training = !exists(dump_folder_path);
+        if (online_training) {
+            std::cout << "Online Training" << std::endl;
+        }
+        else {
+            std::cout << "Offline Training" << std::endl
+                      << "Traces from Folder" << std::endl;
         }
 
-        auto compile_command = "python3 -m infcomp.compile --batchPool \"" + dump_folder + "\"" +
-                                                         " --batchSize " + std::to_string(batch_size) +
+
+        auto compile_command = "python3 -m infcomp.compile --batchSize " + std::to_string(batch_size) +
                                                          " --validSize " + std::to_string(batch_size) +
                                                          " --dir " + nn_folder +
                                                          " --cuda";
+        if (!online_training) {
+            compile_command  += " --batchPool \"" + dump_folder + "\"";
+        }
         if (optirun) {
             compile_command = "optirun " + compile_command;
         }
 
-        std::system(compile_command.c_str());
+        if (online_training) {
+            std::thread thread_nn (&std::system, compile_command.c_str());
+
+            cpprob::compile(f, tcp_addr_compile, "", 0);
+            thread_nn.join();
+        }
+        else {
+            std::system(compile_command.c_str());
+        }
     }
 
     const std::string csis_post = model_folder + "csis.post";

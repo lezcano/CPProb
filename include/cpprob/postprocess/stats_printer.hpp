@@ -14,6 +14,7 @@
 #include "cpprob/postprocess/empirical_distribution.hpp"
 
 namespace cpprob {
+// TODO(Lezcano) Maybe factor into two classes
 class Printer {
 public:
 
@@ -31,22 +32,35 @@ public:
     void print(std::ostream & out) const
     {
         for (const auto & kv : real_distr_) {
-            for (std::size_t i = 0; i < kv.second.size(); ++i) {
-                auto mean = kv.second[i].mean();
-                out << ids_[kv.first] << " " << i << ":" << std::endl
-                    << "  Mean: " << mean << std::endl
-                    << "  Variance: " << kv.second[i].variance(mean) << std::endl;
+            std::size_t i = 0;
+            for (const auto & emp_distr : kv.second) {
+                out << ids_[kv.first];
+                if (kv.second.size() > 1) {
+                    out << ' ' << i;
+                }
+                out << ':' << std::endl;
+                auto mean = emp_distr.mean();
+                out << "  Mean: " << mean << std::endl
+                    << "  Variance: " << emp_distr.variance(mean) << std::endl;
+                ++i;
             }
         }
         for (const auto & kv : int_distr_) {
-            for (std::size_t i = 0; i < kv.second.size(); ++i) {
-                out << ids_[kv.first] << " " << i << ":" << std::endl
+            std::size_t i = 0;
+            for (const auto & emp_distr : kv.second) {
+                out << ids_[kv.first];
+                if (kv.second.size() > 1) {
+                    out << ' ' << i;
+                }
+                out << ':' << std::endl
                     << "  Distribution:\n";
-                auto distr = kv.second[i].distribution();
+                auto distr = emp_distr.distribution();
                 for (const auto & x_w : distr) {
                     out << "    " << x_w.first << ": " << x_w.second << std::endl;
                 }
-                out << "  MAP: " << kv.second[i].max_a_posteriori(distr) << std::endl;
+                out << "  MAP: " << emp_distr.max_a_posteriori(distr) << std::endl;
+                out << "  Num points: " << emp_distr.num_points() << std::endl;
+                ++i;
             }
         }
     }
@@ -66,7 +80,6 @@ private:
             return;
         }
 
-        int num_points = 0;
         for (std::string line; std::getline(file, line);) {
             std::map<int, int> predict_instance;
             std::pair<std::vector<std::pair<int, T>>, double> predicts;
@@ -88,12 +101,6 @@ private:
                     vec_distr[num_times_hit_predict].add_point(elem.second, predicts.second);
                 }
                 ++num_times_hit_predict;
-            }
-            ++num_points;
-        }
-        for (auto & addr_distrs : distributions) {
-            for (auto & distr : addr_distrs.second) {
-                distr.set_num_points(num_points);
             }
         }
     }

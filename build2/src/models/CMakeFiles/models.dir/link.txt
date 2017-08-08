@@ -1,0 +1,1 @@
+/usr/bin/g++-6  -fPIC  -std=c++14 -Wall -Wextra -pedantic -fPIC -fext-numeric-literals  -rdynamic -O3 -DNDEBUG -O3 -DNDEBUG  -shared -Wl,-soname,libmodels.so -o libmodels.so CMakeFiles/models.dir/models.cpp.o 
