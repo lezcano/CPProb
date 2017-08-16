@@ -28,17 +28,20 @@ void State::set(StateType s)
 
 void State::start_rejection_sampling()
 {
-    rejection_sampling_ = true;
+    if(state_ != StateType::dryrun) {
+        rejection_sampling_ = true;
+    }
 }
 
 void State::finish_rejection_sampling()
 {
-    rejection_sampling_ = false;
-    if (state_ == StateType::compile) {
-        StateCompile::finish_rejection_sampling();
-    }
-    else if (state_ == StateType::inference) {
-        StateInfer::finish_rejection_sampling();
+    if(state_ != StateType::dryrun) {
+        rejection_sampling_ = false;
+        if (state_ == StateType::compile) {
+            StateCompile::finish_rejection_sampling();
+        } else if (state_ == StateType::inference) {
+            StateInfer::finish_rejection_sampling();
+        }
     }
 }
 

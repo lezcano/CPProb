@@ -9,7 +9,7 @@
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/state.hpp"
-#include "cpprob/traits.hpp"
+#include "cpprob/call_function.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
 
 #ifdef BUILD_SHERPA

@@ -188,6 +188,8 @@ public:
     // construct/copy/destruct
     multivariate_normal_distribution() : param_{} {}
 
+    multivariate_normal_distribution(const param_type & param) : param_{param} {}
+
     template<class Iter>
     multivariate_normal_distribution(Iter mean_first, Iter mean_last, RealType sigma)
             : param_(mean_first, mean_last, sigma) {}

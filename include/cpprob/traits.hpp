@@ -13,6 +13,10 @@
 
 namespace cpprob {
 
+template<class T>
+using last_elem = std::tuple_element_t<
+        std::tuple_size<T>::value - 1,
+        T>;
 
 template<class F, std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, int> = 0>
 constexpr std::size_t num_args()
@@ -66,41 +70,27 @@ begin(std::declval<T &>()) != end(std::declval<T &>()), // begin/end and operato
 
 template<typename T>
 std::false_type is_iterable_impl(...);
+
+using std::tuple_size;
+using std::get;
+
+template<typename T>
+auto is_tuple_like_impl(int)
+-> decltype(
+        get<0>(std::declval<T>()),
+        void(tuple_size<T>::value),
+        std::true_type{});
+
+template<typename T>
+std::false_type is_tuple_like_impl(...);
 } // end namespace detail
 
 template<typename T>
 using is_iterable = decltype(detail::is_iterable_impl<T>(0));
+template<typename T>
+using is_tuple_like = decltype(detail::is_tuple_like_impl<T>(0));
 
 
-
-namespace detail {
-using boost::function_types::result_type;
-
-template<class F, std::size_t... Indices>
-auto call_f_default_params_detail(const F &f, std::index_sequence<Indices...>) {
-    return f(std::get<Indices>(parameter_types_t<F>())...);
-}
-
-template<class F, class... Args, std::size_t... Indices>
-auto call_f_tuple_detail(const F &f, const std::tuple<Args...> &args, std::index_sequence<Indices...>) {
-    return f(std::get<Indices>(args)...);
-}
-} // end namespace detail
-
-template <class F>
-auto call_f_default_params(const F& f)
-{
-    return detail::call_f_default_params_detail(f, std::make_index_sequence<num_args<F>()>());
-}
-
-
-template <class F, class... Args>
-auto call_f_tuple(const F& f, const std::tuple<Args...>& args)
-{
-    static_assert(sizeof...(Args) == num_args<F>(),
-                  "Number of arguments and arity of function do not agree.");
-    return detail::call_f_tuple_detail(f, args, std::make_index_sequence<num_args<F>()>());
-}
 
 
 } // end namespace cpprob

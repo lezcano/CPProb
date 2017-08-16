@@ -11,6 +11,9 @@
 
 #include "cpprob/cpprob.hpp"
 #include "cpprob/traits.hpp"
+ // TODO(Lezcano) ciclic dependency between tratis and metapirors
+// Where should tuple_observes_t be?
+#include "cpprob/metapriors.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
 
 #include "models/models.hpp"
@@ -90,9 +93,9 @@ void execute (const F & f,
         std::cout << "Inference" << std::endl;
         const auto observes_file = model_folder + "observes.obs";
 
-        using tuple_params_t = cpprob::parameter_types_t<F, std::tuple>;
-        tuple_params_t observes;
+        cpprob::tuple_observes_t<F> observes;
 
+        // TODO(Lezcano) C++17 This should be std::expected
         if (cpprob::parse_file(observes_file, observes)) {
             if (infer) {
                 std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
@@ -115,6 +118,9 @@ void execute (const F & f,
                 const cpprob::StateType state = cpprob::StateType::importance_sampling;
                 cpprob::generate_posterior(f, observes, tcp_addr_infer, sis_post, n_samples, state);
             }
+        }
+        else {
+            std::cout << "Error parsing " << observes_file << std::endl;
         }
 
     }
@@ -147,7 +153,7 @@ int main(int argc, const char* const* argv) {
     std::size_t n_samples, batch_size;
     bool generate_traces, compile, infer, sis, estimate, all, optirun;
     std::string model, tcp_addr_compile, tcp_addr_infer;
-    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d"}};
+    std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d", "linear_priors"}};
 
     std::string all_model_names = model_names[0];
     for (std::size_t i = 1; i < model_names.size(); ++i) {
@@ -231,6 +237,9 @@ int main(int argc, const char* const* argv) {
     }
     else if (model == model_names[5] /* unk_mean 2d */) {
         execute_param(&models::gaussian_2d_unk_mean<>);
+    }
+    else if (model == model_names[6] /* linear_priors */) {
+        execute_param(&models::poly_adjustment_prior<1>);
     }
     else{
         std::cerr << "Incorrect model.\n\n"

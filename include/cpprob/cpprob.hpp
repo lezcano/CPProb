@@ -17,7 +17,7 @@
 #include "cpprob/socket.hpp"
 #include "cpprob/state.hpp"
 #include "cpprob/trace.hpp"
-#include "cpprob/traits.hpp"
+#include "cpprob/call_function.hpp"
 #include "cpprob/utils.hpp"
 #include "cpprob/distributions/distribution_utils.hpp"
 
@@ -107,14 +107,14 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
             StateCompile::add_observe(x);
         }
         else{
-            StateCompile::add_sample(Sample{addr, proposal<Distr, Params...>::type_enum, default_distr(distr),
+            StateCompile::add_sample(Sample{addr, proposal<Distr, Params...>::type_enum, Distr<>(distr.param()),
                                      x, StateCompile::sample_instance(addr), StateCompile::time_index()});
         }
         StateCompile::increment_time();
 
     }
     else if (State::state() == StateType::inference){
-        StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, default_distr(distr));
+        StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, Distr<>(distr.param()));
 
         try {
             auto proposal = StateInfer::get_proposal<Distr, Params...>();
@@ -215,17 +215,28 @@ namespace detail {
 // TODO(Lezcano) Hack to get around the fact that we do not support many multidimensional observes
 // TODO(Lezcano) C++17 This should be done with an if constexpr
 // We just support either one tensorial observe or many scalar observes
-template<class... Args, std::enable_if_t<sizeof...(Args) == 1, int> = 0>
-void send_observe_init(const std::tuple<Args...> & observes)
+template<class... Args>
+void send_observe_init_impl(const std::tuple<Args...> & observes, std::true_type)
 {
     SocketInfer::send_observe_init(std::get<0>(observes));
 }
 
-template<class... Args, std::enable_if_t<sizeof...(Args) != 1, int> = 0>
+template<class... Args>
+void send_observe_init_impl(const std::tuple<Args...> & observes, std::false_type)
+{
+    SocketInfer::send_observe_init(detail::to_vec<double>(discard_build(observes)));
+}
+
+template<class... Args>
 void send_observe_init(const std::tuple<Args...> & observes)
 {
-    SocketInfer::send_observe_init(detail::to_vec<double>(observes));
+    send_observe_init_impl(observes,
+                           std::integral_constant<bool,
+                                   std::tuple_size<decltype(
+                                       discard_build(std::declval<std::tuple<Args...>>())
+                                   )>::value == 1>{});
 }
+
 } // end namespace detail
 
 template<class Func, class... Args>

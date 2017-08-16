@@ -138,59 +138,6 @@ RealType logpdf(const multivariate_normal_distribution<RealType>& distr,
     return ret;
 }
 
-// TODO(Lezcano) In all the default_distr functions, check if the input type is already the default.
-//               If it is, return the argument
-template <class RealType>
-boost::random::normal_distribution<> default_distr(const boost::random::normal_distribution<RealType>& distr)
-{
-    return boost::random::normal_distribution<>(static_cast<double>(distr.mean()),
-                                                static_cast<double>(distr.sigma()));
-}
-
-template <class IntType>
-boost::random::uniform_smallint<> default_distr(const boost::random::uniform_smallint<IntType>& distr)
-{
-    return boost::random::uniform_smallint<>(static_cast<int>(distr.a()),
-                                             static_cast<int>(distr.b()));
-}
-
-template<class IntType, class WeightType>
-boost::random::discrete_distribution<> default_distr(const boost::random::discrete_distribution<IntType, WeightType>& distr)
-{
-    auto probs = distr.probabilities();
-    return boost::random::discrete_distribution<>(probs.begin(), probs.end());
-}
-
-
-template<class RealType>
-vmf_distribution<> default_distr(const vmf_distribution<RealType>& distr)
-{
-    auto mu = distr.mu();
-    std::vector<double> mu_double(mu.begin(), mu.end());
-    return vmf_distribution<>(mu_double, distr.kappa());
-}
-
-template<class IntType, class RealType>
-boost::random::poisson_distribution<> default_distr(const boost::random::poisson_distribution<IntType, RealType>& distr)
-{
-    return boost::random::poisson_distribution<>(static_cast<double>(distr.mean()));
-}
-
-template<class RealType>
-boost::random::uniform_real_distribution<> default_distr(const boost::random::uniform_real_distribution<RealType>& distr)
-{
-    return boost::random::uniform_real_distribution<>(static_cast<double>(distr.a()), static_cast<double>(distr.b()));
-}
-
-template<class RealType>
-multivariate_normal_distribution<> default_distr(const multivariate_normal_distribution<RealType>& distr)
-{
-    auto mean_val = distr.mean().values();
-    auto sigma = distr.sigma();
-    std::vector<double> mean_double(mean_val.begin(), mean_val.end()),
-            sigma_double(sigma.begin(), sigma.end());
-    return multivariate_normal_distribution<>(NDArray<double>(std::move(mean_double), distr.shape()), sigma_double);
-}
 
 template<template <class ...> class Distr, class ...Params>
 struct proposal;
