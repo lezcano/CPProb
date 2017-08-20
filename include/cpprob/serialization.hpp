@@ -84,21 +84,21 @@ template<class CharT, class Traits, class T, std::size_t N>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T, N>& arr)
 {
-    return print_iter(os, arr.begin(), arr.end(), '[', ']');
+    return print_iter(os, arr.cbegin(), arr.cend(), '[', ']');
 }
 
 template<class CharT, class Traits, class T>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec)
 {
-    return print_iter(os, vec.begin(), vec.end(), '[', ']');
+    return print_iter(os, vec.cbegin(), vec.cend(), '[', ']');
 }
 
 template<class CharT, class Traits, class Key, class Value>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map)
 {
-    return print_iter(os, map.begin(), map.end(), '{', '}');
+    return print_iter(os, map.cbegin(), map.cend(), '{', '}');
 }
 
 template<class CharT, class Traits, class U, class V>
