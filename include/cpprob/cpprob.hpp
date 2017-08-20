@@ -103,17 +103,17 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
     if (State::state() == StateType::compile) {
         x = distr(get_rng());
 
-        if(from_observe){
+        if(from_observe) {
             StateCompile::add_observe(x);
         }
-        else{
+        else {
             StateCompile::add_sample(Sample{addr, proposal<Distr, Params...>::type_enum, Distr<>(distr.param()),
                                      x, StateCompile::sample_instance(addr), StateCompile::time_index()});
         }
         StateCompile::increment_time();
 
     }
-    else if (State::state() == StateType::inference){
+    else if (State::state() == StateType::inference) {
         StateInfer::curr_sample_ = Sample(addr, proposal<Distr, Params...>::type_enum, Distr<>(distr.param()));
 
         try {
@@ -142,7 +142,7 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
 {
     if (!control ||
         State::state() == StateType::dryrun ||
-        State::state() == StateType::importance_sampling){
+        State::state() == StateType::importance_sampling) {
         return distr(get_rng());
     }
     else {
@@ -153,7 +153,7 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
 template<template <class ...> class Distr, class ...Params>
 void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result_type & x)
 {
-    if (State::compile()){
+    if (State::compile()) {
         sample_impl(distr, true);
     }
     else if (State::inference()) {

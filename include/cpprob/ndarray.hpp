@@ -141,7 +141,7 @@ public:
 
     NDArray& operator+=(const NDArray & rhs)
     {
-        if (this->shape().empty()){
+        if (this->shape().empty()) {
             *this = rhs;
             return *this;
         }
@@ -160,7 +160,7 @@ public:
 
     NDArray& operator-=(const NDArray & rhs)
     {
-        if (this->shape().empty()){
+        if (this->shape().empty()) {
             *this = rhs;
             return *this;
         }
@@ -179,7 +179,7 @@ public:
 
     NDArray& operator*=(const NDArray & rhs)
     {
-        if (this->shape().empty()){
+        if (this->shape().empty()) {
             *this = rhs;
             return *this;
         }
@@ -216,12 +216,12 @@ public:
     }
 
     // friend functions
-    friend NDArray operator+ (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) += rhs; }
-    friend NDArray operator- (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) -= rhs; }
-    friend NDArray operator* (const NDArray& lhs, const NDArray& rhs){ return NDArray(lhs) *= rhs; }
-    friend NDArray operator* (const T lhs, const NDArray& rhs){ return NDArray(rhs) *= lhs; }
-    friend NDArray operator* (const NDArray& lhs, const T rhs){ return NDArray(lhs) *= rhs; }
-    friend NDArray operator/ (const NDArray& lhs, const T rhs){ return NDArray(lhs) /= rhs; }
+    friend NDArray operator+ (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) += rhs; }
+    friend NDArray operator- (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) -= rhs; }
+    friend NDArray operator* (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) *= rhs; }
+    friend NDArray operator* (const T lhs, const NDArray& rhs) { return NDArray(rhs) *= lhs; }
+    friend NDArray operator* (const NDArray& lhs, const T rhs) { return NDArray(lhs) *= rhs; }
+    friend NDArray operator/ (const NDArray& lhs, const T rhs) { return NDArray(lhs) /= rhs; }
 
     friend NDArray<T> sqrt (const NDArray<T> & arr)
     {
@@ -264,7 +264,7 @@ public:
                    << " and " << begin->shape() << " are not compatible.\n";
                 throw std::range_error(ss.str());
             }
-            std::transform(begin.begin(), begin.end(), ret.begin(), ret.begin(), [](T a, T b){ return std::max(a, b); });
+            std::transform(begin.begin(), begin.end(), ret.begin(), ret.begin(), [](T a, T b) { return std::max(a, b); });
             ++begin;
         }
         return ret;
@@ -294,12 +294,12 @@ public:
         CharT ch;
         T scalar;
 
-        if(!(is >> std::ws >> ch)){
+        if(!(is >> std::ws >> ch)) {
             return is;
         }
 
         // Scalar
-        if(ch != is.widen('[')){
+        if(ch != is.widen('[')) {
             is.putback(ch);
             if(!(is >> std::ws >> scalar))
             {

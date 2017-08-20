@@ -133,7 +133,7 @@ public:
                 return is;
             }
 
-            if (sigma_temp.size() == 1){
+            if (sigma_temp.size() == 1) {
                 param.init(mean_temp.begin(), mean_temp.end(), sigma_temp.front());
                 return is;
             }

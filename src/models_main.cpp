@@ -31,12 +31,13 @@ void execute (const F & f,
     using namespace boost::filesystem;
     const auto model_folder = model_name + "/";
     const auto nn_folder = model_folder + "nn";
+    bool exists_nn_folder = exists(nn_folder);
 
     // Create folders
     if (!exists(path(model_folder))) {
         create_directory(path(model_folder));
     }
-    if (!exists(nn_folder)) {
+    if (!exists_nn_folder) {
         create_directory(path(nn_folder));
     }
 
@@ -70,6 +71,9 @@ void execute (const F & f,
                                                         " --cuda";
         if (!online_training) {
             compile_command  += " --batchPool \"" + dump_folder + "\"";
+        }
+        if (exists_nn_folder) {
+            compile_command += " --resume";
         }
         if (optirun) {
             compile_command = "optirun " + compile_command;
