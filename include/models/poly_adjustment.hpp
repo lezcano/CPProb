@@ -66,8 +66,8 @@ void linear_regression(const std::array<std::pair<RealType, RealType>, N> &point
                     >) {
     using boost::random::normal_distribution;
     normal_distribution<RealType> prior{0,10};
-    auto a = cpprob::sample(prior);
-    auto b = cpprob::sample(prior);
+    auto a = cpprob::sample(prior, true);
+    auto b = cpprob::sample(prior, true);
 
     for (const auto &point : points) {
         normal_distribution<RealType> likelihood{a*point.first + b, 1};
