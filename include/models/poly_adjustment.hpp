@@ -37,10 +37,10 @@ void poly_adjustment_prior(const std::vector<std::pair<RealType, RealType>> &poi
                         cpprob::Prior<
                             std::vector<
                                 std::pair<
-                                    cpprob::Prior<RealType, cpprob::MetaNormal<>>,
+                                    cpprob::Prior<RealType, cpprob::MetaNormal<double, 0, 10>>,
                                     RealType
                                 >
-                            >, cpprob::MetaPoisson<>
+                            >, cpprob::MetaPoisson<int, 10>
                         >
                     >) {
     auto poly = generate_polynomial<RealType>(D);
@@ -52,6 +52,29 @@ void poly_adjustment_prior(const std::vector<std::pair<RealType, RealType>> &poi
     for (const auto coef : poly) {
         cpprob::predict(coef, "Coefficient");
     }
+}
+
+template<class RealType = double, std::size_t N>
+void linear_regression(const std::array<std::pair<RealType, RealType>, N> &points,
+                    cpprob::Builder<
+                        std::array<
+                            std::pair<
+                                cpprob::Prior<RealType, cpprob::MetaNormal<double, 0, 10>>,
+                                RealType
+                            >, N
+                        >
+                    >) {
+    using boost::random::normal_distribution;
+    normal_distribution<RealType> prior{0,10};
+    auto a = cpprob::sample(prior);
+    auto b = cpprob::sample(prior);
+
+    for (const auto &point : points) {
+        normal_distribution<RealType> likelihood{a*point.first + b, 1};
+        cpprob::observe(likelihood, point.second);
+    }
+    cpprob::predict(a, "a");
+    cpprob::predict(b, "b");
 }
 
 //-m infer -n 100 -o [[1 2.1] [2 3.9] [3 5.3] [4 7.7] [5 10.2] [6 12.9]]

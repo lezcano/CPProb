@@ -6,28 +6,28 @@
 
 namespace cpprob {
 
-template<template<class> class Derived, class ResultType>
+template<class Derived>
 struct MetaDistribution {
     template<class RNG>
-    ResultType operator()(RNG &rng) { return Derived<ResultType>::distr(rng); }
+    auto operator()(RNG &rng) { return Derived::distr(rng); }
 };
 
-template<class ResultType=double>
-struct MetaNormal : MetaDistribution<MetaNormal, ResultType> {
-    static constexpr ResultType mean = 0;
-    static constexpr ResultType std = 1;
+template<class ResultType=double, int Mean = 0, int Std = 1>
+struct MetaNormal : MetaDistribution<MetaNormal<ResultType, Mean, Std>> {
+    static constexpr ResultType mean = static_cast<ResultType>(Mean);
+    static constexpr ResultType std = static_cast<ResultType>(Std);
     static std::normal_distribution<ResultType> distr;
 };
-template<class ResultType>
-std::normal_distribution<ResultType> MetaNormal<ResultType>::distr{mean, std};
+template<class ResultType, int Mean, int Std>
+std::normal_distribution<ResultType> MetaNormal<ResultType, Mean, Std>::distr{mean, std};
 
-template<class ResultType=int>
-struct MetaPoisson : MetaDistribution<MetaPoisson, ResultType> {
-    static constexpr double mean = 2;
+template<class ResultType=int, int Mean = 10>
+struct MetaPoisson : MetaDistribution<MetaPoisson<ResultType, Mean>> {
+    static constexpr ResultType mean = static_cast<ResultType>(Mean);
     static std::poisson_distribution<ResultType> distr;
 };
-template<class ResultType>
-std::poisson_distribution<ResultType> MetaPoisson<ResultType>::distr{mean};
+template<class ResultType, int Mean>
+std::poisson_distribution<ResultType> MetaPoisson<ResultType, Mean>::distr{mean};
 
 template<class T, class MetaDistr>
 class Prior {
