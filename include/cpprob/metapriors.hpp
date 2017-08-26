@@ -50,7 +50,7 @@ struct RemPrior {
 };
 template<class T, class U>
 struct RemPrior<Prior<T, U>> {
-    using type = T;
+    using type = typename RemPrior<T>::type;
 };
 template<class T>
 struct RemPrior<T &> {
@@ -71,6 +71,13 @@ struct RemPrior<volatile T> {
 template<template<typename...> class TT, class... Ts>
 struct RemPrior<TT<Ts...>> {
     using type = TT<typename RemPrior<Ts>::type...>;
+};
+// Hack for std::array
+// We cannot write a template as general as we'd like :(
+// https://stackoverflow.com/questions/25893828/c-variadic-template-template-argument-that-matches-any-kind-of-parameters
+template<class T, std::size_t N>
+struct RemPrior<std::array<T, N>> {
+    using type = std::array<typename RemPrior<T>::type, N>;
 };
 
 template<template<typename...> class TT, class... Ts>
@@ -103,9 +110,9 @@ T rem_prior(T &&a) {
 
 template<class T, class U>
 typename RemPrior<T>::type rem_prior(Prior<T, U> &&a) {
-    auto ret = rem_prior(std::move(a.t_));
-    return ret;
+    return rem_prior(std::move(a.t_));
 }
+
 
 template<template<typename...> class TT, class... Ts>
 std::enable_if_t<
@@ -120,12 +127,26 @@ rem_prior(TT<Ts...> &&a) {
     return ret;
 }
 
+// Dirty hack because of the value parameter in std::array :(
+template<class T, std::size_t N>
+typename RemPrior<std::array<T, N>>::type
+rem_prior(std::array<T, N> &&a) {
+    typename RemPrior<std::array<T, N>>::type ret;
+    std::transform(std::make_move_iterator(begin(a)),
+                   std::make_move_iterator(end(a)),
+                   begin(ret),
+                   [](auto e) { return rem_prior(e); });
+    return ret;
+}
+
 using std::get;
 using std::tuple_size;
 
 template<template<typename...> class TT, class... Ts, std::size_t... Indices>
-auto rem_prior_tuple(TT<Ts...> &&tup, std::index_sequence<Indices...>) {
-    return TT<Ts...>{rem_prior(std::move(get<Indices>(tup)))...};
+typename RemPrior<TT<Ts...>>::type
+rem_prior_tuple(TT<Ts...> &&tup, std::index_sequence<Indices...>) {
+    return TT<typename RemPrior<Ts>::type ...>{rem_prior(std::move(get<Indices>(tup)))...};
+    // return std::make_tuple(rem_prior(std::move(get<Indices>(tup)))...);
 }
 
 template<template<typename...> class TT, class... Ts>
