@@ -80,28 +80,25 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
 {
     using boost::random::normal_distribution;
     using boost::random::uniform_real_distribution;
-    using boost::math::pdf;
 
     const RealType mu_prior = 1;
     const RealType sigma_prior = std::sqrt(5);
     const RealType sigma = std::sqrt(2);
 
-    const int max_it = 10000;
+    // Simulate N(mu_prior, sigma_prior) using just its pdf
+    auto pdf_prior = boost::math::normal_distribution<RealType>(mu_prior, sigma_prior);
 
     // Sample from Normal Distr
-    const auto maxval = pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu_prior);
-    uniform_real_distribution<RealType> proposal {mu_prior - 5*sigma_prior, mu_prior + 5*sigma_prior};
+    const auto maxval = boost::math::pdf(pdf_prior, mu_prior);
+    uniform_real_distribution<RealType> proposal{mu_prior - 5*sigma_prior,
+                                                 mu_prior + 5*sigma_prior};
     uniform_real_distribution<RealType> accept {0, maxval};
     RealType mu;
 
     cpprob::start_rejection_sampling();
-    while (true) {
+    do {
         mu = cpprob::sample(proposal, true);
-        if (cpprob::sample(accept) <
-            pdf(boost::math::normal_distribution<RealType>(mu_prior, sigma_prior), mu)) {
-            break;
-        }
-    }
+    } while (cpprob::sample(accept) > boost::math::pdf(pdf_prior, mu));
     cpprob::finish_rejection_sampling();
 
     normal_distribution<RealType> likelihood {mu, sigma};
@@ -125,12 +122,17 @@ void hmm(const std::array<double, N> & observed_states)
     uniform_smallint<> prior {0, 2};
     auto state = cpprob::sample(prior, true);
     cpprob::predict(state, "State");
-    for (const auto obs : observed_states) {
+    auto obs_it = observed_states.begin();
+    normal_distribution<> likelihood {state_mean[state], 1};
+    cpprob::observe(likelihood, *obs_it);
+    ++obs_it;
+
+    for (; obs_it != observed_states.end(); ++obs_it) {
         discrete_distribution<> transition_distr {T[state].begin(), T[state].end()};
         state = cpprob::sample(transition_distr, true);
         cpprob::predict(state, "State");
-        normal_distribution<> likelihood {state_mean[state], 1};
-        cpprob::observe(likelihood, obs);
+        likelihood = normal_distribution<>{state_mean[state], 1};
+        cpprob::observe(likelihood, *obs_it);
     }
 }
 

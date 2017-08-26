@@ -27,6 +27,7 @@ void execute (const F & f,
               const std::size_t batch_size,
               const std::string & tcp_addr_compile,
               const std::string & tcp_addr_infer,
+              const std::string & nn_params,
               const bool optirun) {
     using namespace boost::filesystem;
     const auto model_folder = model_name + "/";
@@ -69,6 +70,9 @@ void execute (const F & f,
                                                         " --validSize " + std::to_string(batch_size) +
                                                         " --dir " + nn_folder +
                                                         " --cuda";
+        if (!nn_params.empty()) {
+            compile_command += " " + nn_params;
+        }
         if (!online_training) {
             compile_command  += " --batchPool \"" + dump_folder + "\"";
         }
@@ -108,6 +112,9 @@ void execute (const F & f,
                 auto infer_command = "python3 -m pyprob.infer --dir " + nn_folder +
                                                             " --cuda";
 
+                if (!nn_params.empty()) {
+                    infer_command += " " + nn_params;
+                }
                 if (optirun) {
                     infer_command = "optirun " + infer_command;
                 }
@@ -146,7 +153,7 @@ void execute (const F & f,
         one_exists |= print(csis_post);
         one_exists |= print(sis_post);
         if (!one_exists) {
-            std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found.";
+            std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found." << std::endl;
         }
     }
 }
@@ -156,7 +163,7 @@ int main(int argc, const char* const* argv) {
 
     std::size_t n_samples, batch_size;
     bool generate_traces, compile, infer, sis, estimate, all, optirun;
-    std::string model, tcp_addr_compile, tcp_addr_infer;
+    std::string model, tcp_addr_compile, tcp_addr_infer, nn_params;
     std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d", "linear_priors"}};
 
     std::string all_model_names = model_names[0];
@@ -178,6 +185,7 @@ int main(int argc, const char* const* argv) {
             ("n_samples", po::value<std::size_t>(&n_samples)->default_value(1000), "Number of particles to be sampled from the posterior.")
             ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.")
             ("tcp_addr_infer", po::value<std::string>(&tcp_addr_infer)->default_value("tcp://127.0.0.1:6666"), "Address and port to connect with the NN at inference time.")
+            ("nn_params", po::value<std::string>(&nn_params), "Parameters to send to the neural network.")
             ("optirun", "Execute python with optirun")
             ;
 
@@ -219,8 +227,8 @@ int main(int argc, const char* const* argv) {
         estimate = true;
     }
 
-    auto execute_param = [&](const auto & f) {
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, optirun);
+    auto execute_param = [&](const auto & f, const std::string & extra_params = "") {
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, nn_params + extra_params, optirun);
     };
 
     if (model == model_names[0] /* unk_mean */) {
@@ -237,13 +245,14 @@ int main(int argc, const char* const* argv) {
     }
     else if (model == model_names[4] /* linear regression */) {
         // Linear adjustment (Deg = 1, Points = 6)
-        execute_param(&models::poly_adjustment<1, 6>);
+        // execute_param(&models::poly_adjustment<1, 6>);
+        execute_param(&models::linear_regression<double, 6>);
     }
     else if (model == model_names[5] /* unk_mean 2d */) {
         execute_param(&models::gaussian_2d_unk_mean<>);
     }
     else if (model == model_names[6] /* linear_priors */) {
-        execute_param(&models::poly_adjustment_prior<1>);
+        execute_param(&models::poly_adjustment_prior<1>, " --obsEmb lstm");
     }
     else{
         std::cerr << "Incorrect model.\n\n"
