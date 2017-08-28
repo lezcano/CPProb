@@ -4,7 +4,6 @@
 #include <boost/random/uniform_smallint.hpp>
 
 #include "cpprob/cpprob.hpp"
-#include "cpprob/distributions/vmf.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
 
 namespace models {

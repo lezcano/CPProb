@@ -27,8 +27,7 @@ union Distribution {
     Normal,
     Poisson,
     UniformContinuous,
-    UniformDiscrete,
-    VMF
+    UniformDiscrete
 }
 
 table NDArray {
@@ -97,13 +96,6 @@ table UniformDiscrete {
     prior_min:int;
     prior_size:int;
     proposal_probabilities:NDArray;
-}
-
-table VMF {
-    prior_mu:NDArray;
-    prior_kappa:double;
-    proposal_mu:NDArray;
-    proposal_kappa:double;
 }
 
 table Sample {

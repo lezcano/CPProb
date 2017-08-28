@@ -161,7 +161,7 @@ void observe(Distr<Params ...> & distr, const typename Distr<Params ...>::result
     }
 }
 
-// Declared in state.hpp in class StateCompile with addr=""
+// Declared at the top of state.hpp
 template<class T>
 void predict(const T & x, const std::string & addr)
 {

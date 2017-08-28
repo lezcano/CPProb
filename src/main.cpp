@@ -14,10 +14,10 @@
 
 #ifdef BUILD_SHERPA
 #include "models/sherpa.hpp"
+#include "models/sherpa_mini.hpp"
 #else
 #include "models/models.hpp"
 #include "models/poly_adjustment.hpp"
-#include "models/sherpa_mini.hpp"
 #endif
 
 template <class... T>

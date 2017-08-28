@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.2)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 ##############################################################################
 # Project Name
@@ -12,38 +13,11 @@ project(${PROJECT_NAME})
 ##############################################################################
 option(BUILD_SHERPA "Build Sherpa" OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
-set(CMAKE_CXX_STANDARD_REQUIRED on)
-
-if(CYGWIN)
-    set(STD_CXX gnu++14)
-else()
-    set(STD_CXX c++14)
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=${STD_CXX} -Wall -Wextra -pedantic -fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,memory")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fext-numeric-literals")
-endif()
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-if (CMAKE_VERSION VERSION_LESS 3.2)
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
-else()
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+    add_compile_options(-fext-numeric-literals)
 endif()
 
 FUNCTION(ESCAPE out var)
@@ -218,11 +192,12 @@ endif()
 find_package(Backtrace REQUIRED)
 if (Backtrace_FOUND)
     include_directories(${Backtrace_INCLUDE_DIR})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Backtrace_LIBRARIES} -rdynamic")
+    add_compile_options(-rdynamic)
 endif()
 
 if (BUILD_SHERPA)
     add_definitions(-DBUILD_SHERPA)
+    # TODO(Lezcano) Change for FindPackage YODA & Rivet
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
 endif()
 

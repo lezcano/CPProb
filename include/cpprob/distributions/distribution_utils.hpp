@@ -17,7 +17,6 @@
 
 #include "min_max_discrete.hpp"
 #include "min_max_continuous.hpp"
-#include "vmf.hpp"
 #include "multivariate_normal.hpp"
 
 #include "cpprob/ndarray.hpp"
@@ -86,17 +85,6 @@ RealType logpdf(const min_max_continuous_distribution<RealType>& distr,
 
     return std::log(boost::math::pdf(boost::math::beta_distribution<RealType>(a, b), norm_x))
            - std::log(max - min);
-}
-
-template<class RealType>
-RealType logpdf(const vmf_distribution<RealType>& distr,
-                const typename vmf_distribution<RealType>::result_type & x)
-{
-    // Not implemented yet
-    if (distr.kappa() == 0){
-        return 1.0/(4.0 * boost::math::constants::pi<RealType>());
-    }
-    return 0;
 }
 
 template<typename IntType, class RealType>
@@ -187,21 +175,6 @@ struct proposal<boost::random::discrete_distribution, IntType, WeightType> {
 };
 
 template<class RealType>
-struct proposal<vmf_distribution, RealType> {
-    static constexpr auto type_enum = infcomp::protocol::Distribution::VMF;
-
-    using type = vmf_distribution<RealType>;
-
-    static type get_distr(const infcomp::protocol::ProposalReply* msg)
-    {
-        auto distr = static_cast<const infcomp::protocol::VMF*>(msg->distribution());
-        flatbuffers::Vector<double>::iterator mu_ptr = distr->proposal_mu()->data()->begin();
-        auto dim = distr->proposal_mu()->data()->size();
-        return vmf_distribution<RealType>(mu_ptr, mu_ptr + dim, distr->proposal_kappa());
-    }
-};
-
-template<class RealType>
 struct proposal<boost::random::uniform_real_distribution, RealType> {
     static constexpr auto type_enum = infcomp::protocol::Distribution::UniformContinuous;
 
@@ -253,9 +226,6 @@ struct proposal<multivariate_normal_distribution, RealType> {
 
 template<class RealType>
 constexpr infcomp::protocol::Distribution proposal<boost::random::normal_distribution, RealType>::type_enum;
-
-template<class RealType>
-constexpr infcomp::protocol::Distribution proposal<vmf_distribution, RealType>::type_enum;
 
 template<class IntType>
 constexpr infcomp::protocol::Distribution proposal<boost::random::uniform_smallint, IntType>::type_enum;

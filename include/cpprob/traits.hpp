@@ -13,22 +13,45 @@
 
 namespace cpprob {
 
+namespace detail {
+template<typename T>
+auto is_object_callable_impl(int)
+-> decltype(
+        &T::operator(),
+        void(), // Handle evil operator ,
+        std::true_type{});
+
+template<typename T>
+std::false_type is_object_callable_impl(...);
+} // end namespace detail
+
+template<typename T>
+using is_object_callable = decltype(detail::is_object_callable_impl<T>(0));
+
 template<class T>
 using last_elem = std::tuple_element_t<
         std::tuple_size<T>::value - 1,
         T>;
 
-template<class F, std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value, int> = 0>
-constexpr std::size_t num_args()
+namespace detail {
+template<class F>
+constexpr std::size_t num_args_impl(std::false_type)
 {
     return boost::function_types::function_arity<F>::value;
 }
 
 // The first argument is the this pointer
-template<class F, std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value, int> = 0>
-constexpr std::size_t num_args()
+template<class F>
+constexpr std::size_t num_args_impl(std::true_type)
 {
     return boost::function_types::function_arity<decltype(&F::operator())>::value - 1;
+}
+} // end namespace detail
+
+template<class F>
+constexpr std::size_t num_args()
+{
+    return detail::num_args_impl<F>(is_object_callable<F>{});
 }
 
 template<class F, template<class ...> class C, class = void, class = std::make_index_sequence<num_args<F>()>>

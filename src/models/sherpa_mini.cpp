@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <boost/random/normal_distribution.hpp>
-#include <cpprob/distributions/vmf.hpp>
 #include <cpprob/distributions/multivariate_normal.hpp>
 #include <cpprob/cpprob.hpp>
 #include <cpprob/state.hpp>

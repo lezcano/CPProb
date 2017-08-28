@@ -35,8 +35,6 @@ struct UniformContinuous;
 
 struct UniformDiscrete;
 
-struct VMF;
-
 struct Sample;
 
 struct Trace;
@@ -64,6 +62,19 @@ enum class MessageBody : uint8_t {
   MIN = NONE,
   MAX = ProposalReply
 };
+
+inline MessageBody (&EnumValuesMessageBody())[7] {
+  static MessageBody values[] = {
+    MessageBody::NONE,
+    MessageBody::TracesFromPriorRequest,
+    MessageBody::ObservesInitRequest,
+    MessageBody::ProposalRequest,
+    MessageBody::TracesFromPriorReply,
+    MessageBody::ObservesInitReply,
+    MessageBody::ProposalReply
+  };
+  return values;
+}
 
 inline const char **EnumNamesMessageBody() {
   static const char *names[] = {
@@ -128,10 +139,27 @@ enum class Distribution : uint8_t {
   Poisson = 9,
   UniformContinuous = 10,
   UniformDiscrete = 11,
-  VMF = 12,
   MIN = NONE,
-  MAX = VMF
+  MAX = UniformDiscrete
 };
+
+inline Distribution (&EnumValuesDistribution())[12] {
+  static Distribution values[] = {
+    Distribution::NONE,
+    Distribution::Beta,
+    Distribution::Categorical,
+    Distribution::Discrete,
+    Distribution::Flip,
+    Distribution::Gamma,
+    Distribution::Laplace,
+    Distribution::MultivariateNormal,
+    Distribution::Normal,
+    Distribution::Poisson,
+    Distribution::UniformContinuous,
+    Distribution::UniformDiscrete
+  };
+  return values;
+}
 
 inline const char **EnumNamesDistribution() {
   static const char *names[] = {
@@ -147,7 +175,6 @@ inline const char **EnumNamesDistribution() {
     "Poisson",
     "UniformContinuous",
     "UniformDiscrete",
-    "VMF",
     nullptr
   };
   return names;
@@ -206,10 +233,6 @@ template<> struct DistributionTraits<UniformDiscrete> {
   static const Distribution enum_value = Distribution::UniformDiscrete;
 };
 
-template<> struct DistributionTraits<VMF> {
-  static const Distribution enum_value = Distribution::VMF;
-};
-
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
 bool VerifyDistributionVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
@@ -224,14 +247,57 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const void *body() const {
     return GetPointer<const void *>(VT_BODY);
   }
+  template<typename T> const T *body_as() const;
+  const TracesFromPriorRequest *body_as_TracesFromPriorRequest() const {
+    return body_type() == MessageBody::TracesFromPriorRequest ? static_cast<const TracesFromPriorRequest *>(body()) : nullptr;
+  }
+  const ObservesInitRequest *body_as_ObservesInitRequest() const {
+    return body_type() == MessageBody::ObservesInitRequest ? static_cast<const ObservesInitRequest *>(body()) : nullptr;
+  }
+  const ProposalRequest *body_as_ProposalRequest() const {
+    return body_type() == MessageBody::ProposalRequest ? static_cast<const ProposalRequest *>(body()) : nullptr;
+  }
+  const TracesFromPriorReply *body_as_TracesFromPriorReply() const {
+    return body_type() == MessageBody::TracesFromPriorReply ? static_cast<const TracesFromPriorReply *>(body()) : nullptr;
+  }
+  const ObservesInitReply *body_as_ObservesInitReply() const {
+    return body_type() == MessageBody::ObservesInitReply ? static_cast<const ObservesInitReply *>(body()) : nullptr;
+  }
+  const ProposalReply *body_as_ProposalReply() const {
+    return body_type() == MessageBody::ProposalReply ? static_cast<const ProposalReply *>(body()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_BODY_TYPE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_BODY) &&
+           VerifyOffset(verifier, VT_BODY) &&
            VerifyMessageBody(verifier, body(), body_type()) &&
            verifier.EndTable();
   }
 };
+
+template<> inline const TracesFromPriorRequest *Message::body_as<TracesFromPriorRequest>() const {
+  return body_as_TracesFromPriorRequest();
+}
+
+template<> inline const ObservesInitRequest *Message::body_as<ObservesInitRequest>() const {
+  return body_as_ObservesInitRequest();
+}
+
+template<> inline const ProposalRequest *Message::body_as<ProposalRequest>() const {
+  return body_as_ProposalRequest();
+}
+
+template<> inline const TracesFromPriorReply *Message::body_as<TracesFromPriorReply>() const {
+  return body_as_TracesFromPriorReply();
+}
+
+template<> inline const ObservesInitReply *Message::body_as<ObservesInitReply>() const {
+  return body_as_ObservesInitReply();
+}
+
+template<> inline const ProposalReply *Message::body_as<ProposalReply>() const {
+  return body_as_ProposalReply();
+}
 
 struct MessageBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -277,9 +343,9 @@ struct NDArray FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_DATA) &&
+           VerifyOffset(verifier, VT_DATA) &&
            verifier.Verify(data()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_SHAPE) &&
+           VerifyOffset(verifier, VT_SHAPE) &&
            verifier.Verify(shape()) &&
            verifier.EndTable();
   }
@@ -390,7 +456,7 @@ struct Categorical FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_PRIOR_SIZE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_PROBABILITIES) &&
+           VerifyOffset(verifier, VT_PROPOSAL_PROBABILITIES) &&
            verifier.VerifyTable(proposal_probabilities()) &&
            verifier.EndTable();
   }
@@ -441,7 +507,7 @@ struct Discrete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_PRIOR_SIZE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_PROBABILITIES) &&
+           VerifyOffset(verifier, VT_PROPOSAL_PROBABILITIES) &&
            verifier.VerifyTable(proposal_probabilities()) &&
            verifier.EndTable();
   }
@@ -659,13 +725,13 @@ struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_MEAN) &&
+           VerifyOffset(verifier, VT_PRIOR_MEAN) &&
            verifier.VerifyTable(prior_mean()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_SIGMA) &&
+           VerifyOffset(verifier, VT_PRIOR_SIGMA) &&
            verifier.VerifyTable(prior_sigma()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_MEAN) &&
+           VerifyOffset(verifier, VT_PROPOSAL_MEAN) &&
            verifier.VerifyTable(proposal_mean()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_SIGMA) &&
+           VerifyOffset(verifier, VT_PROPOSAL_SIGMA) &&
            verifier.VerifyTable(proposal_sigma()) &&
            verifier.EndTable();
   }
@@ -921,7 +987,7 @@ struct UniformDiscrete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_PRIOR_MIN) &&
            VerifyField<int32_t>(verifier, VT_PRIOR_SIZE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_PROBABILITIES) &&
+           VerifyOffset(verifier, VT_PROPOSAL_PROBABILITIES) &&
            verifier.VerifyTable(proposal_probabilities()) &&
            verifier.EndTable();
   }
@@ -963,78 +1029,6 @@ inline flatbuffers::Offset<UniformDiscrete> CreateUniformDiscrete(
   return builder_.Finish();
 }
 
-struct VMF FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
-    VT_PRIOR_MU = 4,
-    VT_PRIOR_KAPPA = 6,
-    VT_PROPOSAL_MU = 8,
-    VT_PROPOSAL_KAPPA = 10
-  };
-  const NDArray *prior_mu() const {
-    return GetPointer<const NDArray *>(VT_PRIOR_MU);
-  }
-  double prior_kappa() const {
-    return GetField<double>(VT_PRIOR_KAPPA, 0.0);
-  }
-  const NDArray *proposal_mu() const {
-    return GetPointer<const NDArray *>(VT_PROPOSAL_MU);
-  }
-  double proposal_kappa() const {
-    return GetField<double>(VT_PROPOSAL_KAPPA, 0.0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PRIOR_MU) &&
-           verifier.VerifyTable(prior_mu()) &&
-           VerifyField<double>(verifier, VT_PRIOR_KAPPA) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROPOSAL_MU) &&
-           verifier.VerifyTable(proposal_mu()) &&
-           VerifyField<double>(verifier, VT_PROPOSAL_KAPPA) &&
-           verifier.EndTable();
-  }
-};
-
-struct VMFBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_prior_mu(flatbuffers::Offset<NDArray> prior_mu) {
-    fbb_.AddOffset(VMF::VT_PRIOR_MU, prior_mu);
-  }
-  void add_prior_kappa(double prior_kappa) {
-    fbb_.AddElement<double>(VMF::VT_PRIOR_KAPPA, prior_kappa, 0.0);
-  }
-  void add_proposal_mu(flatbuffers::Offset<NDArray> proposal_mu) {
-    fbb_.AddOffset(VMF::VT_PROPOSAL_MU, proposal_mu);
-  }
-  void add_proposal_kappa(double proposal_kappa) {
-    fbb_.AddElement<double>(VMF::VT_PROPOSAL_KAPPA, proposal_kappa, 0.0);
-  }
-  VMFBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  VMFBuilder &operator=(const VMFBuilder &);
-  flatbuffers::Offset<VMF> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
-    auto o = flatbuffers::Offset<VMF>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<VMF> CreateVMF(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<NDArray> prior_mu = 0,
-    double prior_kappa = 0.0,
-    flatbuffers::Offset<NDArray> proposal_mu = 0,
-    double proposal_kappa = 0.0) {
-  VMFBuilder builder_(_fbb);
-  builder_.add_proposal_kappa(proposal_kappa);
-  builder_.add_prior_kappa(prior_kappa);
-  builder_.add_proposal_mu(proposal_mu);
-  builder_.add_prior_mu(prior_mu);
-  return builder_.Finish();
-}
-
 struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TIME = 4,
@@ -1059,23 +1053,101 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const void *distribution() const {
     return GetPointer<const void *>(VT_DISTRIBUTION);
   }
+  template<typename T> const T *distribution_as() const;
+  const Beta *distribution_as_Beta() const {
+    return distribution_type() == Distribution::Beta ? static_cast<const Beta *>(distribution()) : nullptr;
+  }
+  const Categorical *distribution_as_Categorical() const {
+    return distribution_type() == Distribution::Categorical ? static_cast<const Categorical *>(distribution()) : nullptr;
+  }
+  const Discrete *distribution_as_Discrete() const {
+    return distribution_type() == Distribution::Discrete ? static_cast<const Discrete *>(distribution()) : nullptr;
+  }
+  const Flip *distribution_as_Flip() const {
+    return distribution_type() == Distribution::Flip ? static_cast<const Flip *>(distribution()) : nullptr;
+  }
+  const Gamma *distribution_as_Gamma() const {
+    return distribution_type() == Distribution::Gamma ? static_cast<const Gamma *>(distribution()) : nullptr;
+  }
+  const Laplace *distribution_as_Laplace() const {
+    return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
+  }
+  const MultivariateNormal *distribution_as_MultivariateNormal() const {
+    return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
+  }
+  const Normal *distribution_as_Normal() const {
+    return distribution_type() == Distribution::Normal ? static_cast<const Normal *>(distribution()) : nullptr;
+  }
+  const Poisson *distribution_as_Poisson() const {
+    return distribution_type() == Distribution::Poisson ? static_cast<const Poisson *>(distribution()) : nullptr;
+  }
+  const UniformContinuous *distribution_as_UniformContinuous() const {
+    return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
+  }
+  const UniformDiscrete *distribution_as_UniformDiscrete() const {
+    return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  }
   const NDArray *value() const {
     return GetPointer<const NDArray *>(VT_VALUE);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_TIME) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_ADDRESS) &&
+           VerifyOffset(verifier, VT_ADDRESS) &&
            verifier.Verify(address()) &&
            VerifyField<int32_t>(verifier, VT_INSTANCE) &&
            VerifyField<uint8_t>(verifier, VT_DISTRIBUTION_TYPE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_DISTRIBUTION) &&
+           VerifyOffset(verifier, VT_DISTRIBUTION) &&
            VerifyDistribution(verifier, distribution(), distribution_type()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_VALUE) &&
+           VerifyOffset(verifier, VT_VALUE) &&
            verifier.VerifyTable(value()) &&
            verifier.EndTable();
   }
 };
+
+template<> inline const Beta *Sample::distribution_as<Beta>() const {
+  return distribution_as_Beta();
+}
+
+template<> inline const Categorical *Sample::distribution_as<Categorical>() const {
+  return distribution_as_Categorical();
+}
+
+template<> inline const Discrete *Sample::distribution_as<Discrete>() const {
+  return distribution_as_Discrete();
+}
+
+template<> inline const Flip *Sample::distribution_as<Flip>() const {
+  return distribution_as_Flip();
+}
+
+template<> inline const Gamma *Sample::distribution_as<Gamma>() const {
+  return distribution_as_Gamma();
+}
+
+template<> inline const Laplace *Sample::distribution_as<Laplace>() const {
+  return distribution_as_Laplace();
+}
+
+template<> inline const MultivariateNormal *Sample::distribution_as<MultivariateNormal>() const {
+  return distribution_as_MultivariateNormal();
+}
+
+template<> inline const Normal *Sample::distribution_as<Normal>() const {
+  return distribution_as_Normal();
+}
+
+template<> inline const Poisson *Sample::distribution_as<Poisson>() const {
+  return distribution_as_Poisson();
+}
+
+template<> inline const UniformContinuous *Sample::distribution_as<UniformContinuous>() const {
+  return distribution_as_UniformContinuous();
+}
+
+template<> inline const UniformDiscrete *Sample::distribution_as<UniformDiscrete>() const {
+  return distribution_as_UniformDiscrete();
+}
 
 struct SampleBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -1159,9 +1231,9 @@ struct Trace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_OBSERVES) &&
+           VerifyOffset(verifier, VT_OBSERVES) &&
            verifier.VerifyTable(observes()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_SAMPLES) &&
+           VerifyOffset(verifier, VT_SAMPLES) &&
            verifier.Verify(samples()) &&
            verifier.VerifyVectorOfTables(samples()) &&
            verifier.EndTable();
@@ -1258,7 +1330,7 @@ struct TracesFromPriorReply FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_TRACES) &&
+           VerifyOffset(verifier, VT_TRACES) &&
            verifier.Verify(traces()) &&
            verifier.VerifyVectorOfTables(traces()) &&
            verifier.EndTable();
@@ -1308,7 +1380,7 @@ struct ObservesInitRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_OBSERVES) &&
+           VerifyOffset(verifier, VT_OBSERVES) &&
            verifier.VerifyTable(observes()) &&
            verifier.EndTable();
   }
@@ -1393,9 +1465,9 @@ struct ProposalRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_CURRENT_SAMPLE) &&
+           VerifyOffset(verifier, VT_CURRENT_SAMPLE) &&
            verifier.VerifyTable(current_sample()) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PREVIOUS_SAMPLE) &&
+           VerifyOffset(verifier, VT_PREVIOUS_SAMPLE) &&
            verifier.VerifyTable(previous_sample()) &&
            verifier.EndTable();
   }
@@ -1447,15 +1519,93 @@ struct ProposalReply FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const void *distribution() const {
     return GetPointer<const void *>(VT_DISTRIBUTION);
   }
+  template<typename T> const T *distribution_as() const;
+  const Beta *distribution_as_Beta() const {
+    return distribution_type() == Distribution::Beta ? static_cast<const Beta *>(distribution()) : nullptr;
+  }
+  const Categorical *distribution_as_Categorical() const {
+    return distribution_type() == Distribution::Categorical ? static_cast<const Categorical *>(distribution()) : nullptr;
+  }
+  const Discrete *distribution_as_Discrete() const {
+    return distribution_type() == Distribution::Discrete ? static_cast<const Discrete *>(distribution()) : nullptr;
+  }
+  const Flip *distribution_as_Flip() const {
+    return distribution_type() == Distribution::Flip ? static_cast<const Flip *>(distribution()) : nullptr;
+  }
+  const Gamma *distribution_as_Gamma() const {
+    return distribution_type() == Distribution::Gamma ? static_cast<const Gamma *>(distribution()) : nullptr;
+  }
+  const Laplace *distribution_as_Laplace() const {
+    return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
+  }
+  const MultivariateNormal *distribution_as_MultivariateNormal() const {
+    return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
+  }
+  const Normal *distribution_as_Normal() const {
+    return distribution_type() == Distribution::Normal ? static_cast<const Normal *>(distribution()) : nullptr;
+  }
+  const Poisson *distribution_as_Poisson() const {
+    return distribution_type() == Distribution::Poisson ? static_cast<const Poisson *>(distribution()) : nullptr;
+  }
+  const UniformContinuous *distribution_as_UniformContinuous() const {
+    return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
+  }
+  const UniformDiscrete *distribution_as_UniformDiscrete() const {
+    return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_SUCCESS) &&
            VerifyField<uint8_t>(verifier, VT_DISTRIBUTION_TYPE) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_DISTRIBUTION) &&
+           VerifyOffset(verifier, VT_DISTRIBUTION) &&
            VerifyDistribution(verifier, distribution(), distribution_type()) &&
            verifier.EndTable();
   }
 };
+
+template<> inline const Beta *ProposalReply::distribution_as<Beta>() const {
+  return distribution_as_Beta();
+}
+
+template<> inline const Categorical *ProposalReply::distribution_as<Categorical>() const {
+  return distribution_as_Categorical();
+}
+
+template<> inline const Discrete *ProposalReply::distribution_as<Discrete>() const {
+  return distribution_as_Discrete();
+}
+
+template<> inline const Flip *ProposalReply::distribution_as<Flip>() const {
+  return distribution_as_Flip();
+}
+
+template<> inline const Gamma *ProposalReply::distribution_as<Gamma>() const {
+  return distribution_as_Gamma();
+}
+
+template<> inline const Laplace *ProposalReply::distribution_as<Laplace>() const {
+  return distribution_as_Laplace();
+}
+
+template<> inline const MultivariateNormal *ProposalReply::distribution_as<MultivariateNormal>() const {
+  return distribution_as_MultivariateNormal();
+}
+
+template<> inline const Normal *ProposalReply::distribution_as<Normal>() const {
+  return distribution_as_Normal();
+}
+
+template<> inline const Poisson *ProposalReply::distribution_as<Poisson>() const {
+  return distribution_as_Poisson();
+}
+
+template<> inline const UniformContinuous *ProposalReply::distribution_as<UniformContinuous>() const {
+  return distribution_as_UniformContinuous();
+}
+
+template<> inline const UniformDiscrete *ProposalReply::distribution_as<UniformDiscrete>() const {
+  return distribution_as_UniformDiscrete();
+}
 
 struct ProposalReplyBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -1584,10 +1734,6 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
     }
     case Distribution::UniformDiscrete: {
       auto ptr = reinterpret_cast<const UniformDiscrete *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Distribution::VMF: {
-      auto ptr = reinterpret_cast<const VMF *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

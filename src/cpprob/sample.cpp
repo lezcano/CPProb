@@ -6,7 +6,6 @@
 #include <boost/random/poisson_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 
-#include "cpprob/distributions/vmf.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
 #include "cpprob/distributions/distribution_utils.hpp"
 
@@ -69,16 +68,6 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
         auto distr = boost::any_cast<boost::random::discrete_distribution<>>(distr_any);
         // distr.max() + 1 is the number of parameters of the distribution
         return infcomp::protocol::CreateDiscrete(buff, distr.max() + 1).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::VMF){
-        auto distr = boost::any_cast<vmf_distribution<>>(distr_any);
-        auto mu = distr.mu();
-        auto mu_nd = NDArray<double>(mu.begin(), mu.end());
-        return infcomp::protocol::CreateVMF(buff,
-                                            infcomp::protocol::CreateNDArray(buff,
-                                                                             buff.CreateVector<double>(mu_nd.values()),
-                                                                             buff.CreateVector<int32_t>(mu_nd.shape())),
-                                            distr.kappa()).Union();
     }
     else if (type == infcomp::protocol::Distribution::Poisson){
         auto distr = boost::any_cast<boost::random::poisson_distribution<>>(distr_any);
