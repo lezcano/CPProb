@@ -1,1 +1,0 @@
-/usr/bin/c++   -fext-numeric-literals  -rdynamic -O3 -DNDEBUG -O3 -DNDEBUG  -rdynamic CMakeFiles/cpprob_tests.dir/main.cpp.o CMakeFiles/cpprob_tests.dir/ndarray.cpp.o  -o cpprob_tests -Wl,-rpath,/home/lezkus/Documents/CPProb/build/src/cpprob ../../src/cpprob/libcpprob.so -lgtest -lgtest_main -lzmq 

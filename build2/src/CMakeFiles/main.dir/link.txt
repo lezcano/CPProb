@@ -1,1 +1,0 @@
-/usr/bin/c++   -fext-numeric-literals  -rdynamic -O3 -DNDEBUG -O3 -DNDEBUG  -rdynamic CMakeFiles/main.dir/main.cpp.o  -o main -Wl,-rpath,/home/lezkus/Documents/CPProb/build/src/cpprob:/home/lezkus/Documents/CPProb/build/src/models cpprob/libcpprob.so -lboost_program_options -lboost_serialization -lboost_filesystem -lboost_system models/libmodels.so -lzmq 
