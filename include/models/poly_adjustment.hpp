@@ -59,7 +59,7 @@ void linear_regression(const std::array<std::pair<RealType, RealType>, N> &point
                     cpprob::Builder<
                         std::array<
                             std::pair<
-                                cpprob::Prior<RealType, cpprob::MetaNormal<double, 0, 10>>,
+                                cpprob::Prior<RealType, cpprob::MetaNormal<double, 3, 1>>,
                                 RealType
                             >, N
                         >

@@ -54,21 +54,22 @@ constexpr std::size_t num_args()
     return detail::num_args_impl<F>(is_object_callable<F>{});
 }
 
-template<class F, template<class ...> class C, class = void, class = std::make_index_sequence<num_args<F>()>>
+template<class F>
+auto function_type(std::true_type) -> decltype(&F::operator()) {}
+template<class F>
+auto function_type(std::false_type) -> F {}
+
+template<class F, template<class ...> class C, class = std::make_index_sequence<num_args<F>()>>
 struct parameter_types;
 
 template<class F, template<class ...> class C, std::size_t... Indices>
-struct parameter_types<F, C,
-        std::enable_if_t<std::is_function<typename std::remove_pointer_t<F>>::value>,
-        std::index_sequence<Indices...>> {
-    using type = C<std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<F>, Indices>::type> ...>;
-};
-
-template<class F, template<class ...> class C, std::size_t... Indices>
-struct parameter_types<F, C,
-        std::enable_if_t<std::is_same<std::void_t<decltype(&F::operator())>, void>::value>,
-        std::index_sequence<Indices...>> {
-    using type = C<std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<decltype(&F::operator())>, Indices+1>::type> ...>;
+struct parameter_types<F, C, std::index_sequence<Indices...>> {
+    using type = C<std::decay_t<typename boost::mpl::at_c<boost::function_types::parameter_types<
+        decltype(function_type<F>(is_object_callable<F>{}))>,
+        std::conditional_t<is_object_callable<F>::value,
+                           std::integral_constant<int, Indices + 1>,
+                           std::integral_constant<int, Indices>>::value
+            >::type> ...>;
 };
 
 template<class F, template<class ...> class C = std::tuple>

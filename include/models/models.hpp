@@ -90,8 +90,8 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
 
     // Sample from Normal Distr
     const auto maxval = boost::math::pdf(pdf_prior, mu_prior);
-    uniform_real_distribution<RealType> proposal{mu_prior - 5*sigma_prior,
-                                                 mu_prior + 5*sigma_prior};
+    uniform_real_distribution<RealType> proposal{mu_prior - 20*sigma_prior,
+                                                 mu_prior + 20*sigma_prior};
     uniform_real_distribution<RealType> accept {0, maxval};
     RealType mu;
 
