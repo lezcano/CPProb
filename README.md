@@ -79,9 +79,9 @@ A vector or array will be enclosed in brackets. A pair or tuple will be enclosed
 
 When using the `--observes` flag, the list of parameters has to be enclosed between quotes.
 
-If we are going to perform inference on a function with signature
+If we are to perform inference on a function with signature
 ```C++
-void model(const std::vector<std::pair<double, double>>, int a, double b);
+void model(const std::array<std::pair<double, double>, 6> &, int a, double b);
 ```
 we can execute the inference engine as
 ```shell
