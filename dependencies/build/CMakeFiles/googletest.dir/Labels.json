@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/googletest"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/googletest.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/googletest-complete.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-install.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-mkdir.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-download.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-update.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-patch.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-configure.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-build.rule"
+		},
+		{
+			"file" : "/home/lezkus/Documents/CPProb/dependencies/build/googletest-prefix/src/googletest-stamp/googletest-test.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"googletest"
+		],
+		"name" : "googletest"
+	}
+}

@@ -1,0 +1,14 @@
+# Target labels
+ flatbuffers
+# Source files and their labels
+/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/flatbuffers
+/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/flatbuffers.rule
+/home/lezkus/Documents/CPProb/dependencies/build/CMakeFiles/flatbuffers-complete.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-install.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-mkdir.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-download.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-update.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-patch.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-configure.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-build.rule
+/home/lezkus/Documents/CPProb/dependencies/build/flatbuffers-prefix/src/flatbuffers-stamp/flatbuffers-test.rule
