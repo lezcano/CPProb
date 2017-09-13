@@ -13,7 +13,7 @@ project(CPProb LANGUAGES CXX)
 find_package(ZeroMQ REQUIRED)
 find_package(GTest REQUIRED)
 find_package(FlatBuffers REQUIRED)
-find_package(Boost COMPONENTS program_options serialization filesystem)
+find_package(Boost COMPONENTS program_options serialization filesystem REQUIRED)
 
 ##############################################################################
 # Project Options
@@ -43,6 +43,7 @@ if (BUILD_SHERPA)
 endif()
 
 include_directories(include)
+include_directories(dependencies/install/include)
 add_subdirectory(src)
 
 ##############################################################################
