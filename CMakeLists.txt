@@ -13,6 +13,7 @@ project(CPProb LANGUAGES CXX)
 find_package(ZeroMQ REQUIRED)
 find_package(GTest REQUIRED)
 find_package(FlatBuffers REQUIRED)
+find_package(Boost COMPONENTS program_options serialization filesystem)
 
 ##############################################################################
 # Project Options
