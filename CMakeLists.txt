@@ -15,7 +15,9 @@ find_package(GTest REQUIRED)
 find_package(FlatBuffers REQUIRED)
 # https://stackoverflow.com/questions/18583800/cmake-error-the-following-boost-libraries-could-not-be-found
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS program_options serialization filesystem REQUIRED)
+
+find_package(Boost REQUIRED)
+#find_package(Boost COMPONENTS program_options serialization filesystem REQUIRED)
 
 ##############################################################################
 # Project Options
