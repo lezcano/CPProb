@@ -30,7 +30,7 @@ std::string SocketCompile::dump_folder_;
 
 void SocketCompile::connect_server(const std::string & tcp_addr)
 {
-    server_.bind(tcp_addr);
+    server_.bind(tcp_addr.c_str());
     dump_folder_.clear();
 }
 
@@ -94,7 +94,7 @@ std::string SocketInfer::dump_file_;
 
 void SocketInfer::connect_client(const std::string& tcp_addr)
 {
-    client_.connect(tcp_addr);
+    client_.connect(tcp_addr.c_str());
     dump_file_.clear();
 }
 
