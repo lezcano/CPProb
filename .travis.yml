@@ -50,7 +50,7 @@ install:
   # Configure LLVM
   - |
     if [[ "${CXX%%+*}" == "clang" ]]; then
-      export LDFLAGS="-l c++ -l c++abi"
+      export LDFLAGS="-stdlib=libc++ -lc++abi"
     fi
 
   # Install Boost headers
