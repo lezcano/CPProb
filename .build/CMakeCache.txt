@@ -182,16 +182,16 @@ FLATBUFFERS_FLATC_EXECUTABLE:FILEPATH=/home/lezkus/Documents/CPProb/dependencies
 FLATBUFFERS_INCLUDE_DIR:PATH=/home/lezkus/Documents/CPProb/dependencies/install/include
 
 //Path to a file.
-GTEST_INCLUDE_DIR:PATH=/usr/include
+GTEST_INCLUDE_DIR:PATH=/home/lezkus/Documents/CPProb/dependencies/install/include
 
 //Path to a library.
-GTEST_LIBRARY:FILEPATH=/usr/lib/libgtest.so
+GTEST_LIBRARY:FILEPATH=/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest.a
 
 //Path to a library.
 GTEST_LIBRARY_DEBUG:FILEPATH=GTEST_LIBRARY_DEBUG-NOTFOUND
 
 //Path to a library.
-GTEST_MAIN_LIBRARY:FILEPATH=/usr/lib/libgtest_main.so
+GTEST_MAIN_LIBRARY:FILEPATH=/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest_main.a
 
 //Path to a library.
 GTEST_MAIN_LIBRARY_DEBUG:FILEPATH=GTEST_MAIN_LIBRARY_DEBUG-NOTFOUND
@@ -204,6 +204,9 @@ ZeroMQ_LIBRARY:FILEPATH=/usr/lib/libzmq.so
 
 //Dependencies for the target
 cpprob_LIB_DEPENDS:STATIC=general;/usr/lib/libzmq.so;
+
+//The directory containing a CMake configuration file for cppzmq.
+cppzmq_DIR:PATH=cppzmq_DIR-NOTFOUND
 
 //Dependencies for target
 models_LIB_DEPENDS:STATIC=
@@ -307,7 +310,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=6
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -351,7 +354,7 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding Backtrace
 FIND_PACKAGE_MESSAGE_DETAILS_Backtrace:INTERNAL=[/usr/include][v()]
 //Details about finding GTest
-FIND_PACKAGE_MESSAGE_DETAILS_GTest:INTERNAL=[/usr/lib/libgtest.so][/usr/include][/usr/lib/libgtest_main.so][v()]
+FIND_PACKAGE_MESSAGE_DETAILS_GTest:INTERNAL=[/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest.a][/home/lezkus/Documents/CPProb/dependencies/install/include][/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest_main.a][v()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding ZeroMQ

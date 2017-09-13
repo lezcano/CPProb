@@ -67,17 +67,6 @@ rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
 
-# Special rule for the target test
-test:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
-	/usr/bin/ctest --force-new-ctest-process $(ARGS)
-.PHONY : test
-
-# Special rule for the target test
-test/fast: test
-
-.PHONY : test/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
@@ -88,6 +77,17 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
+	/usr/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+
+.PHONY : test/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -121,6 +121,210 @@ depend:
 	cd /home/lezkus/Documents/CPProb/.build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
+# Convenience name for target.
+src/cpprob/CMakeFiles/cpprob.dir/rule:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f CMakeFiles/Makefile2 src/cpprob/CMakeFiles/cpprob.dir/rule
+.PHONY : src/cpprob/CMakeFiles/cpprob.dir/rule
+
+# Convenience name for target.
+cpprob: src/cpprob/CMakeFiles/cpprob.dir/rule
+
+.PHONY : cpprob
+
+# fast build rule for target.
+cpprob/fast:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/build
+.PHONY : cpprob/fast
+
+cpprob.o: cpprob.cpp.o
+
+.PHONY : cpprob.o
+
+# target to build an object file
+cpprob.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/cpprob.cpp.o
+.PHONY : cpprob.cpp.o
+
+cpprob.i: cpprob.cpp.i
+
+.PHONY : cpprob.i
+
+# target to preprocess a source file
+cpprob.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/cpprob.cpp.i
+.PHONY : cpprob.cpp.i
+
+cpprob.s: cpprob.cpp.s
+
+.PHONY : cpprob.s
+
+# target to generate assembly for a file
+cpprob.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/cpprob.cpp.s
+.PHONY : cpprob.cpp.s
+
+sample.o: sample.cpp.o
+
+.PHONY : sample.o
+
+# target to build an object file
+sample.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/sample.cpp.o
+.PHONY : sample.cpp.o
+
+sample.i: sample.cpp.i
+
+.PHONY : sample.i
+
+# target to preprocess a source file
+sample.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/sample.cpp.i
+.PHONY : sample.cpp.i
+
+sample.s: sample.cpp.s
+
+.PHONY : sample.s
+
+# target to generate assembly for a file
+sample.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/sample.cpp.s
+.PHONY : sample.cpp.s
+
+serialization.o: serialization.cpp.o
+
+.PHONY : serialization.o
+
+# target to build an object file
+serialization.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/serialization.cpp.o
+.PHONY : serialization.cpp.o
+
+serialization.i: serialization.cpp.i
+
+.PHONY : serialization.i
+
+# target to preprocess a source file
+serialization.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/serialization.cpp.i
+.PHONY : serialization.cpp.i
+
+serialization.s: serialization.cpp.s
+
+.PHONY : serialization.s
+
+# target to generate assembly for a file
+serialization.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/serialization.cpp.s
+.PHONY : serialization.cpp.s
+
+socket.o: socket.cpp.o
+
+.PHONY : socket.o
+
+# target to build an object file
+socket.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/socket.cpp.o
+.PHONY : socket.cpp.o
+
+socket.i: socket.cpp.i
+
+.PHONY : socket.i
+
+# target to preprocess a source file
+socket.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/socket.cpp.i
+.PHONY : socket.cpp.i
+
+socket.s: socket.cpp.s
+
+.PHONY : socket.s
+
+# target to generate assembly for a file
+socket.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/socket.cpp.s
+.PHONY : socket.cpp.s
+
+state.o: state.cpp.o
+
+.PHONY : state.o
+
+# target to build an object file
+state.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/state.cpp.o
+.PHONY : state.cpp.o
+
+state.i: state.cpp.i
+
+.PHONY : state.i
+
+# target to preprocess a source file
+state.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/state.cpp.i
+.PHONY : state.cpp.i
+
+state.s: state.cpp.s
+
+.PHONY : state.s
+
+# target to generate assembly for a file
+state.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/state.cpp.s
+.PHONY : state.cpp.s
+
+trace.o: trace.cpp.o
+
+.PHONY : trace.o
+
+# target to build an object file
+trace.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/trace.cpp.o
+.PHONY : trace.cpp.o
+
+trace.i: trace.cpp.i
+
+.PHONY : trace.i
+
+# target to preprocess a source file
+trace.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/trace.cpp.i
+.PHONY : trace.cpp.i
+
+trace.s: trace.cpp.s
+
+.PHONY : trace.s
+
+# target to generate assembly for a file
+trace.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/trace.cpp.s
+.PHONY : trace.cpp.s
+
+utils.o: utils.cpp.o
+
+.PHONY : utils.o
+
+# target to build an object file
+utils.cpp.o:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/utils.cpp.o
+.PHONY : utils.cpp.o
+
+utils.i: utils.cpp.i
+
+.PHONY : utils.i
+
+# target to preprocess a source file
+utils.cpp.i:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/utils.cpp.i
+.PHONY : utils.cpp.i
+
+utils.s: utils.cpp.s
+
+.PHONY : utils.s
+
+# target to generate assembly for a file
+utils.cpp.s:
+	cd /home/lezkus/Documents/CPProb/.build && $(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/utils.cpp.s
+.PHONY : utils.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -128,8 +332,30 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... test"
 	@echo "... edit_cache"
+	@echo "... cpprob"
+	@echo "... test"
+	@echo "... cpprob.o"
+	@echo "... cpprob.i"
+	@echo "... cpprob.s"
+	@echo "... sample.o"
+	@echo "... sample.i"
+	@echo "... sample.s"
+	@echo "... serialization.o"
+	@echo "... serialization.i"
+	@echo "... serialization.s"
+	@echo "... socket.o"
+	@echo "... socket.i"
+	@echo "... socket.s"
+	@echo "... state.o"
+	@echo "... state.i"
+	@echo "... state.s"
+	@echo "... trace.o"
+	@echo "... trace.i"
+	@echo "... trace.s"
+	@echo "... utils.o"
+	@echo "... utils.i"
+	@echo "... utils.s"
 .PHONY : help
 
 

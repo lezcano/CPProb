@@ -60,43 +60,6 @@ CMAKE_SOURCE_DIR = /home/lezkus/Documents/CPProb
 CMAKE_BINARY_DIR = /home/lezkus/Documents/CPProb/.build
 
 #=============================================================================
-# Target rules for target CMakeFiles/cpprob.dir
-
-# All Build rule for target.
-CMakeFiles/cpprob.dir/all:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/depend
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=4,5,6,7,8,9,10,11 "Built target cpprob"
-.PHONY : CMakeFiles/cpprob.dir/all
-
-# Include target in all.
-all: CMakeFiles/cpprob.dir/all
-
-.PHONY : all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/cpprob.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/lezkus/Documents/CPProb/.build/CMakeFiles 8
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/cpprob.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/lezkus/Documents/CPProb/.build/CMakeFiles 0
-.PHONY : CMakeFiles/cpprob.dir/rule
-
-# Convenience name for target.
-cpprob: CMakeFiles/cpprob.dir/rule
-
-.PHONY : cpprob
-
-# clean rule for target.
-CMakeFiles/cpprob.dir/clean:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/clean
-.PHONY : CMakeFiles/cpprob.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/cpprob.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
 # Directory level rules for directory src
 
 # Convenience name for "all" pass in the directory.
@@ -199,12 +162,12 @@ clean: src/CMakeFiles/models_main.dir/clean
 # Directory level rules for directory src/cpprob
 
 # Convenience name for "all" pass in the directory.
-src/cpprob/all:
+src/cpprob/all: src/cpprob/CMakeFiles/cpprob.dir/all
 
 .PHONY : src/cpprob/all
 
 # Convenience name for "clean" pass in the directory.
-src/cpprob/clean:
+src/cpprob/clean: src/cpprob/CMakeFiles/cpprob.dir/clean
 
 .PHONY : src/cpprob/clean
 
@@ -212,6 +175,43 @@ src/cpprob/clean:
 src/cpprob/preinstall:
 
 .PHONY : src/cpprob/preinstall
+
+#=============================================================================
+# Target rules for target src/cpprob/CMakeFiles/cpprob.dir
+
+# All Build rule for target.
+src/cpprob/CMakeFiles/cpprob.dir/all:
+	$(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/depend
+	$(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=4,5,6,7,8,9,10,11 "Built target cpprob"
+.PHONY : src/cpprob/CMakeFiles/cpprob.dir/all
+
+# Include target in all.
+all: src/cpprob/CMakeFiles/cpprob.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+src/cpprob/CMakeFiles/cpprob.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lezkus/Documents/CPProb/.build/CMakeFiles 8
+	$(MAKE) -f CMakeFiles/Makefile2 src/cpprob/CMakeFiles/cpprob.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lezkus/Documents/CPProb/.build/CMakeFiles 0
+.PHONY : src/cpprob/CMakeFiles/cpprob.dir/rule
+
+# Convenience name for target.
+cpprob: src/cpprob/CMakeFiles/cpprob.dir/rule
+
+.PHONY : cpprob
+
+# clean rule for target.
+src/cpprob/CMakeFiles/cpprob.dir/clean:
+	$(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/clean
+.PHONY : src/cpprob/CMakeFiles/cpprob.dir/clean
+
+# clean rule for target.
+clean: src/cpprob/CMakeFiles/cpprob.dir/clean
+
+.PHONY : clean
 
 #=============================================================================
 # Directory level rules for directory src/models

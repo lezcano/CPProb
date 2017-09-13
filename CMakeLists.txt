@@ -1,24 +1,16 @@
 # Many ideas taken from:
 # https://github.com/ldionne/dyno/blob/master/CMakeLists.txt
 
-cmake_minimum_required(VERSION 2.8.2)
+cmake_minimum_required(VERSION 3.0)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(CPProb LANGUAGES CXX)
 
-# Setup the `cpprob` library target.
-add_library(cpprob SHARED)
-add_library(CPProb::cpprob ALIAS cpprob)
-target_compile_features(cpprob PUBLIC cxx_std_14)
-target_include_directories(cpprob PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                             $<INSTALL_INTERFACE:include>)
 
 ##############################################################################
 # Dependancies
 ##############################################################################
 find_package(ZeroMQ REQUIRED)
-target_link_libraries(cpprob PUBLIC ${ZeroMQ_LIBRARY})
-target_include_directories(cpprob PUBLIC ${ZeroMQ_INCLUDE_DIR})
 find_package(GTest REQUIRED)
 find_package(FlatBuffers REQUIRED)
 

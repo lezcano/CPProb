@@ -67,17 +67,6 @@ rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
 # Special rule for the target test
 test:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
@@ -88,6 +77,17 @@ test:
 test/fast: test
 
 .PHONY : test/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -122,19 +122,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named cpprob
-
-# Build rule for target.
-cpprob: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 cpprob
-.PHONY : cpprob
-
-# fast build rule for target.
-cpprob/fast:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/build
-.PHONY : cpprob/fast
-
-#=============================================================================
 # Target rules for targets named main
 
 # Build rule for target.
@@ -159,6 +146,19 @@ models_main: cmake_check_build_system
 models_main/fast:
 	$(MAKE) -f src/CMakeFiles/models_main.dir/build.make src/CMakeFiles/models_main.dir/build
 .PHONY : models_main/fast
+
+#=============================================================================
+# Target rules for targets named cpprob
+
+# Build rule for target.
+cpprob: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 cpprob
+.PHONY : cpprob
+
+# fast build rule for target.
+cpprob/fast:
+	$(MAKE) -f src/cpprob/CMakeFiles/cpprob.dir/build.make src/cpprob/CMakeFiles/cpprob.dir/build
+.PHONY : cpprob/fast
 
 #=============================================================================
 # Target rules for targets named models
@@ -186,195 +186,6 @@ CPProb_tests/fast:
 	$(MAKE) -f tests/cpprob/CMakeFiles/CPProb_tests.dir/build.make tests/cpprob/CMakeFiles/CPProb_tests.dir/build
 .PHONY : CPProb_tests/fast
 
-src/cpprob/cpprob.o: src/cpprob/cpprob.cpp.o
-
-.PHONY : src/cpprob/cpprob.o
-
-# target to build an object file
-src/cpprob/cpprob.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/cpprob.cpp.o
-.PHONY : src/cpprob/cpprob.cpp.o
-
-src/cpprob/cpprob.i: src/cpprob/cpprob.cpp.i
-
-.PHONY : src/cpprob/cpprob.i
-
-# target to preprocess a source file
-src/cpprob/cpprob.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/cpprob.cpp.i
-.PHONY : src/cpprob/cpprob.cpp.i
-
-src/cpprob/cpprob.s: src/cpprob/cpprob.cpp.s
-
-.PHONY : src/cpprob/cpprob.s
-
-# target to generate assembly for a file
-src/cpprob/cpprob.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/cpprob.cpp.s
-.PHONY : src/cpprob/cpprob.cpp.s
-
-src/cpprob/sample.o: src/cpprob/sample.cpp.o
-
-.PHONY : src/cpprob/sample.o
-
-# target to build an object file
-src/cpprob/sample.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/sample.cpp.o
-.PHONY : src/cpprob/sample.cpp.o
-
-src/cpprob/sample.i: src/cpprob/sample.cpp.i
-
-.PHONY : src/cpprob/sample.i
-
-# target to preprocess a source file
-src/cpprob/sample.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/sample.cpp.i
-.PHONY : src/cpprob/sample.cpp.i
-
-src/cpprob/sample.s: src/cpprob/sample.cpp.s
-
-.PHONY : src/cpprob/sample.s
-
-# target to generate assembly for a file
-src/cpprob/sample.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/sample.cpp.s
-.PHONY : src/cpprob/sample.cpp.s
-
-src/cpprob/serialization.o: src/cpprob/serialization.cpp.o
-
-.PHONY : src/cpprob/serialization.o
-
-# target to build an object file
-src/cpprob/serialization.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/serialization.cpp.o
-.PHONY : src/cpprob/serialization.cpp.o
-
-src/cpprob/serialization.i: src/cpprob/serialization.cpp.i
-
-.PHONY : src/cpprob/serialization.i
-
-# target to preprocess a source file
-src/cpprob/serialization.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/serialization.cpp.i
-.PHONY : src/cpprob/serialization.cpp.i
-
-src/cpprob/serialization.s: src/cpprob/serialization.cpp.s
-
-.PHONY : src/cpprob/serialization.s
-
-# target to generate assembly for a file
-src/cpprob/serialization.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/serialization.cpp.s
-.PHONY : src/cpprob/serialization.cpp.s
-
-src/cpprob/socket.o: src/cpprob/socket.cpp.o
-
-.PHONY : src/cpprob/socket.o
-
-# target to build an object file
-src/cpprob/socket.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/socket.cpp.o
-.PHONY : src/cpprob/socket.cpp.o
-
-src/cpprob/socket.i: src/cpprob/socket.cpp.i
-
-.PHONY : src/cpprob/socket.i
-
-# target to preprocess a source file
-src/cpprob/socket.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/socket.cpp.i
-.PHONY : src/cpprob/socket.cpp.i
-
-src/cpprob/socket.s: src/cpprob/socket.cpp.s
-
-.PHONY : src/cpprob/socket.s
-
-# target to generate assembly for a file
-src/cpprob/socket.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/socket.cpp.s
-.PHONY : src/cpprob/socket.cpp.s
-
-src/cpprob/state.o: src/cpprob/state.cpp.o
-
-.PHONY : src/cpprob/state.o
-
-# target to build an object file
-src/cpprob/state.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/state.cpp.o
-.PHONY : src/cpprob/state.cpp.o
-
-src/cpprob/state.i: src/cpprob/state.cpp.i
-
-.PHONY : src/cpprob/state.i
-
-# target to preprocess a source file
-src/cpprob/state.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/state.cpp.i
-.PHONY : src/cpprob/state.cpp.i
-
-src/cpprob/state.s: src/cpprob/state.cpp.s
-
-.PHONY : src/cpprob/state.s
-
-# target to generate assembly for a file
-src/cpprob/state.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/state.cpp.s
-.PHONY : src/cpprob/state.cpp.s
-
-src/cpprob/trace.o: src/cpprob/trace.cpp.o
-
-.PHONY : src/cpprob/trace.o
-
-# target to build an object file
-src/cpprob/trace.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/trace.cpp.o
-.PHONY : src/cpprob/trace.cpp.o
-
-src/cpprob/trace.i: src/cpprob/trace.cpp.i
-
-.PHONY : src/cpprob/trace.i
-
-# target to preprocess a source file
-src/cpprob/trace.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/trace.cpp.i
-.PHONY : src/cpprob/trace.cpp.i
-
-src/cpprob/trace.s: src/cpprob/trace.cpp.s
-
-.PHONY : src/cpprob/trace.s
-
-# target to generate assembly for a file
-src/cpprob/trace.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/trace.cpp.s
-.PHONY : src/cpprob/trace.cpp.s
-
-src/cpprob/utils.o: src/cpprob/utils.cpp.o
-
-.PHONY : src/cpprob/utils.o
-
-# target to build an object file
-src/cpprob/utils.cpp.o:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/utils.cpp.o
-.PHONY : src/cpprob/utils.cpp.o
-
-src/cpprob/utils.i: src/cpprob/utils.cpp.i
-
-.PHONY : src/cpprob/utils.i
-
-# target to preprocess a source file
-src/cpprob/utils.cpp.i:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/utils.cpp.i
-.PHONY : src/cpprob/utils.cpp.i
-
-src/cpprob/utils.s: src/cpprob/utils.cpp.s
-
-.PHONY : src/cpprob/utils.s
-
-# target to generate assembly for a file
-src/cpprob/utils.cpp.s:
-	$(MAKE) -f CMakeFiles/cpprob.dir/build.make CMakeFiles/cpprob.dir/src/cpprob/utils.cpp.s
-.PHONY : src/cpprob/utils.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -382,34 +193,13 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... edit_cache"
-	@echo "... cpprob"
 	@echo "... test"
+	@echo "... edit_cache"
 	@echo "... main"
 	@echo "... models_main"
+	@echo "... cpprob"
 	@echo "... models"
 	@echo "... CPProb_tests"
-	@echo "... src/cpprob/cpprob.o"
-	@echo "... src/cpprob/cpprob.i"
-	@echo "... src/cpprob/cpprob.s"
-	@echo "... src/cpprob/sample.o"
-	@echo "... src/cpprob/sample.i"
-	@echo "... src/cpprob/sample.s"
-	@echo "... src/cpprob/serialization.o"
-	@echo "... src/cpprob/serialization.i"
-	@echo "... src/cpprob/serialization.s"
-	@echo "... src/cpprob/socket.o"
-	@echo "... src/cpprob/socket.i"
-	@echo "... src/cpprob/socket.s"
-	@echo "... src/cpprob/state.o"
-	@echo "... src/cpprob/state.i"
-	@echo "... src/cpprob/state.s"
-	@echo "... src/cpprob/trace.o"
-	@echo "... src/cpprob/trace.i"
-	@echo "... src/cpprob/trace.s"
-	@echo "... src/cpprob/utils.o"
-	@echo "... src/cpprob/utils.i"
-	@echo "... src/cpprob/utils.s"
 .PHONY : help
 
 
