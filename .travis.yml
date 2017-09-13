@@ -10,10 +10,6 @@ cache:
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.64.0 # Keep this in sync with BOOST_VERSION
 
 matrix:
-  include:
-    - env: COMPILER=clang++-3.7
-      addons: { apt: { packages: ["clang-3.7", "libzmq3-dev"], sources: ["llvm-toolchain-trusty-3.7", "ubuntu-toolchain-r-test"] } }
-
     - env: COMPILER=clang++-3.8
       addons: { apt: { packages: ["clang-3.8", "libzmq3-dev"], sources: ["llvm-toolchain-trusty-3.8", "ubuntu-toolchain-r-test"] } }
 
@@ -54,7 +50,6 @@ install:
   # Install libc++ and libc++abi if needed
   - |
     if [[ "${CXX%%+*}" == "clang" ]]; then
-      if   [[ "${CXX}" == "clang++-3.7" ]]; then LLVM_VERSION="3.7.1";
       elif [[ "${CXX}" == "clang++-3.8" ]]; then LLVM_VERSION="3.8.1";
       elif [[ "${CXX}" == "clang++-3.9" ]]; then LLVM_VERSION="3.9.1";
       elif [[ "${CXX}" == "clang++-4.0" ]]; then LLVM_VERSION="4.0.0";
