@@ -1,4 +1,8 @@
 if(BUILD_SHERPA)
+    add_definitions(-DBUILD_SHERPA)
+    # TODO(Lezcano) Change for FindPackage YODA & Rivet
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
+
     find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
     MESSAGE(STATUS "Linking to SHERPA")
     add_library(sherpa SHARED sherpa.cpp)
