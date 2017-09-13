@@ -1,7 +1,7 @@
 # Many ideas taken from:
 # https://github.com/ldionne/dyno/blob/master/CMakeLists.txt
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(CPProb LANGUAGES CXX)

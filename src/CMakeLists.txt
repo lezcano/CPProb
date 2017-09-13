@@ -5,11 +5,11 @@ find_package(Threads)
 
 add_executable(main main.cpp)
 target_link_libraries(main PUBLIC cpprob ${Boost_LIBRARIES})
-target_compile_features(main PUBLIC cxx_std_14)
+set_property(TARGET main PROPERTY CXX_STANDARD 14)
 
 add_executable(models_main models_main.cpp)
 target_link_libraries(models_main PUBLIC cpprob ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_compile_features(models_main PUBLIC cxx_std_14)
+set_property(TARGET models_main PROPERTY CXX_STANDARD 14)
 
 if (BUILD_SHERPA)
     target_link_libraries(main PUBLIC cpprob sherpa sherpa_mini)

@@ -1,7 +1,8 @@
 file(GLOB SRC_FILES *.cpp)
 
 add_executable(cpprob_tests ${SRC_FILES})
-target_link_libraries(cpprob_tests cpprob gtest gtest_main)
-target_compile_features(cpprob_tests PUBLIC cxx_std_14)
+target_link_libraries(cpprob_tests cpprob ${GTEST_BOTH_LIBRARIES})
+target_include_directories(cpprob_tests PUBLIC ${GTEST_INCLUDE_DIRS})
+set_property(TARGET cpprob_tests PROPERTY CXX_STANDARD 14)
 
 add_test(Tests cpprob_tests)

@@ -1,9 +1,7 @@
 file(GLOB SRC_FILES *.cpp)
 
-# Setup the `cpprob` library target.
 add_library(cpprob SHARED ${SRC_FILES})
-add_library(CPProb::cpprob ALIAS cpprob)
-target_compile_features(cpprob PUBLIC cxx_std_14)
+set_property(TARGET cpprob PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(cpprob PUBLIC ${ZeroMQ_LIBRARY} ${Boost_LIBRARY_DIR})
 target_include_directories(cpprob PUBLIC ${ZeroMQ_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${Backtrace_INCLUDE_DIR} ${FLATBUFFERS_INCLUDE_DIR})
