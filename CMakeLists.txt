@@ -13,6 +13,8 @@ project(CPProb LANGUAGES CXX)
 find_package(ZeroMQ REQUIRED)
 find_package(GTest REQUIRED)
 find_package(FlatBuffers REQUIRED)
+# https://stackoverflow.com/questions/18583800/cmake-error-the-following-boost-libraries-could-not-be-found
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS program_options serialization filesystem REQUIRED)
 
 ##############################################################################
@@ -43,7 +45,6 @@ if (BUILD_SHERPA)
 endif()
 
 include_directories(include)
-include_directories(dependencies/install/include)
 add_subdirectory(src)
 
 ##############################################################################
