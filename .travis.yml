@@ -82,7 +82,7 @@ install:
 
 before_script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 toolset=clang cxxflags="-std=c++1y ${CXXFLAGS}" include="${BOOST_DIR}" linkflags="${LDFLAGS}" --with-program_options --with-filesystem)
+  - (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 cxxflags=-std=c++1y --with-program_options --with-filesystem)
   - (cd dependencies && ./install.sh)
   - (mkdir build && cd build && cmake .. -DBOOST_ROOT="${BOOST_DIR}" -DCMAKE_PREFIX_PATH="${TRAVIS_BUILD_DIR}/dependencies/install" -DCMAKE_INSTALL_PREFIX="${TRAVIS_BUILD_DIR}/build/install")
 
