@@ -28,11 +28,6 @@ option(BUILD_SHERPA "Build Sherpa" OFF)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
-    add_compile_options(-fext-numeric-literals)
-endif()
-
 include_directories(include)
 add_subdirectory(src)
 
