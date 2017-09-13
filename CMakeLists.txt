@@ -12,14 +12,13 @@ project(CPProb LANGUAGES CXX)
 ##############################################################################
 find_package(ZeroMQ REQUIRED)
 find_package(GTest REQUIRED)
+find_package(Backtrace REQUIRED)
 find_package(FlatBuffers REQUIRED)
+
 # https://stackoverflow.com/questions/18583800/cmake-error-the-following-boost-libraries-could-not-be-found
 set(Boost_USE_STATIC_LIBS ON)
 
-find_package(Boost REQUIRED)
-
-include_directories(${CMAKE_BINARY_DIR}/boost/include)
-#find_package(Boost COMPONENTS program_options serialization filesystem REQUIRED)
+find_package(Boost COMPONENTS program_options filesystem REQUIRED)
 
 ##############################################################################
 # Project Options
@@ -32,13 +31,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
     add_compile_options(-fext-numeric-literals)
 endif()
-
-##############################################################################
-# Look for Backtrace
-##############################################################################
-find_package(Backtrace REQUIRED)
-include_directories(${Backtrace_INCLUDE_DIR})
-add_compile_options(-rdynamic)
 
 include_directories(include)
 add_subdirectory(src)
