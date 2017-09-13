@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/CPProb_tests.dir/main.cpp.o CMakeFiles/CPProb_tests.dir/ndarray.cpp.o  -o CPProb_tests -lCPProb -lgtest -lgtest_main 

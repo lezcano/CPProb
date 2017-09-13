@@ -23,7 +23,6 @@ ExternalProject_Add(flatbuffers
   GIT_TAG           master
   INSTALL_DIR "${CMAKE_INSTALL_PREFIX}"
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-  INSTALL_COMMAND ""
   BUILD_COMMAND  ""    # Disable build step
   TEST_COMMAND   ""    # Disable test step
   UPDATE_COMMAND ""    # Disable source work-tree update
