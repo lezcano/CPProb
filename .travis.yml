@@ -47,6 +47,12 @@ install:
     fi
   - cmake --version
 
+  # Configure LLVM
+  - |
+    if [[ "${CXX%%+*}" == "clang" ]]; then
+      export LDFLAGS="-l c++ -l c++abi"
+    fi
+
   # Install Boost headers
   - BOOST_VERSION=1.64.0 # Keep this in sync with the cached directory
   - BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
