@@ -5,11 +5,6 @@ language: cpp
 dist: trusty
 sudo: false
 
-addons:
-  apt:
-    packages:
-      - libzmq5
-
 cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.64.0 # Keep this in sync with BOOST_VERSION
