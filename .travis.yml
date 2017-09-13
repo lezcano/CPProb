@@ -50,6 +50,7 @@ install:
   # Configure LLVM
   - |
     if [[ "${CXX%%+*}" == "clang" ]]; then
+      export CXXFLAGS="-nostdinc++"
       export LDFLAGS="-stdlib=libc++ -lc++abi"
     fi
 
