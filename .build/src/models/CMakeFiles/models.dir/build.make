@@ -92,7 +92,6 @@ src/models/libmodels.so: src/models/CMakeFiles/models.dir/models.cpp.o
 src/models/libmodels.so: src/models/CMakeFiles/models.dir/build.make
 src/models/libmodels.so: src/cpprob/libcpprob.so
 src/models/libmodels.so: /usr/lib/libboost_program_options.a
-src/models/libmodels.so: /usr/lib/libboost_serialization.a
 src/models/libmodels.so: /usr/lib/libboost_filesystem.a
 src/models/libmodels.so: /usr/lib/libboost_system.a
 src/models/libmodels.so: /usr/lib/libzmq.so

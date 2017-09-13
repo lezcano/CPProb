@@ -1,1 +1,1 @@
-/usr/bin/c++    -rdynamic CMakeFiles/cpprob_tests.dir/main.cpp.o CMakeFiles/cpprob_tests.dir/ndarray.cpp.o  -o cpprob_tests -Wl,-rpath,/home/lezkus/Documents/CPProb/.build/src/cpprob ../../src/cpprob/libcpprob.so -lgtest -lgtest_main -lzmq 
+/usr/bin/c++    -rdynamic CMakeFiles/cpprob_tests.dir/main.cpp.o CMakeFiles/cpprob_tests.dir/ndarray.cpp.o  -o cpprob_tests -Wl,-rpath,/home/lezkus/Documents/CPProb/.build/src/cpprob ../../src/cpprob/libcpprob.so ../../../dependencies/install/lib64/libgtest.a ../../../dependencies/install/lib64/libgtest_main.a -lpthread -lzmq 

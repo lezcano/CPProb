@@ -91,14 +91,12 @@ models_main_EXTERNAL_OBJECTS =
 src/models_main: src/CMakeFiles/models_main.dir/models_main.cpp.o
 src/models_main: src/CMakeFiles/models_main.dir/build.make
 src/models_main: /usr/lib/libboost_program_options.a
-src/models_main: /usr/lib/libboost_serialization.a
 src/models_main: /usr/lib/libboost_filesystem.a
 src/models_main: /usr/lib/libboost_system.a
 src/models_main: src/models/libmodels.so
 src/models_main: src/cpprob/libcpprob.so
 src/models_main: /usr/lib/libzmq.so
 src/models_main: /usr/lib/libboost_program_options.a
-src/models_main: /usr/lib/libboost_serialization.a
 src/models_main: /usr/lib/libboost_filesystem.a
 src/models_main: /usr/lib/libboost_system.a
 src/models_main: src/CMakeFiles/models_main.dir/link.txt

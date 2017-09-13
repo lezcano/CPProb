@@ -117,6 +117,8 @@ tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/build.make
 tests/cpprob/cpprob_tests: src/cpprob/libcpprob.so
+tests/cpprob/cpprob_tests: ../dependencies/install/lib64/libgtest.a
+tests/cpprob/cpprob_tests: ../dependencies/install/lib64/libgtest_main.a
 tests/cpprob/cpprob_tests: /usr/lib/libzmq.so
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable cpprob_tests"

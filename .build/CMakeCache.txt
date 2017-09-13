@@ -242,7 +242,7 @@ ZeroMQ_LIBRARY:FILEPATH=/usr/lib/libzmq.so
 cpprob_LIB_DEPENDS:STATIC=general;/usr/lib/libzmq.so;
 
 //Dependencies for the target
-models_LIB_DEPENDS:STATIC=general;cpprob;general;/usr/lib/libboost_program_options.a;general;/usr/lib/libboost_serialization.a;general;/usr/lib/libboost_filesystem.a;general;/usr/lib/libboost_system.a;
+models_LIB_DEPENDS:STATIC=general;cpprob;general;/usr/lib/libboost_program_options.a;general;/usr/lib/libboost_filesystem.a;general;/usr/lib/libboost_system.a;
 
 
 ########################
