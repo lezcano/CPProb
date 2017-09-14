@@ -67,15 +67,13 @@ CMAKE_BUILD_TYPE:STRING=
 CMAKE_COLOR_MAKEFILE:BOOL=ON
 
 //CXX compiler
-CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
+CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++
 
-//A wrapper around 'ar' adding the appropriate '--plugin' option
-// for the GCC compiler
-CMAKE_CXX_COMPILER_AR:FILEPATH=/usr/bin/gcc-ar
+//LLVM archiver
+CMAKE_CXX_COMPILER_AR:FILEPATH=/usr/bin/llvm-ar
 
-//A wrapper around 'ranlib' adding the appropriate '--plugin' option
-// for the GCC compiler
-CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/usr/bin/gcc-ranlib
+//Generate index for LLVM archive
+CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/usr/bin/llvm-ranlib
 
 //Flags used by the compiler during all build types.
 CMAKE_CXX_FLAGS:STRING=
@@ -92,6 +90,9 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 
 //Flags used by the compiler during release builds with debug info.
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
+
+//No help, variable specified on the command line.
+CMAKE_CXX_INCLUDE_WHAT_YOU_USE:UNINITIALIZED=/usr/bin/include-what-you-use
 
 //Flags used by the linker.
 CMAKE_EXE_LINKER_FLAGS:STRING=
@@ -212,16 +213,16 @@ FLATBUFFERS_FLATC_EXECUTABLE:FILEPATH=/home/lezkus/Documents/CPProb/dependencies
 FLATBUFFERS_INCLUDE_DIR:PATH=/home/lezkus/Documents/CPProb/dependencies/install/include
 
 //Path to a file.
-GTEST_INCLUDE_DIR:PATH=/home/lezkus/Documents/CPProb/dependencies/install/include
+GTEST_INCLUDE_DIR:PATH=/usr/include
 
 //Path to a library.
-GTEST_LIBRARY:FILEPATH=/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest.a
+GTEST_LIBRARY:FILEPATH=/usr/lib/libgtest.so
 
 //Path to a library.
 GTEST_LIBRARY_DEBUG:FILEPATH=GTEST_LIBRARY_DEBUG-NOTFOUND
 
 //Path to a library.
-GTEST_MAIN_LIBRARY:FILEPATH=/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest_main.a
+GTEST_MAIN_LIBRARY:FILEPATH=/usr/lib/libgtest_main.so
 
 //Path to a library.
 GTEST_MAIN_LIBRARY_DEBUG:FILEPATH=GTEST_MAIN_LIBRARY_DEBUG-NOTFOUND
@@ -401,7 +402,7 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding Backtrace
 FIND_PACKAGE_MESSAGE_DETAILS_Backtrace:INTERNAL=[/usr/include][v()]
 //Details about finding GTest
-FIND_PACKAGE_MESSAGE_DETAILS_GTest:INTERNAL=[/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest.a][/home/lezkus/Documents/CPProb/dependencies/install/include][/home/lezkus/Documents/CPProb/dependencies/install/lib64/libgtest_main.a][v()]
+FIND_PACKAGE_MESSAGE_DETAILS_GTest:INTERNAL=[/usr/lib/libgtest.so][/usr/include][/usr/lib/libgtest_main.so][v()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding ZeroMQ

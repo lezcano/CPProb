@@ -12,7 +12,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/lezkus/Documents/CPProb/src/cpprob/trace.cpp" "/home/lezkus/Documents/CPProb/.build/src/cpprob/CMakeFiles/cpprob.dir/trace.cpp.o"
   "/home/lezkus/Documents/CPProb/src/cpprob/utils.cpp" "/home/lezkus/Documents/CPProb/.build/src/cpprob/CMakeFiles/cpprob.dir/utils.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH

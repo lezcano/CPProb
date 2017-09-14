@@ -1,23 +1,22 @@
-#include <algorithm>
-#include <cstdlib>
-#include <csignal>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <vector>
+#include <cstdlib>                                          // for exit, system
+#include <iostream>                                         // for operator<<
+#include <string>                                           // for operator+
+#include <thread>                                           // for thread
+#include <vector>                                           // for vector
 
-#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/operations.hpp>                  // for exists
+#include <boost/filesystem/path.hpp>                        // for path
 #include <boost/program_options.hpp>
 
-#include "cpprob/cpprob.hpp"
-#include "cpprob/traits.hpp"
+#include "cpprob/cpprob.hpp"                                // for compile
  // TODO(Lezcano) ciclic dependency between tratis and metapirors
 // Where should tuple_observes_t be?
-#include "cpprob/metapriors.hpp"
-#include "cpprob/postprocess/stats_printer.hpp"
-
-#include "models/models.hpp"
-#include "models/poly_adjustment.hpp"
+#include "cpprob/metapriors.hpp"                            // for tuple_obs...
+#include "cpprob/postprocess/stats_printer.hpp"             // for Printer
+#include "cpprob/serialization.hpp"                         // for parse_file
+#include "cpprob/state.hpp"                                 // for StateType
+#include "models/models.hpp"                                // for gaussian_...
+#include "models/poly_adjustment.hpp"                       // for linear_re...
 
 template <class F>
 void execute (const F & f,

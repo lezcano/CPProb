@@ -1,10 +1,12 @@
 #include "models/models.hpp"
 
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_smallint.hpp>
+#include <boost/random/normal_distribution.hpp>          // for normal_distr...
+#include <boost/random/poisson_distribution.hpp>         // for poisson_dist...
+#include <boost/random/uniform_smallint.hpp>             // for uniform_smal...
 
-#include "cpprob/cpprob.hpp"
-#include "cpprob/distributions/multivariate_normal.hpp"
+#include "cpprob/cpprob.hpp"                             // for observe, pre...
+#include "cpprob/distributions/multivariate_normal.hpp"  // for multivariate...
+
 
 namespace models {
 

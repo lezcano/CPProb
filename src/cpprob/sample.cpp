@@ -1,14 +1,17 @@
 #include "cpprob/sample.hpp"
 
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_smallint.hpp>
-#include <boost/random/discrete_distribution.hpp>
-#include <boost/random/poisson_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
+#include <cstdint>                                       // for int32_t
+#include <stdexcept>                                     // for runtime_error
+#include <type_traits>                                   // for underlying_t...
+#include <vector>                                        // for vector
 
-#include "cpprob/distributions/multivariate_normal.hpp"
-#include "cpprob/distributions/distribution_utils.hpp"
+#include <boost/random/discrete_distribution.hpp>        // for discrete_dis...
+#include <boost/random/normal_distribution.hpp>          // for normal_distr...
+#include <boost/random/poisson_distribution.hpp>         // for poisson_dist...
+#include <boost/random/uniform_real_distribution.hpp>    // for uniform_real...
+#include <boost/random/uniform_smallint.hpp>             // for uniform_smal...
 
+#include "cpprob/distributions/multivariate_normal.hpp"  // for multivariate...
 
 namespace cpprob {
 

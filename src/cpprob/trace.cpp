@@ -1,14 +1,15 @@
 #include "cpprob/trace.hpp"
 
-#include <exception>
-#include <iostream>
-#include <string>
-#include <unordered_map>
+#include <algorithm>                        // for transform
+#include <cstdint>                          // for int32_t
+#include <exception>                        // for terminate
+#include <iostream>                         // for operator<<, endl, basic_o...
+#include <memory>                           // for allocator_traits<>::value...
+#include <string>                           // for string
+#include <unordered_map>                    // for unordered_map, _Node_iter...
 
-#include <boost/any.hpp>
-
-#include "cpprob/sample.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/sample.hpp"                // for Sample
+#include "flatbuffers/infcomp_generated.h"  // for CreateNDArray, CreateTrac...
 
 namespace cpprob {
 

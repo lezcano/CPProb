@@ -1,19 +1,21 @@
 #ifndef INCLUDE_MODELS_HPP_
 #define INCLUDE_MODELS_HPP_
 
-#include <array>
-#include <string>
-#include <utility>
-#include <vector>
+#include <array>                                         // for array
+#include <cmath>                                         // for sqrt
+#include <cstddef>                                       // for size_t
+#include <vector>                                        // for vector
 
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_smallint.hpp>
-#include <boost/random/discrete_distribution.hpp>
-#include <boost/math/distributions/normal.hpp>
+#include <boost/math/distributions/normal.hpp>           // for normal_distr...
+#include <boost/random/discrete_distribution.hpp>        // for discrete_dis...
+#include <boost/random/normal_distribution.hpp>          // for normal_distr...
+#include <boost/random/uniform_real_distribution.hpp>    // for uniform_real...
+#include <boost/random/uniform_smallint.hpp>             // for uniform_smal...
 
+#include "cpprob/cpprob.hpp"                             // for sample, predict
+#include "cpprob/distributions/multivariate_normal.hpp"  // for multivariate...
+#include "cpprob/ndarray.hpp"                            // for NDArray
 
-#include "cpprob/cpprob.hpp"
-#include "cpprob/distributions/multivariate_normal.hpp"
 
 namespace models {
 template<class RealType = double>

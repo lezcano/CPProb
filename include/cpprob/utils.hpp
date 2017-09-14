@@ -1,17 +1,16 @@
 #ifndef INCLUDE_UTILS_HPP
 #define INCLUDE_UTILS_HPP
 
-#include <algorithm>                            // std::max_element
-#include <array>                                // std:: array
-#include <fstream>
-#include <functional>                           // std::ref
-#include <random>                               // std::random_device
-#include <string>
-#include <sstream>
-#include <tuple>
-#include <type_traits>                          // std::enable_if_t
+#include <algorithm>                       // for generate, max_element
+#include <array>                           // for array
+#include <fstream>                         // for size_t
+#include <functional>                      // for ref
+#include <iterator>                        // for iterator_traits
+#include <random>                          // for mt19937, random_device
+#include <string>                          // for string
+#include <type_traits>                     // for enable_if_t, is_arithmetic
 
-#include <boost/type_traits/has_less.hpp>
+#include <boost/type_traits/has_less.hpp>  // for has_less
 
 namespace cpprob {
 namespace detail {

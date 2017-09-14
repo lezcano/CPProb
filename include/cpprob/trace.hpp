@@ -1,16 +1,17 @@
 #ifndef INCLUDE_TRACE_HPP_
 #define INCLUDE_TRACE_HPP_
 
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include <string>                     // for string
+#include <unordered_map>              // for unordered_map
+#include <utility>                    // for pair
+#include <vector>                     // for vector
 
-#include "cpprob/any.hpp"
-#include "cpprob/ndarray.hpp"
-#include "cpprob/sample.hpp"
+#include "cpprob/any.hpp"             // for any
+#include "cpprob/ndarray.hpp"         // for NDArray
+#include "cpprob/sample.hpp"          // for Sample
+#include "flatbuffers/flatbuffers.h"  // for FlatBufferBuilder (ptr only)
 
-#include "flatbuffers/infcomp_generated.h"
+namespace infcomp { namespace protocol { struct Trace; } }
 
 namespace cpprob{
 class TraceCompile {

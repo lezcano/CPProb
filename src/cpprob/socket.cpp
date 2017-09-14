@@ -1,20 +1,26 @@
 #include "cpprob/socket.hpp"
 
-#include <cstdio>       // std::remove
-#include <exception>    // std::terminate
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <string>
+#include <algorithm>                          // for transform
+#include <cstdint>                            // for int32_t
+#include <cstdio>                             // for remove
+#include <exception>                          // for terminate
+#include <fstream>                            // for operator<<, ofstream
+#include <iostream>                           // for cerr, ios_base::failure
+#include <iterator>                           // for back_insert_iterator
+#include <limits>                             // for numeric_limits, numeric...
+#include <string>                             // for string, operator+, allo...
+#include <type_traits>                        // for __decay_and_strip<>::__...
 
-#include <boost/lexical_cast.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <boost/detail/basic_pointerbuf.hpp>  // for basic_pointerbuf<>::pos...
+#include <boost/lexical_cast.hpp>             // for lexical_cast
+#include <boost/uuid/random_generator.hpp>    // for basic_random_generator
+#include <boost/uuid/uuid.hpp>                // for uuid
+#include <boost/uuid/uuid_io.hpp>             // for operator<<
+#include <zmq.h>                              // for ZMQ_REP, ZMQ_REQ
 
-#include "cpprob/trace.hpp"
-
-#include "flatbuffers/infcomp_generated.h"
-
+#include "cpprob/trace.hpp"                   // for TraceCompile
+#include "cpprob/serialization.hpp"           // for operator<<
+#include "flatbuffers/infcomp_generated.h"    // for CreateMessage, GetMessage
 
 namespace cpprob {
 
@@ -57,7 +63,7 @@ void SocketCompile::send_batch(const std::vector<TraceCompile> & traces_vector)
 
     std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> fbb_traces;
     std::transform(traces_vector.begin(), traces_vector.end(), std::back_inserter(fbb_traces),
-                   [](const auto & trace) { return trace.pack(buff); });
+                   [](const TraceCompile & trace) { return trace.pack(buff); });
 
     auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &fbb_traces);
     auto msg = infcomp::protocol::CreateMessage(

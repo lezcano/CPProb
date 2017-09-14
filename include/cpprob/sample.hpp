@@ -1,11 +1,11 @@
 #ifndef CPPROB_SAMPLE_HPP
 #define CPPROB_SAMPLE_HPP
 
-#include <boost/any.hpp>
+#include <string>                           // for string
+#include <boost/any.hpp>                    // for any
 
-
-#include "cpprob/ndarray.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/ndarray.hpp"               // for NDArray
+#include "flatbuffers/infcomp_generated.h"  // for Distribution, Sample (ptr...
 
 namespace cpprob {
 

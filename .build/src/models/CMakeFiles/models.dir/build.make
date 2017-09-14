@@ -60,15 +60,15 @@ include src/models/CMakeFiles/models.dir/flags.make
 src/models/CMakeFiles/models.dir/models.cpp.o: src/models/CMakeFiles/models.dir/flags.make
 src/models/CMakeFiles/models.dir/models.cpp.o: ../src/models/models.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/models/CMakeFiles/models.dir/models.cpp.o"
-	cd /home/lezkus/Documents/CPProb/.build/src/models && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/models.dir/models.cpp.o -c /home/lezkus/Documents/CPProb/src/models/models.cpp
+	cd /home/lezkus/Documents/CPProb/.build/src/models && $(CMAKE_COMMAND) -E __run_iwyu --iwyu=/usr/bin/include-what-you-use -- /usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/models.dir/models.cpp.o -c /home/lezkus/Documents/CPProb/src/models/models.cpp
 
 src/models/CMakeFiles/models.dir/models.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/models.dir/models.cpp.i"
-	cd /home/lezkus/Documents/CPProb/.build/src/models && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/src/models/models.cpp > CMakeFiles/models.dir/models.cpp.i
+	cd /home/lezkus/Documents/CPProb/.build/src/models && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/src/models/models.cpp > CMakeFiles/models.dir/models.cpp.i
 
 src/models/CMakeFiles/models.dir/models.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/models.dir/models.cpp.s"
-	cd /home/lezkus/Documents/CPProb/.build/src/models && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/src/models/models.cpp -o CMakeFiles/models.dir/models.cpp.s
+	cd /home/lezkus/Documents/CPProb/.build/src/models && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/src/models/models.cpp -o CMakeFiles/models.dir/models.cpp.s
 
 src/models/CMakeFiles/models.dir/models.cpp.o.requires:
 

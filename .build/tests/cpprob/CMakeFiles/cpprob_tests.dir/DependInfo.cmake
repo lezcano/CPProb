@@ -7,7 +7,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/lezkus/Documents/CPProb/tests/cpprob/main.cpp" "/home/lezkus/Documents/CPProb/.build/tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o"
   "/home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp" "/home/lezkus/Documents/CPProb/.build/tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH

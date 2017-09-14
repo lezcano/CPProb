@@ -1,22 +1,25 @@
 #ifndef INCLUDE_SOCKET_HPP_
 #define INCLUDE_SOCKET_HPP_
 
-#include <exception>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <string.h>                                     // for memcpy
+#include <cstddef>                                      // for size_t
+#include <stdexcept>                                    // for runtime_error
+#include <string>                                       // for string
+#include <unordered_map>                                // for unordered_map
+#include <utility>                                      // for pair
+#include <vector>                                       // for vector
 
-#include <zmq.hpp>
+#include <zmq.hpp>                                      // for message_t
 
-#include "cpprob/trace.hpp"
-#include "cpprob/distributions/distribution_utils.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/any.hpp"                               // for any
+#include "cpprob/distributions/distribution_utils.hpp"  // for proposal
+#include "cpprob/ndarray.hpp"                           // for NDArray
+#include "cpprob/sample.hpp"                            // for Sample
+
+#include "flatbuffers/infcomp_generated.h"              // for CreateMessage
+namespace cpprob { class TraceCompile; }
 
 namespace cpprob{
-
-// Forward Declaration
-template<class T>
-class NDArray;
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////

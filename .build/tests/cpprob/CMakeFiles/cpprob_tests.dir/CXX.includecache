@@ -315,6 +315,12 @@ cpprob/traits.hpp
 ../include/cpprob/cpprob/traits.hpp
 
 ../include/cpprob/serialization.hpp
+array
+-
+cstddef
+-
+initializer_list
+-
 fstream
 -
 iostream
@@ -323,7 +329,11 @@ map
 -
 sstream
 -
+string
+-
 tuple
+-
+utility
 -
 vector
 -
@@ -354,8 +364,6 @@ gtest/gtest.h
 gtest/gtest.h
 /home/lezkus/Documents/CPProb/tests/cpprob/gtest/gtest.h
 vector
--
-type_traits
 -
 cpprob/ndarray.hpp
 /home/lezkus/Documents/CPProb/tests/cpprob/cpprob/ndarray.hpp

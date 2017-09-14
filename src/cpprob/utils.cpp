@@ -1,20 +1,15 @@
 #include "cpprob/utils.hpp"
 
-#include <execinfo.h>
-#include <cxxabi.h>
-#include <cstdio>
-#include <cstdlib>
+#include <cxxabi.h>    // for __cxa_demangle
+#include <execinfo.h>  // for backtrace, backtrace_symbols
 
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include <random>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <cstdio>      // for perror
+#include <cstdlib>     // for exit, free, EXIT_FAILURE
+#include <iostream>    // for cerr
+#include <random>      // for mt19937
+#include <regex>       // for regex_search, regex, smatch
+#include <string>      // for string, basic_string, operator+
+#include <vector>      // for vector
 
 namespace cpprob{
 

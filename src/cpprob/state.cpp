@@ -1,16 +1,12 @@
 #include "cpprob/state.hpp"
 
-#include <iomanip>
-#include <set>
-#include <string>
-#include <type_traits>
-#include <unordered_map>
+#include <iterator>           // for make_move_iterator, move_iterator, oper...
+#include <set>                // for set
+#include <string>             // for string
+#include <unordered_map>      // for unordered_map
 
-
-#include "cpprob/any.hpp"
-#include "cpprob/serialization.hpp"
-#include "cpprob/socket.hpp"
-#include "cpprob/trace.hpp"
+#include "cpprob/socket.hpp"  // for SocketInfer, SocketCompile
+#include "cpprob/trace.hpp"   // for TraceCompile, TraceInfer, TraceInfer::i...
 
 namespace cpprob {
 

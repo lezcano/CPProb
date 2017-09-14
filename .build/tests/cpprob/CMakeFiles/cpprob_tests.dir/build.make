@@ -60,15 +60,15 @@ include tests/cpprob/CMakeFiles/cpprob_tests.dir/flags.make
 tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o: tests/cpprob/CMakeFiles/cpprob_tests.dir/flags.make
 tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o: ../tests/cpprob/main.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/cpprob_tests.dir/main.cpp.o -c /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && $(CMAKE_COMMAND) -E __run_iwyu --iwyu=/usr/bin/include-what-you-use -- /usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/cpprob_tests.dir/main.cpp.o -c /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/cpprob_tests.dir/main.cpp.i"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp > CMakeFiles/cpprob_tests.dir/main.cpp.i
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp > CMakeFiles/cpprob_tests.dir/main.cpp.i
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/cpprob_tests.dir/main.cpp.s"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp -o CMakeFiles/cpprob_tests.dir/main.cpp.s
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/tests/cpprob/main.cpp -o CMakeFiles/cpprob_tests.dir/main.cpp.s
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o.requires:
 
@@ -84,15 +84,15 @@ tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o.provides.build: tests/cpprob
 tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o: tests/cpprob/CMakeFiles/cpprob_tests.dir/flags.make
 tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o: ../tests/cpprob/ndarray.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/cpprob_tests.dir/ndarray.cpp.o -c /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && $(CMAKE_COMMAND) -E __run_iwyu --iwyu=/usr/bin/include-what-you-use -- /usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/cpprob_tests.dir/ndarray.cpp.o -c /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/cpprob_tests.dir/ndarray.cpp.i"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp > CMakeFiles/cpprob_tests.dir/ndarray.cpp.i
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp > CMakeFiles/cpprob_tests.dir/ndarray.cpp.i
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/cpprob_tests.dir/ndarray.cpp.s"
-	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp -o CMakeFiles/cpprob_tests.dir/ndarray.cpp.s
+	cd /home/lezkus/Documents/CPProb/.build/tests/cpprob && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/tests/cpprob/ndarray.cpp -o CMakeFiles/cpprob_tests.dir/ndarray.cpp.s
 
 tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o.requires:
 
@@ -117,8 +117,8 @@ tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/main.cpp.o
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/ndarray.cpp.o
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/build.make
 tests/cpprob/cpprob_tests: src/cpprob/libcpprob.so
-tests/cpprob/cpprob_tests: ../dependencies/install/lib64/libgtest.a
-tests/cpprob/cpprob_tests: ../dependencies/install/lib64/libgtest_main.a
+tests/cpprob/cpprob_tests: /usr/lib/libgtest.so
+tests/cpprob/cpprob_tests: /usr/lib/libgtest_main.so
 tests/cpprob/cpprob_tests: /usr/lib/libzmq.so
 tests/cpprob/cpprob_tests: tests/cpprob/CMakeFiles/cpprob_tests.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable cpprob_tests"

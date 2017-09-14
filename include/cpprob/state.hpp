@@ -1,18 +1,18 @@
 #ifndef CPPROB_STATE_HPP
 #define CPPROB_STATE_HPP
 
-#include <iostream> // debug
-#include <map>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
+#include <iostream>                                     // for size_t
+#include <map>                                          // for map
+#include <string>                                       // for string
+#include <type_traits>                                  // for enable_if_t
+#include <utility>                                      // for make_pair
+#include <vector>                                       // for vector
 
-#include "cpprob/any.hpp"
-#include "cpprob/sample.hpp"
-#include "cpprob/socket.hpp"
-#include "cpprob/trace.hpp"
-#include "cpprob/distributions/distribution_utils.hpp"
+#include "cpprob/distributions/distribution_utils.hpp"  // for proposal
+#include "cpprob/ndarray.hpp"                           // for NDArray
+#include "cpprob/sample.hpp"                            // for Sample
+#include "cpprob/socket.hpp"                            // for SocketInfer
+#include "cpprob/trace.hpp"                             // for TraceInfer
 
 namespace cpprob {
 

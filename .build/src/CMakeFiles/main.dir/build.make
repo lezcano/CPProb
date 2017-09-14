@@ -60,15 +60,15 @@ include src/CMakeFiles/main.dir/flags.make
 src/CMakeFiles/main.dir/main.cpp.o: src/CMakeFiles/main.dir/flags.make
 src/CMakeFiles/main.dir/main.cpp.o: ../src/main.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/CMakeFiles/main.dir/main.cpp.o"
-	cd /home/lezkus/Documents/CPProb/.build/src && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/main.cpp.o -c /home/lezkus/Documents/CPProb/src/main.cpp
+	cd /home/lezkus/Documents/CPProb/.build/src && $(CMAKE_COMMAND) -E __run_iwyu --iwyu=/usr/bin/include-what-you-use -- /usr/bin/clang++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/main.cpp.o -c /home/lezkus/Documents/CPProb/src/main.cpp
 
 src/CMakeFiles/main.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/main.cpp.i"
-	cd /home/lezkus/Documents/CPProb/.build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/src/main.cpp > CMakeFiles/main.dir/main.cpp.i
+	cd /home/lezkus/Documents/CPProb/.build/src && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/lezkus/Documents/CPProb/src/main.cpp > CMakeFiles/main.dir/main.cpp.i
 
 src/CMakeFiles/main.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/main.cpp.s"
-	cd /home/lezkus/Documents/CPProb/.build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/src/main.cpp -o CMakeFiles/main.dir/main.cpp.s
+	cd /home/lezkus/Documents/CPProb/.build/src && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/lezkus/Documents/CPProb/src/main.cpp -o CMakeFiles/main.dir/main.cpp.s
 
 src/CMakeFiles/main.dir/main.cpp.o.requires:
 

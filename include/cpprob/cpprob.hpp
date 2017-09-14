@@ -1,25 +1,27 @@
 #ifndef INCLUDE_CPPROB_HPP
 #define INCLUDE_CPPROB_HPP
 
-#include <array>
-#include <cmath>
-#include <cstdlib> // std::exit
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <string>
-#include <utility>
-#include <vector>
 
-#include "cpprob/any.hpp"
-#include "cpprob/ndarray.hpp"
-#include "cpprob/socket.hpp"
-#include "cpprob/state.hpp"
-#include "cpprob/trace.hpp"
-#include "cpprob/call_function.hpp"
-#include "cpprob/utils.hpp"
-#include "cpprob/distributions/distribution_utils.hpp"
+#include <array>                                        // for array, tuple_...
+#include <boost/container/detail/std_fwd.hpp>           // for pair
+#include <initializer_list>                             // for initializer_list
+#include <iostream>                                     // for operator<<
+#include <iterator>                                     // for make_move_ite...
+#include <stdexcept>                                    // for runtime_error
+#include <string>                                       // for string
+#include <tuple>                                        // for tuple
+#include <type_traits>                                  // for declval, enab...
+#include <utility>                                      // for move, index_s...
+#include <vector>                                       // for vector
+
+#include "cpprob/call_function.hpp"                     // for call_f_defaul...
+#include "cpprob/distributions/distribution_utils.hpp"  // for logpdf, proposal
+#include "cpprob/metapriors.hpp"                        // for discard_build
+#include "cpprob/sample.hpp"                            // for Sample
+#include "cpprob/socket.hpp"                            // for SocketInfer
+#include "cpprob/state.hpp"                             // for StateInfer
+#include "cpprob/traits.hpp"                            // for tuple_size
+#include "cpprob/utils.hpp"                             // for get_rng, get_...
 
 namespace cpprob {
 namespace detail {

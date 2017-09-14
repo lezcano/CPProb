@@ -27,9 +27,6 @@ src/cpprob/CMakeFiles/cpprob.dir/sample.cpp.o
  ../dependencies/install/include/flatbuffers/base.h
  ../dependencies/install/include/flatbuffers/flatbuffers.h
  ../dependencies/install/include/flatbuffers/stl_emulation.h
- ../include/cpprob/distributions/distribution_utils.hpp
- ../include/cpprob/distributions/min_max_continuous.hpp
- ../include/cpprob/distributions/min_max_discrete.hpp
  ../include/cpprob/distributions/multivariate_normal.hpp
  ../include/cpprob/ndarray.hpp
  ../include/cpprob/sample.hpp
