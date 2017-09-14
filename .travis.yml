@@ -11,6 +11,12 @@ cache:
 
 matrix:
   include:
+    - env: COMPILER=g++-6
+      addons: { apt: { packages: ["g++-6", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - env: COMPILER=g++-7
+      addons: { apt: { packages: ["g++-7", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+
     - env: COMPILER=clang++-3.8
       addons: { apt: { packages: ["clang-3.8", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
 
@@ -20,12 +26,6 @@ matrix:
     - env: COMPILER=clang++-4.0
       addons: { apt: { packages: ["clang-4.0", "libzmq3-dev"], sources: ["llvm-toolchain-trusty-4.0"] } }
 
-
-    - env: COMPILER=g++-6
-      addons: { apt: { packages: ["g++-6", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
-
-    - env: COMPILER=g++-7
-      addons: { apt: { packages: ["g++-7", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
 
 install:
   # Set the ${CXX} variable properly
