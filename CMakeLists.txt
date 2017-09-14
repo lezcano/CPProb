@@ -23,6 +23,7 @@ find_package(Boost COMPONENTS program_options filesystem REQUIRED)
 ##############################################################################
 option(BUILD_SHERPA "Build Sherpa" OFF)
 
+# No -pedantic since it breaks the g++ build in travis (?!)
 add_compile_options(-Wall -Wextra)
 
 include_directories(include)
