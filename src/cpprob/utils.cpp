@@ -10,18 +10,17 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <random>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include <boost/random/random_device.hpp>
-
 namespace cpprob{
 
-boost::random::mt19937& get_rng()
+std::mt19937& get_rng()
 {
-    static boost::random::mt19937 rng{detail::seeded_rng()};
+    static std::mt19937 rng{detail::seeded_rng()};
     return rng;
 }
 

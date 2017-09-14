@@ -90,15 +90,15 @@ models_main_EXTERNAL_OBJECTS =
 
 src/models_main: src/CMakeFiles/models_main.dir/models_main.cpp.o
 src/models_main: src/CMakeFiles/models_main.dir/build.make
-src/models_main: /usr/lib/libboost_program_options.a
-src/models_main: /usr/lib/libboost_filesystem.a
-src/models_main: /usr/lib/libboost_system.a
+src/models_main: /usr/lib/libboost_program_options.so
+src/models_main: /usr/lib/libboost_filesystem.so
+src/models_main: /usr/lib/libboost_system.so
 src/models_main: src/models/libmodels.so
 src/models_main: src/cpprob/libcpprob.so
 src/models_main: /usr/lib/libzmq.so
-src/models_main: /usr/lib/libboost_program_options.a
-src/models_main: /usr/lib/libboost_filesystem.a
-src/models_main: /usr/lib/libboost_system.a
+src/models_main: /usr/lib/libboost_program_options.so
+src/models_main: /usr/lib/libboost_filesystem.so
+src/models_main: /usr/lib/libboost_system.so
 src/models_main: src/CMakeFiles/models_main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable models_main"
 	cd /home/lezkus/Documents/CPProb/.build/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/models_main.dir/link.txt --verbose=$(VERBOSE)

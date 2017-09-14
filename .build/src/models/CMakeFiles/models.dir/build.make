@@ -91,9 +91,9 @@ models_EXTERNAL_OBJECTS =
 src/models/libmodels.so: src/models/CMakeFiles/models.dir/models.cpp.o
 src/models/libmodels.so: src/models/CMakeFiles/models.dir/build.make
 src/models/libmodels.so: src/cpprob/libcpprob.so
-src/models/libmodels.so: /usr/lib/libboost_program_options.a
-src/models/libmodels.so: /usr/lib/libboost_filesystem.a
-src/models/libmodels.so: /usr/lib/libboost_system.a
+src/models/libmodels.so: /usr/lib/libboost_program_options.so
+src/models/libmodels.so: /usr/lib/libboost_filesystem.so
+src/models/libmodels.so: /usr/lib/libboost_system.so
 src/models/libmodels.so: /usr/lib/libzmq.so
 src/models/libmodels.so: src/models/CMakeFiles/models.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX shared library libmodels.so"

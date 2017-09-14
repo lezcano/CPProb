@@ -1,18 +1,15 @@
 #ifndef INCLUDE_UTILS_HPP
 #define INCLUDE_UTILS_HPP
 
-#include <type_traits>                          // std::enable_if_t
-#include <random>                               // std::random_device
+#include <algorithm>                            // std::max_element
 #include <array>                                // std:: array
-#include <functional>                           // std::ref
-#include <string>
-#include <tuple>
-#include <sstream>
 #include <fstream>
-#include <type_traits>
-
-#include <boost/random/mersenne_twister.hpp>    // boost::random::mt19937
-#include <boost/random/random_device.hpp>
+#include <functional>                           // std::ref
+#include <random>                               // std::random_device
+#include <string>
+#include <sstream>
+#include <tuple>
+#include <type_traits>                          // std::enable_if_t
 
 #include <boost/type_traits/has_less.hpp>
 
@@ -35,7 +32,7 @@ T get_zero (T)
 
 // Idea from
 // http://codereview.stackexchange.com/questions/109260/seed-stdmt19937-from-stdrandom-device/109266#109266
-template<class T = boost::random::mt19937, std::size_t N = T::state_size, std::enable_if_t<N != 0, int> = 0>
+template<class T = std::mt19937, std::size_t N = T::state_size, std::enable_if_t<N != 0, int> = 0>
 T seeded_rng()
 {
     std::array<typename T::result_type, N> random_data;
@@ -50,7 +47,7 @@ T seeded_rng()
 
 std::string get_addr();
 
-boost::random::mt19937& get_rng();
+std::mt19937& get_rng();
 
 }  // namespace cpprob
 

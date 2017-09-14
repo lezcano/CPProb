@@ -90,15 +90,15 @@ main_EXTERNAL_OBJECTS =
 
 src/main: src/CMakeFiles/main.dir/main.cpp.o
 src/main: src/CMakeFiles/main.dir/build.make
-src/main: /usr/lib/libboost_program_options.a
-src/main: /usr/lib/libboost_filesystem.a
-src/main: /usr/lib/libboost_system.a
+src/main: /usr/lib/libboost_program_options.so
+src/main: /usr/lib/libboost_filesystem.so
+src/main: /usr/lib/libboost_system.so
 src/main: src/models/libmodels.so
 src/main: src/cpprob/libcpprob.so
 src/main: /usr/lib/libzmq.so
-src/main: /usr/lib/libboost_program_options.a
-src/main: /usr/lib/libboost_filesystem.a
-src/main: /usr/lib/libboost_system.a
+src/main: /usr/lib/libboost_program_options.so
+src/main: /usr/lib/libboost_filesystem.so
+src/main: /usr/lib/libboost_system.so
 src/main: src/CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/lezkus/Documents/CPProb/.build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
 	cd /home/lezkus/Documents/CPProb/.build/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
