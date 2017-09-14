@@ -23,7 +23,7 @@ find_package(Boost COMPONENTS program_options filesystem REQUIRED)
 ##############################################################################
 option(BUILD_SHERPA "Build Sherpa" OFF)
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra -pedantic)
 
 include_directories(include)
 add_subdirectory(src)
