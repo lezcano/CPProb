@@ -32,7 +32,7 @@ std::poisson_distribution<ResultType> MetaPoisson<ResultType, Mean>::distr{mean}
 template<class T, class MetaDistr>
 class Prior {
 public:
-    Prior() : t_(meta_distr(get_rng())) {}
+    Prior() : t_(meta_distr(get_observe_rng())) {}
 
     Prior(const T &t) : t_{t} {}
 

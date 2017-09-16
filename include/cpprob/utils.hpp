@@ -50,7 +50,9 @@ T seeded_rng()
 
 std::string get_addr();
 
-boost::random::mt19937& get_rng();
+boost::random::mt19937& get_sample_rng();
+
+boost::random::mt19937& get_observe_rng();
 
 }  // namespace cpprob
 

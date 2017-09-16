@@ -101,12 +101,13 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
     std::string addr {get_addr()};
 
     if (State::state() == StateType::compile) {
-        x = distr(get_rng());
 
         if(from_observe) {
+            x = distr(get_observe_rng());
             StateCompile::add_observe(x);
         }
         else {
+            x = distr(get_sample_rng());
             StateCompile::add_sample(Sample{addr, proposal<Distr, Params...>::type_enum, Distr<>(distr.param()),
                                      x, StateCompile::sample_instance(addr), StateCompile::time_index()});
         }
@@ -118,13 +119,14 @@ typename Distr<Params ...>::result_type sample_impl(Distr<Params ...> & distr, c
 
         try {
             auto proposal = StateInfer::get_proposal<Distr, Params...>();
-            x = proposal(get_rng());
+            // In Inference it's always going to be a sample
+            x = proposal(get_sample_rng());
 
             StateInfer::increment_log_prob(logpdf(distr, x) - logpdf(proposal, x));
         }
         // No proposal -> Default to prior as proposal
         catch (const std::runtime_error &) {
-            x = distr(get_rng());
+            x = distr(get_sample_rng());
         }
 
         StateInfer::curr_sample_.set_value(x);
@@ -143,7 +145,7 @@ typename Distr<Params ...>::result_type sample(Distr<Params ...> & distr, bool c
     if (!control ||
         State::state() == StateType::dryrun ||
         State::state() == StateType::importance_sampling) {
-        return distr(get_rng());
+        return distr(get_sample_rng());
     }
     else {
         return sample_impl(distr, false);
@@ -178,6 +180,10 @@ void predict(const T & x, const std::string & addr)
 void start_rejection_sampling();
 
 void finish_rejection_sampling();
+
+void seed_sample_rng(decltype(get_sample_rng()()) seed);
+
+void seed_observe_rng(decltype(get_observe_rng()()) seed);
 
 template<class Func>
 void compile(const Func & f,

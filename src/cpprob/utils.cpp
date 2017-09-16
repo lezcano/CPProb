@@ -19,7 +19,13 @@
 
 namespace cpprob{
 
-boost::random::mt19937& get_rng()
+boost::random::mt19937& get_sample_rng()
+{
+    static boost::random::mt19937 rng{detail::seeded_rng()};
+    return rng;
+}
+
+boost::random::mt19937& get_observe_rng()
 {
     static boost::random::mt19937 rng{detail::seeded_rng()};
     return rng;
