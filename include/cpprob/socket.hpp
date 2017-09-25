@@ -12,7 +12,7 @@
 #include "cpprob/distributions/distribution_utils.hpp"
 #include "flatbuffers/infcomp_generated.h"
 
-namespace cpprob{
+namespace cpprob {
 
 // Forward Declaration
 template<class T>
@@ -51,7 +51,7 @@ public:
     static void send_observe_init(const NDArray<double> & data);
 
     template<template <class ...> class Distr, class ...Params>
-    static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
+    static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample) {
         static flatbuffers::FlatBufferBuilder buff;
 
         auto msg = infcomp::protocol::CreateMessage(

@@ -13,23 +13,23 @@ class Sample {
 public:
     Sample() = default;
 
-    Sample(const std::string &sample_address,
-           const infcomp::protocol::Distribution &proposal_type,
-           const boost::any &proposal_distr,
+    Sample(const std::string & sample_address,
+           const infcomp::protocol::Distribution & proposal_type,
+           const boost::any & proposal_distr,
            NDArray<double> value = 0,
            int sample_instance = 0,
            int time_index = 0);
 
-    void set_value(const NDArray<double> &value);
+    void set_value(const NDArray<double> & value);
 
     std::string sample_address();
 
-    flatbuffers::Offset <infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder &buff) const;
+    flatbuffers::Offset <infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
 
 private:
 
-    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder &buff,
-                                         const boost::any &distr,
+    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder & buff,
+                                         const boost::any & distr,
                                          infcomp::protocol::Distribution type) const;
 
     std::string sample_address_;

@@ -12,36 +12,36 @@ namespace cpprob {
 
 // Forward declarations
 template<class CharT, class Traits, class U, class V>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair);
+std::basic_istream<CharT, Traits> & operator>>(std::basic_istream<CharT, Traits> & is, std::pair<U, V> & pair);
 template<class CharT, class Traits, class... T>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup);
+std::basic_istream<CharT, Traits> & operator>>(std::basic_istream<CharT, Traits> & is, std::tuple<T...> & tup);
 template<class CharT, class Traits, class T>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec);
+std::basic_istream<CharT, Traits> & operator>>(std::basic_istream<CharT, Traits> & is, std::vector<T> & vec);
 template<class CharT, class Traits, class T, std::size_t N>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::array<T,N>& vec);
+std::basic_istream<CharT, Traits> & operator>>(std::basic_istream<CharT, Traits> & is, std::array<T, N> & vec);
 template<class CharT, class Traits, class Key, class Value>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::map<Key,Value>& map);
+std::basic_istream<CharT, Traits> & operator>>(std::basic_istream<CharT, Traits> & is, std::map<Key, Value> & map);
 
 template<class CharT, class Traits, class U, class V>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair);
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, const std::pair<U, V> & pair);
 template<class CharT, class Traits, class... T>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup);
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, const std::tuple<T...> & tup);
 template<class CharT, class Traits, class T>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec);
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, const std::vector<T> & vec);
 template<class CharT, class Traits, class T, std::size_t N>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T,N>& vec);
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, const std::array<T, N> & vec);
 template<class CharT, class Traits, class Key, class Value>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map);
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, const std::map<Key, Value> & map);
 
 template<class CharT, class Traits, class U, class V>
 std::basic_ostream<CharT, Traits>&
-operator<<(std::basic_ostream<CharT, Traits> &os, const std::pair<U, V>& pair)
+operator<<(std::basic_ostream<CharT, Traits> & os, const std::pair<U, V> & pair)
 {
     return os << os.widen('(') << pair.first << os.widen(' ') << pair.second << os.widen(')');
 }
 
 template<class CharT, class Traits, class... T, size_t... Indices>
-void print_tuple_impl(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup, std::index_sequence<Indices...>)
+void print_tuple_impl(std::basic_ostream<CharT, Traits> & os, const std::tuple<T...> & tup, std::index_sequence<Indices...>)
 {
     (void)std::initializer_list<int>
     {
@@ -51,8 +51,8 @@ void print_tuple_impl(std::basic_ostream<CharT, Traits> &os, const std::tuple<T.
 }
 
 template<class CharT, class Traits, class... T>
-std::basic_ostream<CharT, Traits>&
-operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup)
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, const std::tuple<T...> & tup)
 {
     os << os.widen('(');
     if (sizeof...(T) != 0)
@@ -64,8 +64,8 @@ operator<<(std::basic_ostream<CharT, Traits> &os, const std::tuple<T...>& tup)
 }
 
 template<class CharT, class Traits, class Iter>
-std::basic_ostream<CharT, Traits>&
-print_iter(std::basic_ostream<CharT, Traits> &os, Iter beg,  Iter end, char init_del, char end_del)
+std::basic_ostream<CharT, Traits> &
+print_iter(std::basic_ostream<CharT, Traits> & os, Iter beg,  Iter end, char init_del, char end_del)
 {
     os << os.widen(init_del);
     if (beg != end) {
@@ -81,29 +81,29 @@ print_iter(std::basic_ostream<CharT, Traits> &os, Iter beg,  Iter end, char init
 
 
 template<class CharT, class Traits, class T, std::size_t N>
-std::basic_ostream<CharT, Traits>&
-operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T, N>& arr)
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, const std::array<T, N> & arr)
 {
     return print_iter(os, arr.cbegin(), arr.cend(), '[', ']');
 }
 
 template<class CharT, class Traits, class T>
-std::basic_ostream<CharT, Traits>&
-operator<<(std::basic_ostream<CharT, Traits> &os, const std::vector<T>& vec)
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, const std::vector<T> & vec)
 {
     return print_iter(os, vec.cbegin(), vec.cend(), '[', ']');
 }
 
 template<class CharT, class Traits, class Key, class Value>
-std::basic_ostream<CharT, Traits>&
-operator<<(std::basic_ostream<CharT, Traits> &os, const std::map<Key,Value>& map)
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, const std::map<Key,Value> & map)
 {
     return print_iter(os, map.cbegin(), map.cend(), '{', '}');
 }
 
 template<class CharT, class Traits, class U, class V>
-std::basic_istream<CharT, Traits>&
-operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> & is, std::pair<U, V> & pair)
 {
     std::tuple<U, V> tup;
     is >> tup;
@@ -115,14 +115,14 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::pair<U, V>& pair)
 }
 
 template<class CharT, class Traits, class... T, size_t... Indices>
-void read_tuple_impl(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup, std::index_sequence<Indices...>)
+void read_tuple_impl(std::basic_istream<CharT, Traits> & is, std::tuple<T...> & tup, std::index_sequence<Indices...>)
 {
-    (void)std::initializer_list<int>{ (is >> std::get<Indices>(tup), 0)... };
+    (void)std::initializer_list<int> { (is >> std::get<Indices>(tup), 0)... };
 }
 
 template<class CharT, class Traits, class... T>
-std::basic_istream<CharT, Traits>&
-operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> & is, std::tuple<T...> & tup) {
     CharT ch;
     if (!(is >> std::ws >> ch)) {
         return is;
@@ -150,8 +150,8 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::tuple<T...>& tup) {
 }
 
 template<class CharT, class Traits, class T>
-std::basic_istream<CharT, Traits>&
-operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> & is, std::vector<T> & vec)
 {
     CharT ch;
     if (!(is >> std::ws >> ch)) {
@@ -188,8 +188,8 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::vector<T>& vec)
 }
 
 template<class CharT, class Traits, class T, std::size_t N>
-std::basic_istream<CharT, Traits>&
-operator>>(std::basic_istream<CharT, Traits> &is, std::array<T, N>& arr)
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> & is, std::array<T, N> & arr)
 {
     CharT ch;
     if (!(is >> std::ws >> ch)) {
@@ -216,7 +216,8 @@ operator>>(std::basic_istream<CharT, Traits> &is, std::array<T, N>& arr)
 }
 
 template<class CharT, class Traits, class Key, class Value>
-std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> &is, std::map<Key,Value>& map)
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> & is, std::map<Key,Value> & map)
 {
     CharT ch;
     if (!(is >> std::ws >> ch)) {
@@ -254,13 +255,13 @@ std::basic_istream<CharT, Traits>& operator>>(std::basic_istream<CharT, Traits> 
 }
 
 template<class... T, class CharT, class Traits, size_t... Indices>
-void parse_stream(std::basic_istream<CharT, Traits>& is, std::tuple<T...>& tup, std::index_sequence<Indices ...>)
+void parse_stream(std::basic_istream<CharT, Traits> & is, std::tuple<T...> & tup, std::index_sequence<Indices ...>)
 {
-    (void)std::initializer_list<int>{ (is >> std::get<Indices>(tup), 0)... };
+    (void)std::initializer_list<int> { (is >> std::get<Indices>(tup), 0)... };
 }
 
 template <class... T>
-bool parse_file(const std::string& path, std::tuple<T...>& tup)
+bool parse_file(const std::string & path, std::tuple<T...> & tup)
 {
     std::ifstream file(path);
     if (file) {
@@ -273,7 +274,7 @@ bool parse_file(const std::string& path, std::tuple<T...>& tup)
 }
 
 template <class... T>
-bool parse_string(const std::string& param, std::tuple<T...>& tup)
+bool parse_string(const std::string & param, std::tuple<T...> & tup)
 {
     std::istringstream iss(param);
     parse_stream(iss, tup, std::make_index_sequence<sizeof...(T)>());

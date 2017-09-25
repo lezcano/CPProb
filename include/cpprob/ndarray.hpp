@@ -69,35 +69,35 @@ public:
              std::enable_if_t<std::is_constructible<T, U>::value, int> = 0>
     explicit operator NDArray<U>() const
     {
-        std::vector<U> ret_v(values_.begin(), values_.end());
-        return NDArray<U>(ret_v, shape_);
+        return NDArray<U>(std::vector<U>(values_.begin(), values_.end()), shape_);
     }
 
-    // Casting for scalars
+    bool is_vector() const
+    {
+        return shape_.size() == 1;
+    }
+
     bool is_scalar() const
     {
-        return shape_.size() == 1 && shape_.front() == 1;
-    }
-
-    explicit operator T() const
-    {
-        if (is_scalar()) {
-            return values_.front();
-        }
-        else {
-            throw std::bad_cast();
-        }
+        return is_vector() && shape_.front() == 1;
     }
 
     // Casting for scalars
-    explicit operator std::vector<T>() const
+    explicit operator T() const
     {
-        if (shape_.size() == 1) {
-            return values_;
-        }
-        else {
+        if (!is_scalar()) {
             throw std::bad_cast();
         }
+        return values_.front();
+    }
+
+    // Casting for vectors
+    explicit operator std::vector<T>() const
+    {
+        if (!is_vector()) {
+            throw std::bad_cast();
+        }
+        return values_;
     }
 
     // Iterator utilities
@@ -109,140 +109,59 @@ public:
     const_iterator cend() const { return values_.cend(); }
 
     // Comparison operators
-    friend bool operator==( const NDArray & lhs, const NDArray & rhs )
+    friend bool operator==(const NDArray & lhs, const NDArray & rhs )
     {
         return std::tie(lhs.shape_, lhs.values_) == std::tie(rhs.shape_, rhs.values_);
     }
 
-    friend bool operator!=( const NDArray & lhs, const NDArray & rhs )
-    {
-        return !(lhs == rhs);
-    }
 
-    friend bool operator<( const NDArray & lhs, const NDArray & rhs )
+    friend bool operator<(const NDArray & lhs, const NDArray & rhs )
     {
         return std::tie(lhs.shape_, lhs.values_) < std::tie(rhs.shape_, rhs.values_);
     }
 
-    friend bool operator<=( const NDArray & lhs, const NDArray & rhs )
+    friend bool operator>(const NDArray & lhs, const NDArray & rhs )
     {
-        return lhs < rhs || lhs == rhs;
+        return std::tie(lhs.shape_, lhs.values_) > std::tie(rhs.shape_, rhs.values_);
     }
 
-    friend bool operator>=( const NDArray & lhs, const NDArray & rhs )
-    {
-        return !(lhs < rhs);
-    }
+    friend bool operator!=(const NDArray & lhs, const NDArray & rhs ) { return !(lhs == rhs); }
+    friend bool operator<=(const NDArray & lhs, const NDArray & rhs ) { return lhs < rhs || lhs == rhs; }
+    friend bool operator>=(const NDArray & lhs, const NDArray & rhs ) { return lhs > rhs || lhs == rhs; }
 
-    friend bool operator>( const NDArray & lhs, const NDArray & rhs )
-    {
-        return lhs >= rhs && lhs != rhs;
-    }
+    // Arithmetic operators
+    // In-place operators
+    NDArray & operator+=(const NDArray & rhs) { return map_binary(rhs, std::plus<T>()); }
+    NDArray & operator-=(const NDArray & rhs) { return map_binary(rhs, std::minus<T>()); }
+    NDArray & operator*=(const NDArray & rhs) { return map_binary(rhs, std::multiplies<T>()); }
+    NDArray & operator/=(const NDArray & rhs) { return map_binary(rhs, std::divides<T>()); }
 
-    NDArray& operator+=(const NDArray & rhs)
-    {
-        if (this->shape().empty()) {
-            *this = rhs;
-            return *this;
-        }
-        if (rhs.shape_.empty())
-            return *this;
-        if (this->shape() != rhs.shape())
-            throw std::domain_error("The tensors do not have the same shape");
+    NDArray & operator+=(const T rhs) { return map_binary(rhs, [](T & lhs, const T rhs) { lhs += rhs; }); }
+    NDArray & operator-=(const T rhs) { return map_binary(rhs, [](T & lhs, const T rhs) { lhs -= rhs; }); }
+    NDArray & operator*=(const T rhs) { return map_binary(rhs, [](T & lhs, const T rhs) { lhs *= rhs; }); }
+    NDArray & operator/=(const T rhs) { return map_binary(rhs, [](T & lhs, const T rhs) { lhs /= rhs; }); }
 
-        std::transform(values_.begin(),
-                       values_.end(),
-                       rhs.values_.begin(),
-                       values_.begin(),
-                       std::plus<T>());
-        return *this;
-    }
+    // Friend operators
+    // Binary
+    friend NDArray operator+(const NDArray & lhs, const NDArray & rhs) { return NDArray(lhs) += rhs; }
+    friend NDArray operator+(const T lhs, const NDArray & rhs) { return NDArray(rhs) += lhs; }
+    friend NDArray operator+(const NDArray & lhs, const T rhs) { return NDArray(lhs) += rhs; }
 
-    NDArray& operator-=(const NDArray & rhs)
-    {
-        if (this->shape().empty()) {
-            *this = rhs;
-            return *this;
-        }
-        if (rhs.shape_.empty())
-            return *this;
-        if (this->shape() != rhs.shape())
-            throw std::domain_error("The tensors do not have the same shape");
+    friend NDArray operator-(const NDArray & lhs, const NDArray & rhs) { return NDArray(lhs) -= rhs; }
+    friend NDArray operator-(const NDArray & lhs, const T rhs) { return NDArray(lhs) -= rhs; }
 
-        std::transform(values_.begin(),
-                       values_.end(),
-                       rhs.values_.begin(),
-                       values_.begin(),
-                       std::minus<T>());
-        return *this;
-    }
+    friend NDArray operator*(const NDArray & lhs, const NDArray & rhs) { return NDArray(lhs) *= rhs; }
+    friend NDArray operator*(const T lhs, const NDArray & rhs) { return NDArray(rhs) *= lhs; }
+    friend NDArray operator*(const NDArray & lhs, const T rhs) { return NDArray(lhs) *= rhs; }
 
-    NDArray& operator*=(const NDArray & rhs)
-    {
-        if (this->shape().empty()) {
-            *this = rhs;
-            return *this;
-        }
-        if (rhs.shape_.empty())
-            return *this;
-        if (this->shape() != rhs.shape())
-            throw std::domain_error("The tensors do not have the same shape");
+    friend NDArray operator/(const NDArray & lhs, const NDArray & rhs) { return NDArray(lhs) /= rhs; }
+    friend NDArray operator/(const NDArray & lhs, const T rhs) { return NDArray(lhs) /= rhs; }
 
-        std::transform(values_.begin(),
-                       values_.end(),
-                       rhs.values_.begin(),
-                       values_.begin(),
-                       std::multiplies<T>());
-        return *this;
-    }
+    // Unary
+    NDArray<T> sqrt() { map_unary(&std::sqrt); }
+    NDArray<T> exp () { map_unary(&std::exp); }
+    NDArray<T> log () { map_unary(&std::log); }
 
-    NDArray& operator*=(const T rhs)
-    {
-        std::transform(values_.begin(),
-                       values_.end(),
-                       values_.begin(),
-                       [rhs](T a){ return rhs * a; });
-        return *this;
-    }
-
-    NDArray& operator/=(const T rhs)
-    {
-
-        std::transform(values_.begin(),
-                       values_.end(),
-                       values_.begin(),
-                       [rhs](T a){ return a / rhs; });
-        return *this;
-    }
-
-    // friend functions
-    friend NDArray operator+ (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) += rhs; }
-    friend NDArray operator- (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) -= rhs; }
-    friend NDArray operator* (const NDArray& lhs, const NDArray& rhs) { return NDArray(lhs) *= rhs; }
-    friend NDArray operator* (const T lhs, const NDArray& rhs) { return NDArray(rhs) *= lhs; }
-    friend NDArray operator* (const NDArray& lhs, const T rhs) { return NDArray(lhs) *= rhs; }
-    friend NDArray operator/ (const NDArray& lhs, const T rhs) { return NDArray(lhs) /= rhs; }
-
-    friend NDArray<T> sqrt (const NDArray<T> & arr)
-    {
-        std::vector<T> ret(arr.values_.size());
-        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::sqrt(elem); });
-        return NDArray<T>(ret, arr.shape());
-    }
-
-    friend NDArray<T> log (const NDArray<T> & arr)
-    {
-        std::vector<T> ret(arr.values_.size());
-        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::log(elem); });
-        return NDArray<T>(ret, arr.shape());
-    }
-
-    friend NDArray<T> exp (const NDArray<T> & arr)
-    {
-        std::vector<T> ret(arr.values_.size());
-        std::transform(arr.values_.begin(), arr.values_.end(), ret.begin(), [](T elem) { return std::exp(elem); });
-        return NDArray<T>(ret, arr.shape());
-    }
 
     template<class Iter, std::enable_if_t<
                                 std::is_same<
@@ -415,7 +334,7 @@ private:
         return ret;
     }
 
-    // TODO(Lezcano) Duplicate code!!
+    // TODO(Lezcano) Duplicate code!! if constexpr would be nice
     template<class Iter, std::enable_if_t<is_tuple_like<typename std::iterator_traits<Iter>::value_type>::value &&
                                           !is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
     std::vector<T> flatten(Iter begin, Iter end, int depth)
@@ -431,7 +350,7 @@ private:
         return ret;
     }
 
-    template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
+    template<class Iter, std::enable_if_t<is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
     std::vector<T> flatten(Iter begin, Iter end, int depth)
     {
         const auto size_tensor_i = std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<int>());
@@ -455,6 +374,46 @@ private:
     std::vector<T> flatten(const Tup & tup)
     {
         return flatten_impl(tup, std::make_index_sequence<std::tuple_size<Tup>::value>{});
+    }
+
+
+    template<class F>
+    NDArray & map_binary(const NDArray & rhs, const F & f)
+    {
+        if (this->shape().empty()) {
+            *this = rhs;
+            return *this;
+        }
+        if (rhs.shape_.empty())
+            return *this;
+        if (this->shape() != rhs.shape())
+            throw std::domain_error("The tensors do not have the same shape");
+
+        std::transform(values_.begin(),
+                       values_.end(),
+                       rhs.values_.begin(),
+                       values_.begin(),
+                       f);
+        return *this;
+    }
+
+    template<class F>
+    NDArray & map_binary(const T rhs, const F & f)
+    {
+        for (auto & elem : values_) {
+            f(elem, rhs);
+        }
+        return *this;
+    }
+
+    template<class F>
+    NDArray<T> map_unary(const F & f)
+    {
+        NDArray<T> ret = *this;
+        for (auto & elem : ret.values_) {
+            elem = f(elem);
+        }
+        return ret;
     }
 
     std::vector<T> values_;

@@ -56,29 +56,29 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
                                              const boost::any& distr_any,
                                              infcomp::protocol::Distribution type) const
 {
-    if (type == infcomp::protocol::Distribution::Normal){
+    if (type == infcomp::protocol::Distribution::Normal) {
         auto distr = boost::any_cast<boost::random::normal_distribution<>>(distr_any);
         return infcomp::protocol::CreateNormal(buff, distr.mean(), distr.sigma()).Union();
     }
-    else if (type == infcomp::protocol::Distribution::UniformDiscrete){
+    else if (type == infcomp::protocol::Distribution::UniformDiscrete) {
         auto distr = boost::any_cast<boost::random::uniform_smallint<>>(distr_any);
         return infcomp::protocol::CreateUniformDiscrete(buff,distr.a(), distr.b()-distr.a()+1).Union();
     }
-    else if (type == infcomp::protocol::Distribution::Discrete){
+    else if (type == infcomp::protocol::Distribution::Discrete) {
         auto distr = boost::any_cast<boost::random::discrete_distribution<>>(distr_any);
         // distr.max() + 1 is the number of parameters of the distribution
         return infcomp::protocol::CreateDiscrete(buff, distr.max() + 1).Union();
     }
-    else if (type == infcomp::protocol::Distribution::Poisson){
+    else if (type == infcomp::protocol::Distribution::Poisson) {
         auto distr = boost::any_cast<boost::random::poisson_distribution<>>(distr_any);
         return infcomp::protocol::CreatePoisson(buff, distr.mean()).Union();
 
     }
-    else if (type == infcomp::protocol::Distribution::UniformContinuous){
+    else if (type == infcomp::protocol::Distribution::UniformContinuous) {
         auto distr = boost::any_cast<boost::random::uniform_real_distribution<>>(distr_any);
         return infcomp::protocol::CreateUniformContinuous(buff, distr.a(), distr.b()).Union();
     }
-    else if (type == infcomp::protocol::Distribution::MultivariateNormal){
+    else if (type == infcomp::protocol::Distribution::MultivariateNormal) {
         auto distr = boost::any_cast<multivariate_normal_distribution<>>(distr_any);
         auto mean = distr.mean();
         auto sigma = distr.sigma();
@@ -93,7 +93,7 @@ flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buf
                                                                                             buff.CreateVector<int32_t>(sigma_nd.shape()))
         ).Union();
     }
-    else if (type == infcomp::protocol::Distribution::NONE){
+    else if (type == infcomp::protocol::Distribution::NONE) {
         return 0;
     }
     else{

@@ -13,7 +13,7 @@ project(${PROJECT_NAME})
 ##############################################################################
 option(BUILD_SHERPA "Build Sherpa" OFF)
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra -pedantic)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # http://stackoverflow.com/questions/25365160/boostmultiprecisionfloat128-and-c11
