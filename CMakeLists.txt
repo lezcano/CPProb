@@ -15,16 +15,20 @@ find_package(ZeroMQ REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Backtrace REQUIRED)
 find_package(FlatBuffers REQUIRED)
-
-find_package(Boost COMPONENTS program_options filesystem REQUIRED)
+find_package(Boost COMPONENTS program_options filesystem system REQUIRED)
 
 ##############################################################################
 # Project Options
 ##############################################################################
 option(BUILD_SHERPA "Build Sherpa" OFF)
 
-# No -pedantic since it breaks the g++ build in travis (?!)
 add_compile_options(-Wall -Wextra)
+
+if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # No -pedantic since it breaks the g++ build in travis (?!)
+    add_compile_options(-pedantic)
+endif()
+
 
 include_directories(include)
 add_subdirectory(src)

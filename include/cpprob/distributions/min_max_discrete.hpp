@@ -2,7 +2,6 @@
 #define INCLUDE_MIN_MAX_DISCRETE_HPP
 
 
-
 #include <istream>
 #include <ostream>
 #include <tuple>
@@ -111,10 +110,7 @@ public:
             double xmax,
             Func fw) : param_(min, max, nw, xmin, xmax, fw) { }
 
-    explicit min_max_discrete_distribution(const param_type & param)
-    {
-        param_(param);
-    }
+    explicit min_max_discrete_distribution(const param_type & param) : param_(param) {}
 
     // public member functions
     template<typename URNG>

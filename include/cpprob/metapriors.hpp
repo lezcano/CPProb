@@ -1,8 +1,8 @@
 #ifndef CPPROB_METAPRIORS_HPP_
 #define CPPROB_METAPRIORS_HPP_
 
-#include <cpprob/utils.hpp>
-#include <cpprob/traits.hpp>
+#include "cpprob/utils.hpp"
+#include "cpprob/traits.hpp"
 
 namespace cpprob {
 

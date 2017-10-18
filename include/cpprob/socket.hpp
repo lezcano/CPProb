@@ -12,7 +12,6 @@
 #include <zmq.hpp>                                      // for message_t
 
 #include "cpprob/any.hpp"                               // for any
-#include "cpprob/distributions/distribution_utils.hpp"  // for proposal
 #include "cpprob/ndarray.hpp"                           // for NDArray
 #include "cpprob/sample.hpp"                            // for Sample
 
@@ -39,7 +38,9 @@ private:
 
     // Friends
     friend class StateCompile;
-    static void send_batch(const std::vector<TraceCompile> & traces);
+
+    // Function to send the batch from StateCompile
+    static void send_batch(const flatbuffers::FlatBufferBuilder & buff);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,23 +52,13 @@ public:
     static void connect_client(const std::string& tcp_addr);
     static void config_file(const std::string & dump_file);
 
-    static void send_observe_init(const NDArray<double> & data);
+    static void send_observe_init(const flatbuffers::FlatBufferBuilder & buff);
 
-    template<template <class ...> class Distr, class ...Params>
-    static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample){
-        static flatbuffers::FlatBufferBuilder buff;
-
-        auto msg = infcomp::protocol::CreateMessage(
-                buff,
-                infcomp::protocol::MessageBody::ProposalRequest,
-                infcomp::protocol::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
-
-        buff.Finish(msg);
-
+    template<class Distribution>
+    static auto get_proposal(const flatbuffers::FlatBufferBuilder & buff){
         zmq::message_t request {buff.GetSize()};
         memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
         client_.send(request);
-        buff.Clear();
 
         zmq::message_t reply;
         client_.recv(&reply);
@@ -78,7 +69,7 @@ public:
         if (!reply_msg->success()) {
             throw std::runtime_error("NN could not propose parameters.");
         }
-        return proposal<Distr, Params...>::get_distr(reply_msg);
+        return serialise<Distribution>::from_flatbuffers(reply_msg);
     }
 
 private:

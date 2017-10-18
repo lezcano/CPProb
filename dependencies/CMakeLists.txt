@@ -25,6 +25,9 @@ ExternalProject_Add(flatbuffers
   UPDATE_COMMAND ""    # Disable source work-tree update
 )
 
+# json.hpp, just download the .hpp file
+file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp "${CMAKE_INSTALL_PREFIX}/json.hpp" SHOW_PROGRESS)
+
 #ExternalProject_Add(ZeroMQ
 #  URL            https://github.com/zeromq/libZMQ/archive/master.zip
 #  INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"

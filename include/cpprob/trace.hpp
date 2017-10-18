@@ -9,11 +9,13 @@
 #include "cpprob/any.hpp"             // for any
 #include "cpprob/ndarray.hpp"         // for NDArray
 #include "cpprob/sample.hpp"          // for Sample
+#include "flatbuffers/infcomp_generated.h"
 #include "flatbuffers/flatbuffers.h"  // for FlatBufferBuilder (ptr only)
 
 namespace infcomp { namespace protocol { struct Trace; } }
 
-namespace cpprob{
+namespace cpprob {
+
 class TraceCompile {
 public:
 
@@ -26,9 +28,10 @@ private:
     // Attributes
     int time_index_ = 1;
     std::unordered_map<std::string, int> sample_instance_;
+
     std::vector<Sample> samples_;
     std::vector<Sample> samples_rejection_;
-    std::vector<NDArray<double>> observes_;
+    std::vector<cpprob::NDArray<double>> observes_;
 };
 
 class TraceInfer {
@@ -43,6 +46,7 @@ private:
     // Static Members
     static std::unordered_map<std::string, int> ids_predict_;
 
+
     // Attributes
     // We have to separate them so we can dump them in different files.
     // We still use cpprob::any so we do not lose precision
@@ -50,6 +54,9 @@ private:
     std::vector<std::pair<int, cpprob::any>> predict_real_;
     std::vector<std::pair<int, cpprob::any>> predict_any_;
     double log_w_ = 0;
+
+    Sample prev_sample_;
+    Sample curr_sample_;
 };
 
 }  // namespace cpprob

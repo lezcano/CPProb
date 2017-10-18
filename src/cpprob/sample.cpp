@@ -1,17 +1,6 @@
 #include "cpprob/sample.hpp"
 
-#include <cstdint>                                       // for int32_t
-#include <stdexcept>                                     // for runtime_error
-#include <type_traits>                                   // for underlying_t...
-#include <vector>                                        // for vector
-
-#include <boost/random/discrete_distribution.hpp>        // for discrete_dis...
-#include <boost/random/normal_distribution.hpp>          // for normal_distr...
-#include <boost/random/poisson_distribution.hpp>         // for poisson_dist...
-#include <boost/random/uniform_real_distribution.hpp>    // for uniform_real...
-#include <boost/random/uniform_smallint.hpp>             // for uniform_smal...
-
-#include "cpprob/distributions/multivariate_normal.hpp"  // for multivariate...
+#include "flatbuffers/infcomp_generated.h"  // for Distribution, Sample (ptr...
 
 namespace cpprob {
 
@@ -19,91 +8,37 @@ namespace cpprob {
 ////////////////////////            Sample              ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Sample::Sample(const std::string& sample_address,
-               const infcomp::protocol::Distribution & proposal_type,
-               const boost::any& proposal_distr,
-               NDArray<double> value,
-               int sample_instance,
-               int time_index) :
-        sample_address_{sample_address},
-        proposal_type_{proposal_type},
-        proposal_distr_{proposal_distr},
-        value_{value},
-        sample_instance_{sample_instance},
-        time_index_{time_index} { }
-
-void Sample::set_value(const NDArray<double>& value)
+flatbuffers::Offset<infcomp::protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilder & buff) const
 {
-    value_ = value;
-}
+    auto serialised_distr = [&] () -> flatbuffers::Offset<void> {
+        if (this->distr_enum_ == infcomp::protocol::Distribution::NONE) {
+           return 0;
+        }
+        else {
+            return serialise_distr_(buff);
+        }
+    }();
 
-std::string Sample::sample_address()
-{
-    return sample_address_;
-}
-
-flatbuffers::Offset<infcomp::protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilder& buff) const{
     return infcomp::protocol::CreateSample(
             buff,
             time_index_,
-            buff.CreateString(sample_address_),
+            buff.CreateString(addr_),
             sample_instance_,
-            proposal_type_,
-            pack_distr(buff, proposal_distr_, proposal_type_),
+            distr_enum_,
+            serialised_distr,
             infcomp::protocol::CreateNDArray(buff,
-                                             buff.CreateVector<double>(value_.values()),
-                                             buff.CreateVector<int32_t>(value_.shape())));
+                                             buff.CreateVector<double>(val_.values()),
+                                             buff.CreateVector<int32_t>(val_.shape())));
 }
 
-flatbuffers::Offset<void> Sample::pack_distr(flatbuffers::FlatBufferBuilder& buff,
-                                             const boost::any& distr_any,
-                                             infcomp::protocol::Distribution type) const
+void Sample::set_value(const NDArray<double> &value)
 {
-    if (type == infcomp::protocol::Distribution::Normal){
-        auto distr = boost::any_cast<boost::random::normal_distribution<>>(distr_any);
-        return infcomp::protocol::CreateNormal(buff, distr.mean(), distr.sigma()).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::UniformDiscrete){
-        auto distr = boost::any_cast<boost::random::uniform_smallint<>>(distr_any);
-        return infcomp::protocol::CreateUniformDiscrete(buff,distr.a(), distr.b()-distr.a()+1).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::Discrete){
-        auto distr = boost::any_cast<boost::random::discrete_distribution<>>(distr_any);
-        // distr.max() + 1 is the number of parameters of the distribution
-        return infcomp::protocol::CreateDiscrete(buff, distr.max() + 1).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::Poisson){
-        auto distr = boost::any_cast<boost::random::poisson_distribution<>>(distr_any);
-        return infcomp::protocol::CreatePoisson(buff, distr.mean()).Union();
+    val_ = value;
+}
 
-    }
-    else if (type == infcomp::protocol::Distribution::UniformContinuous){
-        auto distr = boost::any_cast<boost::random::uniform_real_distribution<>>(distr_any);
-        return infcomp::protocol::CreateUniformContinuous(buff, distr.a(), distr.b()).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::MultivariateNormal){
-        auto distr = boost::any_cast<multivariate_normal_distribution<>>(distr_any);
-        auto mean = distr.mean();
-        auto sigma = distr.sigma();
-        auto mean_nd = NDArray<double>(mean.begin(), mean.end());
-        auto sigma_nd = NDArray<double>(sigma.begin(), sigma.end());
-        return infcomp::protocol::CreateMultivariateNormal(buff,
-                                                           infcomp::protocol::CreateNDArray(buff,
-                                                                                            buff.CreateVector<double>(mean_nd.values()),
-                                                                                            buff.CreateVector<int32_t>(mean_nd.shape())),
-                                                           infcomp::protocol::CreateNDArray(buff,
-                                                                                            buff.CreateVector<double>(sigma_nd.values()),
-                                                                                            buff.CreateVector<int32_t>(sigma_nd.shape()))
-        ).Union();
-    }
-    else if (type == infcomp::protocol::Distribution::NONE){
-        return 0;
-    }
-    else{
-        throw std::runtime_error("Distribution " +
-                                 std::to_string(static_cast<std::underlying_type_t<infcomp::protocol::Distribution>>(type)) +
-                                 "not implemented.");
-    }
+std::string Sample::address() const
+{
+    return addr_;
 }
 
 } // end namespace cpprob
