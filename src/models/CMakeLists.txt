@@ -8,7 +8,7 @@ if(BUILD_SHERPA)
     add_library(sherpa SHARED sherpa.cpp)
     target_link_libraries(sherpa PUBLIC cpprob ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
     target_include_directories(sherpa PRIVATE /usr/local/include/SHERPA-MC)
-    target_compile_options(sherpa PRIVATE -rdynamic -Wl --no-as-needed)
+    target_compile_options(sherpa PRIVATE -rdynamic -Wl,--no-as-needed)
 
     add_executable(sherpa_gen sherpa_gen.cpp)
     target_link_libraries(sherpa_gen PUBLIC cpprob sherpa)
