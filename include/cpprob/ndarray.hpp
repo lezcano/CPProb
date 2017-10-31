@@ -42,7 +42,7 @@ public:
         // Check that dimensions agree if values is not empty.
         // If values is empty it might be a default initialisation
         if (!values_.empty()) {
-            auto a = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int>());
+            auto a = std::accumulate(shape_.cbegin(), shape_.cend(), 1, std::multiplies<int>());
             if (a != static_cast<int>(values_.size()))
                 throw std::runtime_error("Product of the elements of the shape vector " + std::to_string(a) +
                                          " is not equal to the size of the values vector " +

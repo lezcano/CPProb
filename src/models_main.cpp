@@ -26,8 +26,7 @@ void execute (const F & f,
               const std::size_t batch_size,
               const std::string & tcp_addr_compile,
               const std::string & tcp_addr_infer,
-              const std::string & nn_params,
-              const bool optirun) {
+              const std::string & nn_params) {
     using namespace boost::filesystem;
     const auto model_folder = model_name + "/";
     const auto nn_folder = model_folder + "nn";
@@ -78,9 +77,6 @@ void execute (const F & f,
         if (exists_nn_folder) {
             compile_command += " --resume";
         }
-        if (optirun) {
-            compile_command = "optirun " + compile_command;
-        }
 
         if (online_training) {
             std::thread thread_nn (&std::system, compile_command.c_str());
@@ -114,9 +110,6 @@ void execute (const F & f,
                 if (!nn_params.empty()) {
                     infer_command += " " + nn_params;
                 }
-                if (optirun) {
-                    infer_command = "optirun " + infer_command;
-                }
 
                 std::thread thread_nn (&std::system, infer_command.c_str());
 
@@ -137,7 +130,7 @@ void execute (const F & f,
     if (estimate) {
         std::cout << "Posterior Distribution Estimators" << std::endl;
         const path path_dump_folder (csis_post);
-        auto print = [] (const std::string & file_name) {
+        const auto print = [] (const std::string & file_name) {
             if (exists(path(file_name + "_ids"))) {
                 cpprob::Printer p;
                 p.load(file_name);
@@ -148,10 +141,7 @@ void execute (const F & f,
                 return false;
             }
         };
-        bool one_exists = false;
-        one_exists |= print(csis_post);
-        one_exists |= print(sis_post);
-        if (!one_exists) {
+        if (!(print(csis_post) || print(sis_post))) {
             std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found." << std::endl;
         }
     }
@@ -161,7 +151,7 @@ void execute (const F & f,
 int main(int argc, const char* const* argv) {
 
     std::size_t n_samples, batch_size;
-    bool generate_traces, compile, infer, sis, estimate, all, optirun;
+    bool generate_traces, compile, infer, sis, estimate;
     std::string model, tcp_addr_compile, tcp_addr_infer, nn_params;
     std::vector<std::string> model_names {{"unk_mean", "unk_mean_rejection", "linear_gaussian", "hmm", "linear_regression", "unk_mean_2d", "linear_priors"}};
 
@@ -174,18 +164,16 @@ int main(int argc, const char* const* argv) {
     po::options_description desc("Options");
     desc.add_options()
             ("model", po::value<std::string>(&model)->required()->value_name(all_model_names))
-            ("generate_traces", "Generate traces for compilation.")
-            ("compile", "Compilation.")
-            ("infer", "Compiled inference.")
-            ("sis", "Sequential importance sampling.")
-            ("estimate", "Estimators.")
-            ("all", "All the options")
+            ("generate_traces", po::value<bool>(&generate_traces)->default_value(false), "Generate traces for compilation.")
+            ("compile", po::value<bool>(&compile)->default_value(false), "Compilation.")
+            ("infer", po::value<bool>(&infer)->default_value(false), "Compiled inference.")
+            ("sis", po::value<bool>(&sis)->default_value(false), "Sequential importance sampling.")
+            ("estimate", po::value<bool>(&estimate)->default_value(false), "Estimators.")
             ("batch_size", po::value<std::size_t>(&batch_size)->default_value(256))
             ("n_samples", po::value<std::size_t>(&n_samples)->default_value(1000), "Number of particles to be sampled from the posterior.")
             ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "Address and port to connect with the NN at compile time.")
             ("tcp_addr_infer", po::value<std::string>(&tcp_addr_infer)->default_value("tcp://127.0.0.1:6666"), "Address and port to connect with the NN at inference time.")
             ("nn_params", po::value<std::string>(&nn_params), "Parameters to send to the neural network.")
-            ("optirun", "Execute python with optirun")
             ;
 
     po::variables_map vm;
@@ -205,29 +193,9 @@ int main(int argc, const char* const* argv) {
         std::cerr << desc << std::endl;
         std::exit (EXIT_FAILURE);
     }
-    generate_traces = vm.count("generate_traces");
-    compile = vm.count("compile");
-    infer = vm.count("infer");
-    sis = vm.count("sis");
-    estimate = vm.count("estimate");
-    all = vm.count("all");
-    optirun = vm.count("optirun");
-
-    if (all && (compile || infer || sis || estimate)) {
-        std::cerr << "Select all or some parts of the compilation, but not both."
-                  << desc << std::endl;
-        std::exit (EXIT_FAILURE);
-    }
-    if (all) {
-        generate_traces = true;
-        compile = true;
-        infer = true;
-        sis = true;
-        estimate = true;
-    }
 
     auto execute_param = [&](const auto & f, const std::string & extra_params = "") {
-        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, nn_params + extra_params, optirun);
+        execute(f, generate_traces, compile, infer, sis, estimate, model, n_samples, batch_size, tcp_addr_compile, tcp_addr_infer, nn_params + extra_params);
     };
 
     if (model == model_names[0] /* unk_mean */) {

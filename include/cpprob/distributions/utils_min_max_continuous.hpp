@@ -1,12 +1,11 @@
-#ifndef INCLUDE_MIN_MAX_CONTINUOUS_HPP_HPP
-#define INCLUDE_MIN_MAX_CONTINUOUS_HPP_HPP
+#ifndef INCLUDE_MIN_MAX_CONTINUOUS_HPP
+#define INCLUDE_MIN_MAX_CONTINUOUS_HPP
 
 #include <cmath>
 
 #include <boost/math/distributions/beta.hpp>
 
-#include "flatbuffers/infcomp_generated.h"
-#include "cpprob/distributions/utils_distributions.hpp"
+#include "cpprob/distributions/utils_base.hpp"
 
 #include "cpprob/distributions/min_max_continuous.hpp"
 
@@ -17,8 +16,8 @@ namespace cpprob {
 //////////////////////////////
 template<class RealType>
 struct logpdf<min_max_continuous_distribution<RealType>> {
-    RealType operator()(const min_max_continuous_distribution<RealType> &distr,
-                        const typename min_max_continuous_distribution<RealType>::result_type &x) const
+    RealType operator()(const min_max_continuous_distribution<RealType> & distr,
+                        const typename min_max_continuous_distribution<RealType>::result_type & x) const
     {
         auto beta_distr = distr.beta();
         auto a = beta_distr.alpha();

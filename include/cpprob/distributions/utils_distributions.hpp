@@ -1,6 +1,7 @@
 #ifndef CPPROB_UTILS_DISTRIBUTIONS_HPP
 #define CPPROB_UTILS_DISTRIBUTIONS_HPP
 
+#include "cpprob/distributions/utils_abc.hpp"
 #include "cpprob/distributions/utils_discrete.hpp"
 #include "cpprob/distributions/utils_min_max_discrete.hpp"
 #include "cpprob/distributions/utils_mixture.hpp"
