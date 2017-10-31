@@ -1,12 +1,17 @@
 #ifndef INCLUDE_SERIALIZATION_HPP
 #define INCLUDE_SERIALIZATION_HPP
 
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <tuple>
-#include <vector>
+#include <array>             // for array
+#include <cstddef>           // for size_t
+#include <initializer_list>  // for initializer_list
+#include <fstream>           // for ifstream
+#include <iostream>          // for cerr
+#include <map>               // for map
+#include <sstream>           // for stringstream
+#include <string>            // for operator<<, string
+#include <tuple>             // for tuple
+#include <utility>           // for make_index_sequence, pair, index_sequence
+#include <vector>            // for vector
 
 namespace cpprob {
 

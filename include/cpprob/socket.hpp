@@ -1,22 +1,24 @@
 #ifndef INCLUDE_SOCKET_HPP_
 #define INCLUDE_SOCKET_HPP_
 
-#include <exception>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <string.h>                                     // for memcpy
+#include <cstddef>                                      // for size_t
+#include <stdexcept>                                    // for runtime_error
+#include <string>                                       // for string
+#include <unordered_map>                                // for unordered_map
+#include <utility>                                      // for pair
+#include <vector>                                       // for vector
 
-#include <zmq.hpp>
+#include <zmq.hpp>                                      // for message_t
 
-#include "cpprob/trace.hpp"
-#include "cpprob/distributions/distribution_utils.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/any.hpp"                               // for any
+#include "cpprob/ndarray.hpp"                           // for NDArray
+#include "cpprob/sample.hpp"                            // for Sample
 
-namespace cpprob {
+#include "flatbuffers/infcomp_generated.h"              // for CreateMessage
+namespace cpprob { class TraceCompile; }
 
-// Forward Declaration
-template<class T>
-class NDArray;
+namespace cpprob{
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////        Compilation            ////////////////////////
@@ -36,7 +38,9 @@ private:
 
     // Friends
     friend class StateCompile;
-    static void send_batch(const std::vector<TraceCompile> & traces);
+
+    // Function to send the batch from StateCompile
+    static void send_batch(const flatbuffers::FlatBufferBuilder & buff);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,23 +52,13 @@ public:
     static void connect_client(const std::string& tcp_addr);
     static void config_file(const std::string & dump_file);
 
-    static void send_observe_init(const NDArray<double> & data);
+    static void send_observe_init(const flatbuffers::FlatBufferBuilder & buff);
 
-    template<template <class ...> class Distr, class ...Params>
-    static auto get_proposal(const Sample& curr_sample, const Sample& prev_sample) {
-        static flatbuffers::FlatBufferBuilder buff;
-
-        auto msg = infcomp::protocol::CreateMessage(
-                buff,
-                infcomp::protocol::MessageBody::ProposalRequest,
-                infcomp::protocol::CreateProposalRequest(buff, curr_sample.pack(buff), prev_sample.pack(buff)).Union());
-
-        buff.Finish(msg);
-
+    template<class Distribution>
+    static auto get_proposal(const flatbuffers::FlatBufferBuilder & buff){
         zmq::message_t request {buff.GetSize()};
         memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
         client_.send(request);
-        buff.Clear();
 
         zmq::message_t reply;
         client_.recv(&reply);
@@ -75,7 +69,7 @@ public:
         if (!reply_msg->success()) {
             throw std::runtime_error("NN could not propose parameters.");
         }
-        return proposal<Distr, Params...>::get_distr(reply_msg);
+        return serialise<Distribution>::from_flatbuffers(reply_msg);
     }
 
 private:

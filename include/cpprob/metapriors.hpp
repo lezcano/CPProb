@@ -1,8 +1,8 @@
 #ifndef CPPROB_METAPRIORS_HPP_
 #define CPPROB_METAPRIORS_HPP_
 
-#include <cpprob/utils.hpp>
-#include <cpprob/traits.hpp>
+#include "cpprob/utils.hpp"
+#include "cpprob/traits.hpp"
 
 namespace cpprob {
 
@@ -127,7 +127,6 @@ rem_prior(TT<Ts...> &&a) {
     return ret;
 }
 
-// Dirty hack because of the value parameter in std::array :(
 template<class T, std::size_t N>
 typename RemPrior<std::array<T, N>>::type
 rem_prior(std::array<T, N> &&a) {

@@ -27,7 +27,9 @@ union Distribution {
     Normal,
     Poisson,
     UniformContinuous,
-    UniformDiscrete
+    UniformContinuousAlt,
+    UniformDiscrete,
+    VMF
 }
 
 table NDArray {
@@ -68,9 +70,9 @@ table Laplace {
 
 table MultivariateNormal {
     prior_mean:NDArray;
-    prior_sigma:NDArray;
+    prior_std:NDArray;
     proposal_mean:NDArray;
-    proposal_sigma:NDArray;
+    proposal_std:NDArray; // TODO: check why this is proposal_vars. We should prefer proposal_stds.
 }
 
 table Normal {
@@ -92,10 +94,25 @@ table UniformContinuous {
     proposal_certainty:double; // [0, infinity)
 }
 
+table UniformContinuousAlt {
+    prior_min:double;
+    prior_max:double;
+    proposal_means:NDArray;  // (-infinity, infinity)
+    proposal_stds:NDArray;   // (0, infinity)
+    proposal_coeffs:NDArray; // [0, 1]
+}
+
 table UniformDiscrete {
     prior_min:int;
     prior_size:int;
     proposal_probabilities:NDArray;
+}
+
+table VMF {
+    prior_mu:NDArray;
+    prior_kappa:double;
+    proposal_mu:NDArray;
+    proposal_kappa:double;
 }
 
 table Sample {

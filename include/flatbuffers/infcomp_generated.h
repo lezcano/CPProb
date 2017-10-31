@@ -33,7 +33,11 @@ struct Poisson;
 
 struct UniformContinuous;
 
+struct UniformContinuousAlt;
+
 struct UniformDiscrete;
+
+struct VMF;
 
 struct Sample;
 
@@ -138,12 +142,14 @@ enum class Distribution : uint8_t {
   Normal = 8,
   Poisson = 9,
   UniformContinuous = 10,
-  UniformDiscrete = 11,
+  UniformContinuousAlt = 11,
+  UniformDiscrete = 12,
+  VMF = 13,
   MIN = NONE,
-  MAX = UniformDiscrete
+  MAX = VMF
 };
 
-inline Distribution (&EnumValuesDistribution())[12] {
+inline Distribution (&EnumValuesDistribution())[14] {
   static Distribution values[] = {
     Distribution::NONE,
     Distribution::Beta,
@@ -156,7 +162,9 @@ inline Distribution (&EnumValuesDistribution())[12] {
     Distribution::Normal,
     Distribution::Poisson,
     Distribution::UniformContinuous,
-    Distribution::UniformDiscrete
+    Distribution::UniformContinuousAlt,
+    Distribution::UniformDiscrete,
+    Distribution::VMF
   };
   return values;
 }
@@ -174,7 +182,9 @@ inline const char **EnumNamesDistribution() {
     "Normal",
     "Poisson",
     "UniformContinuous",
+    "UniformContinuousAlt",
     "UniformDiscrete",
+    "VMF",
     nullptr
   };
   return names;
@@ -229,8 +239,16 @@ template<> struct DistributionTraits<UniformContinuous> {
   static const Distribution enum_value = Distribution::UniformContinuous;
 };
 
+template<> struct DistributionTraits<UniformContinuousAlt> {
+  static const Distribution enum_value = Distribution::UniformContinuousAlt;
+};
+
 template<> struct DistributionTraits<UniformDiscrete> {
   static const Distribution enum_value = Distribution::UniformDiscrete;
+};
+
+template<> struct DistributionTraits<VMF> {
+  static const Distribution enum_value = Distribution::VMF;
 };
 
 bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj, Distribution type);
@@ -707,32 +725,32 @@ inline flatbuffers::Offset<Laplace> CreateLaplace(
 struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_PRIOR_MEAN = 4,
-    VT_PRIOR_SIGMA = 6,
+    VT_PRIOR_STD = 6,
     VT_PROPOSAL_MEAN = 8,
-    VT_PROPOSAL_SIGMA = 10
+    VT_PROPOSAL_STD = 10
   };
   const NDArray *prior_mean() const {
     return GetPointer<const NDArray *>(VT_PRIOR_MEAN);
   }
-  const NDArray *prior_sigma() const {
-    return GetPointer<const NDArray *>(VT_PRIOR_SIGMA);
+  const NDArray *prior_std() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_STD);
   }
   const NDArray *proposal_mean() const {
     return GetPointer<const NDArray *>(VT_PROPOSAL_MEAN);
   }
-  const NDArray *proposal_sigma() const {
-    return GetPointer<const NDArray *>(VT_PROPOSAL_SIGMA);
+  const NDArray *proposal_std() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_STD);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_PRIOR_MEAN) &&
            verifier.VerifyTable(prior_mean()) &&
-           VerifyOffset(verifier, VT_PRIOR_SIGMA) &&
-           verifier.VerifyTable(prior_sigma()) &&
+           VerifyOffset(verifier, VT_PRIOR_STD) &&
+           verifier.VerifyTable(prior_std()) &&
            VerifyOffset(verifier, VT_PROPOSAL_MEAN) &&
            verifier.VerifyTable(proposal_mean()) &&
-           VerifyOffset(verifier, VT_PROPOSAL_SIGMA) &&
-           verifier.VerifyTable(proposal_sigma()) &&
+           VerifyOffset(verifier, VT_PROPOSAL_STD) &&
+           verifier.VerifyTable(proposal_std()) &&
            verifier.EndTable();
   }
 };
@@ -743,14 +761,14 @@ struct MultivariateNormalBuilder {
   void add_prior_mean(flatbuffers::Offset<NDArray> prior_mean) {
     fbb_.AddOffset(MultivariateNormal::VT_PRIOR_MEAN, prior_mean);
   }
-  void add_prior_sigma(flatbuffers::Offset<NDArray> prior_sigma) {
-    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_SIGMA, prior_sigma);
+  void add_prior_std(flatbuffers::Offset<NDArray> prior_std) {
+    fbb_.AddOffset(MultivariateNormal::VT_PRIOR_STD, prior_std);
   }
   void add_proposal_mean(flatbuffers::Offset<NDArray> proposal_mean) {
     fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_MEAN, proposal_mean);
   }
-  void add_proposal_sigma(flatbuffers::Offset<NDArray> proposal_sigma) {
-    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_SIGMA, proposal_sigma);
+  void add_proposal_std(flatbuffers::Offset<NDArray> proposal_std) {
+    fbb_.AddOffset(MultivariateNormal::VT_PROPOSAL_STD, proposal_std);
   }
   MultivariateNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -767,13 +785,13 @@ struct MultivariateNormalBuilder {
 inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<NDArray> prior_mean = 0,
-    flatbuffers::Offset<NDArray> prior_sigma = 0,
+    flatbuffers::Offset<NDArray> prior_std = 0,
     flatbuffers::Offset<NDArray> proposal_mean = 0,
-    flatbuffers::Offset<NDArray> proposal_sigma = 0) {
+    flatbuffers::Offset<NDArray> proposal_std = 0) {
   MultivariateNormalBuilder builder_(_fbb);
-  builder_.add_proposal_sigma(proposal_sigma);
+  builder_.add_proposal_std(proposal_std);
   builder_.add_proposal_mean(proposal_mean);
-  builder_.add_prior_sigma(prior_sigma);
+  builder_.add_prior_std(prior_std);
   builder_.add_prior_mean(prior_mean);
   return builder_.Finish();
 }
@@ -968,6 +986,89 @@ inline flatbuffers::Offset<UniformContinuous> CreateUniformContinuous(
   return builder_.Finish();
 }
 
+struct UniformContinuousAlt FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MIN = 4,
+    VT_PRIOR_MAX = 6,
+    VT_PROPOSAL_MEANS = 8,
+    VT_PROPOSAL_STDS = 10,
+    VT_PROPOSAL_COEFFS = 12
+  };
+  double prior_min() const {
+    return GetField<double>(VT_PRIOR_MIN, 0.0);
+  }
+  double prior_max() const {
+    return GetField<double>(VT_PRIOR_MAX, 0.0);
+  }
+  const NDArray *proposal_means() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_MEANS);
+  }
+  const NDArray *proposal_stds() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_STDS);
+  }
+  const NDArray *proposal_coeffs() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_COEFFS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<double>(verifier, VT_PRIOR_MIN) &&
+           VerifyField<double>(verifier, VT_PRIOR_MAX) &&
+           VerifyOffset(verifier, VT_PROPOSAL_MEANS) &&
+           verifier.VerifyTable(proposal_means()) &&
+           VerifyOffset(verifier, VT_PROPOSAL_STDS) &&
+           verifier.VerifyTable(proposal_stds()) &&
+           VerifyOffset(verifier, VT_PROPOSAL_COEFFS) &&
+           verifier.VerifyTable(proposal_coeffs()) &&
+           verifier.EndTable();
+  }
+};
+
+struct UniformContinuousAltBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_min(double prior_min) {
+    fbb_.AddElement<double>(UniformContinuousAlt::VT_PRIOR_MIN, prior_min, 0.0);
+  }
+  void add_prior_max(double prior_max) {
+    fbb_.AddElement<double>(UniformContinuousAlt::VT_PRIOR_MAX, prior_max, 0.0);
+  }
+  void add_proposal_means(flatbuffers::Offset<NDArray> proposal_means) {
+    fbb_.AddOffset(UniformContinuousAlt::VT_PROPOSAL_MEANS, proposal_means);
+  }
+  void add_proposal_stds(flatbuffers::Offset<NDArray> proposal_stds) {
+    fbb_.AddOffset(UniformContinuousAlt::VT_PROPOSAL_STDS, proposal_stds);
+  }
+  void add_proposal_coeffs(flatbuffers::Offset<NDArray> proposal_coeffs) {
+    fbb_.AddOffset(UniformContinuousAlt::VT_PROPOSAL_COEFFS, proposal_coeffs);
+  }
+  UniformContinuousAltBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  UniformContinuousAltBuilder &operator=(const UniformContinuousAltBuilder &);
+  flatbuffers::Offset<UniformContinuousAlt> Finish() {
+    const auto end = fbb_.EndTable(start_, 5);
+    auto o = flatbuffers::Offset<UniformContinuousAlt>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<UniformContinuousAlt> CreateUniformContinuousAlt(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    double prior_min = 0.0,
+    double prior_max = 0.0,
+    flatbuffers::Offset<NDArray> proposal_means = 0,
+    flatbuffers::Offset<NDArray> proposal_stds = 0,
+    flatbuffers::Offset<NDArray> proposal_coeffs = 0) {
+  UniformContinuousAltBuilder builder_(_fbb);
+  builder_.add_prior_max(prior_max);
+  builder_.add_prior_min(prior_min);
+  builder_.add_proposal_coeffs(proposal_coeffs);
+  builder_.add_proposal_stds(proposal_stds);
+  builder_.add_proposal_means(proposal_means);
+  return builder_.Finish();
+}
+
 struct UniformDiscrete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_PRIOR_MIN = 4,
@@ -1029,6 +1130,78 @@ inline flatbuffers::Offset<UniformDiscrete> CreateUniformDiscrete(
   return builder_.Finish();
 }
 
+struct VMF FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PRIOR_MU = 4,
+    VT_PRIOR_KAPPA = 6,
+    VT_PROPOSAL_MU = 8,
+    VT_PROPOSAL_KAPPA = 10
+  };
+  const NDArray *prior_mu() const {
+    return GetPointer<const NDArray *>(VT_PRIOR_MU);
+  }
+  double prior_kappa() const {
+    return GetField<double>(VT_PRIOR_KAPPA, 0.0);
+  }
+  const NDArray *proposal_mu() const {
+    return GetPointer<const NDArray *>(VT_PROPOSAL_MU);
+  }
+  double proposal_kappa() const {
+    return GetField<double>(VT_PROPOSAL_KAPPA, 0.0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PRIOR_MU) &&
+           verifier.VerifyTable(prior_mu()) &&
+           VerifyField<double>(verifier, VT_PRIOR_KAPPA) &&
+           VerifyOffset(verifier, VT_PROPOSAL_MU) &&
+           verifier.VerifyTable(proposal_mu()) &&
+           VerifyField<double>(verifier, VT_PROPOSAL_KAPPA) &&
+           verifier.EndTable();
+  }
+};
+
+struct VMFBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_prior_mu(flatbuffers::Offset<NDArray> prior_mu) {
+    fbb_.AddOffset(VMF::VT_PRIOR_MU, prior_mu);
+  }
+  void add_prior_kappa(double prior_kappa) {
+    fbb_.AddElement<double>(VMF::VT_PRIOR_KAPPA, prior_kappa, 0.0);
+  }
+  void add_proposal_mu(flatbuffers::Offset<NDArray> proposal_mu) {
+    fbb_.AddOffset(VMF::VT_PROPOSAL_MU, proposal_mu);
+  }
+  void add_proposal_kappa(double proposal_kappa) {
+    fbb_.AddElement<double>(VMF::VT_PROPOSAL_KAPPA, proposal_kappa, 0.0);
+  }
+  VMFBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  VMFBuilder &operator=(const VMFBuilder &);
+  flatbuffers::Offset<VMF> Finish() {
+    const auto end = fbb_.EndTable(start_, 4);
+    auto o = flatbuffers::Offset<VMF>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<VMF> CreateVMF(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<NDArray> prior_mu = 0,
+    double prior_kappa = 0.0,
+    flatbuffers::Offset<NDArray> proposal_mu = 0,
+    double proposal_kappa = 0.0) {
+  VMFBuilder builder_(_fbb);
+  builder_.add_proposal_kappa(proposal_kappa);
+  builder_.add_prior_kappa(prior_kappa);
+  builder_.add_proposal_mu(proposal_mu);
+  builder_.add_prior_mu(prior_mu);
+  return builder_.Finish();
+}
+
 struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TIME = 4,
@@ -1084,8 +1257,14 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const UniformContinuous *distribution_as_UniformContinuous() const {
     return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
   }
+  const UniformContinuousAlt *distribution_as_UniformContinuousAlt() const {
+    return distribution_type() == Distribution::UniformContinuousAlt ? static_cast<const UniformContinuousAlt *>(distribution()) : nullptr;
+  }
   const UniformDiscrete *distribution_as_UniformDiscrete() const {
     return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  }
+  const VMF *distribution_as_VMF() const {
+    return distribution_type() == Distribution::VMF ? static_cast<const VMF *>(distribution()) : nullptr;
   }
   const NDArray *value() const {
     return GetPointer<const NDArray *>(VT_VALUE);
@@ -1145,8 +1324,16 @@ template<> inline const UniformContinuous *Sample::distribution_as<UniformContin
   return distribution_as_UniformContinuous();
 }
 
+template<> inline const UniformContinuousAlt *Sample::distribution_as<UniformContinuousAlt>() const {
+  return distribution_as_UniformContinuousAlt();
+}
+
 template<> inline const UniformDiscrete *Sample::distribution_as<UniformDiscrete>() const {
   return distribution_as_UniformDiscrete();
+}
+
+template<> inline const VMF *Sample::distribution_as<VMF>() const {
+  return distribution_as_VMF();
 }
 
 struct SampleBuilder {
@@ -1550,8 +1737,14 @@ struct ProposalReply FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const UniformContinuous *distribution_as_UniformContinuous() const {
     return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
   }
+  const UniformContinuousAlt *distribution_as_UniformContinuousAlt() const {
+    return distribution_type() == Distribution::UniformContinuousAlt ? static_cast<const UniformContinuousAlt *>(distribution()) : nullptr;
+  }
   const UniformDiscrete *distribution_as_UniformDiscrete() const {
     return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  }
+  const VMF *distribution_as_VMF() const {
+    return distribution_type() == Distribution::VMF ? static_cast<const VMF *>(distribution()) : nullptr;
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1603,8 +1796,16 @@ template<> inline const UniformContinuous *ProposalReply::distribution_as<Unifor
   return distribution_as_UniformContinuous();
 }
 
+template<> inline const UniformContinuousAlt *ProposalReply::distribution_as<UniformContinuousAlt>() const {
+  return distribution_as_UniformContinuousAlt();
+}
+
 template<> inline const UniformDiscrete *ProposalReply::distribution_as<UniformDiscrete>() const {
   return distribution_as_UniformDiscrete();
+}
+
+template<> inline const VMF *ProposalReply::distribution_as<VMF>() const {
+  return distribution_as_VMF();
 }
 
 struct ProposalReplyBuilder {
@@ -1732,8 +1933,16 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
       auto ptr = reinterpret_cast<const UniformContinuous *>(obj);
       return verifier.VerifyTable(ptr);
     }
+    case Distribution::UniformContinuousAlt: {
+      auto ptr = reinterpret_cast<const UniformContinuousAlt *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
     case Distribution::UniformDiscrete: {
       auto ptr = reinterpret_cast<const UniformDiscrete *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Distribution::VMF: {
+      auto ptr = reinterpret_cast<const VMF *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

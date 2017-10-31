@@ -1,16 +1,12 @@
 #include "cpprob/state.hpp"
 
-#include <iomanip>
-#include <set>
-#include <string>
-#include <type_traits>
-#include <unordered_map>
+#include <iterator>           // for make_move_iterator, move_iterator, oper...
+#include <set>                // for set
+#include <string>             // for string
+#include <unordered_map>      // for unordered_map
 
-
-#include "cpprob/any.hpp"
-#include "cpprob/serialization.hpp"
-#include "cpprob/socket.hpp"
-#include "cpprob/trace.hpp"
+#include "cpprob/socket.hpp"  // for SocketInfer, SocketCompile
+#include "cpprob/trace.hpp"   // for TraceCompile, TraceInfer, TraceInfer::i...
 
 namespace cpprob {
 
@@ -73,6 +69,7 @@ StateType State::state()
 
 TraceCompile StateCompile::trace_;
 std::vector<TraceCompile> StateCompile::batch_;
+flatbuffers::FlatBufferBuilder StateCompile::buff_;
 
 void StateCompile::start_batch()
 {
@@ -81,7 +78,18 @@ void StateCompile::start_batch()
 
 void StateCompile::finish_batch()
 {
-    SocketCompile::send_batch(batch_);
+    std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> fbb_traces;
+    std::transform(batch_.begin(), batch_.end(), std::back_inserter(fbb_traces),
+                   [](const TraceCompile & trace) { return trace.pack(buff_); });
+
+    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff_, &fbb_traces);
+    auto msg = infcomp::protocol::CreateMessage(
+            buff_,
+            infcomp::protocol::MessageBody::TracesFromPriorReply,
+            traces.Union());
+    buff_.Finish(msg);
+    SocketCompile::send_batch(buff_);
+    buff_.Clear();
 }
 
 void StateCompile::start_trace()
@@ -92,16 +100,6 @@ void StateCompile::start_trace()
 void StateCompile::finish_trace()
 {
     batch_.emplace_back(std::move(trace_));
-}
-
-void StateCompile::add_sample(const Sample& s)
-{
-    if (State::rejection_sampling()) {
-        StateCompile::trace_.samples_rejection_.emplace_back(s);
-    }
-    else {
-        StateCompile::trace_.samples_.emplace_back(s);
-    }
 }
 
 int StateCompile::sample_instance(const std::string & addr)
@@ -131,7 +129,7 @@ void StateCompile::finish_rejection_sampling()
     std::set<std::string> samples_processed;
     std::vector<Sample> last_samples;
     for (auto it = trace_.samples_rejection_.rbegin(); it != trace_.samples_rejection_.rend(); ++it) {
-        auto emplaced = samples_processed.emplace(it->sample_address());
+        auto emplaced = samples_processed.emplace(it->address());
         // If it is the first time that we find that sample
         if (emplaced.second) {
             last_samples.emplace_back(std::move(*it));
@@ -151,8 +149,7 @@ void StateCompile::finish_rejection_sampling()
 ////////////////////////////////////////////////////////////////////////////////
 
 TraceInfer StateInfer::trace_;
-Sample StateInfer::prev_sample_;
-Sample StateInfer::curr_sample_;
+flatbuffers::FlatBufferBuilder StateInfer::buff_;
 bool StateInfer::all_int_empty = true;
 bool StateInfer::all_real_empty = true;
 bool StateInfer::all_any_empty = true;
@@ -181,15 +178,19 @@ void StateInfer::finish_infer()
 }
 
 
+void StateInfer::add_value_to_sample(const NDArray<double> & x)
+{
+    trace_.curr_sample_.set_value(x);
+}
+
 void StateInfer::start_trace()
 {
-    prev_sample_ = Sample();
-    curr_sample_ = Sample();
     trace_ = TraceInfer();
 }
 
 void StateInfer::finish_trace()
 {
+    buff_.Clear();
     SocketInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, "_int");
     SocketInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, "_real");
     SocketInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, "_any");

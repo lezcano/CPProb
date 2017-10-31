@@ -1,16 +1,17 @@
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <tuple>
+#include <cstdlib>                                          // for exit, EXI...
+#include <iostream>                                         // for operator<<
+#include <string>                                           // for string
+#include <tuple>                                            // for tuple
 
-#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/operations.hpp>                  // for exists
+#include <boost/filesystem/path.hpp>                        // for path
 #include <boost/program_options.hpp>
 
-#include "cpprob/cpprob.hpp"
-#include "cpprob/serialization.hpp"
-#include "cpprob/state.hpp"
-#include "cpprob/call_function.hpp"
-#include "cpprob/postprocess/stats_printer.hpp"
+#include "cpprob/call_function.hpp"                         // for call_f_de...
+#include "cpprob/cpprob.hpp"                                // for compile
+#include "cpprob/postprocess/stats_printer.hpp"             // for Printer
+#include "cpprob/serialization.hpp"                         // for parse_file
+#include "cpprob/state.hpp"                                 // for StateType
 
 #ifdef BUILD_SHERPA
 #include "models/sherpa.hpp"
@@ -93,12 +94,12 @@ int main(int argc, const char* const* argv) {
     models::SherpaWrapper f;
     // auto f = &sherpa_mini_wrapper;
     #else
-    // auto f = &models::normal_rejection_sampling<>;
+    auto f = &models::normal_rejection_sampling<>;
     // auto f = &models::linear_gaussian_1d<50>;
     // auto f = &models::gaussian_unknown_mean<>;
     // auto f = &models::hmm<16>;
     // auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
-    models::Gauss<> f{};
+    //models::Gauss<> f{};
     #endif
 
     if (mode == "compile") {

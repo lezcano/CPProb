@@ -1,11 +1,13 @@
 #ifndef CPPROB_SAMPLE_HPP
 #define CPPROB_SAMPLE_HPP
 
-#include <boost/any.hpp>
+#include <functional>                       // for function
+#include <string>                           // for string
+#include <boost/any.hpp>                    // for any
 
-
-#include "cpprob/ndarray.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/ndarray.hpp"               // for NDArray
+#include "cpprob/distributions/utils_distributions.hpp"
+#include "flatbuffers/infcomp_generated.h"  // for Distribution, Sample (ptr...
 
 namespace cpprob {
 
@@ -13,31 +15,36 @@ class Sample {
 public:
     Sample() = default;
 
-    Sample(const std::string & sample_address,
-           const infcomp::protocol::Distribution & proposal_type,
-           const boost::any & proposal_distr,
-           NDArray<double> value = 0,
+    template<class Distr>
+    Sample(const std::string & addr,
+           const Distr & distr,
+           const NDArray<double> & val = 0,
            int sample_instance = 0,
-           int time_index = 0);
+           int time_index = 0) :
+            addr_(addr),
+            serialise_distr_(
+                    [distr](flatbuffers::FlatBufferBuilder& buff)
+                    { return serialise<Distr>::to_flatbuffers(buff, distr); }),
+            distr_enum_(infcomp::protocol::DistributionTraits<cpprob::buffer_t<Distr>>::enum_value),
+            val_(val),
+            sample_instance_(sample_instance),
+            time_index_(time_index) {}
+
+    flatbuffers::Offset<infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
 
     void set_value(const NDArray<double> & value);
 
-    std::string sample_address();
-
-    flatbuffers::Offset <infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
+    std::string address() const;
 
 private:
 
-    flatbuffers::Offset<void> pack_distr(flatbuffers::FlatBufferBuilder & buff,
-                                         const boost::any & distr,
-                                         infcomp::protocol::Distribution type) const;
-
-    std::string sample_address_;
-    infcomp::protocol::Distribution proposal_type_;
-    boost::any proposal_distr_;
-    NDArray<double> value_{0};
-    int sample_instance_{0};
-    int time_index_{0};
+    std::string addr_;
+    // Store a function that, given a buffer, serialises the given distribution
+    std::function<flatbuffers::Offset<void>(flatbuffers::FlatBufferBuilder& buff)> serialise_distr_;
+    infcomp::protocol::Distribution distr_enum_;
+    NDArray<double> val_ = 0;
+    int sample_instance_ = 0;
+    int time_index_ = 0;
 };
 
 } // end namespace cpprob

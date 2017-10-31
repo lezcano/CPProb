@@ -1,20 +1,26 @@
 #include "cpprob/socket.hpp"
 
-#include <cstdio>       // std::remove
-#include <exception>    // std::terminate
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <string>
+#include <algorithm>                          // for transform
+#include <cstdint>                            // for int32_t
+#include <cstdio>                             // for remove
+#include <exception>                          // for terminate
+#include <fstream>                            // for operator<<, ofstream
+#include <iostream>                           // for cerr, ios_base::failure
+#include <iterator>                           // for back_insert_iterator
+#include <limits>                             // for numeric_limits, numeric...
+#include <string>                             // for string, operator+, allo...
+#include <type_traits>                        // for __decay_and_strip<>::__...
 
-#include <boost/lexical_cast.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <boost/detail/basic_pointerbuf.hpp>  // for basic_pointerbuf<>::pos...
+#include <boost/lexical_cast.hpp>             // for lexical_cast
+#include <boost/uuid/random_generator.hpp>    // for basic_random_generator
+#include <boost/uuid/uuid.hpp>                // for uuid
+#include <boost/uuid/uuid_io.hpp>             // for operator<<
+#include <zmq.h>                              // for ZMQ_REP, ZMQ_REQ
 
-#include "cpprob/trace.hpp"
-
-#include "flatbuffers/infcomp_generated.h"
-
+#include "cpprob/trace.hpp"                   // for TraceCompile
+#include "cpprob/serialization.hpp"           // for operator<<
+#include "flatbuffers/infcomp_generated.h"    // for CreateMessage, GetMessage
 
 namespace cpprob {
 
@@ -30,14 +36,13 @@ std::string SocketCompile::dump_folder_;
 
 void SocketCompile::connect_server(const std::string & tcp_addr)
 {
-    server_.bind(tcp_addr);
+    server_.bind(tcp_addr.c_str());
     dump_folder_.clear();
 }
 
 void SocketCompile::config_file(const std::string & dump_folder)
 {
     dump_folder_ = dump_folder;
-    //server_.close();
 }
 
 std::size_t SocketCompile::get_batch_size()
@@ -51,21 +56,8 @@ std::size_t SocketCompile::get_batch_size()
     return request_msg->num_traces();
 }
 
-void SocketCompile::send_batch(const std::vector<TraceCompile> & traces_vector)
+void SocketCompile::send_batch(const flatbuffers::FlatBufferBuilder & buff)
 {
-    static flatbuffers::FlatBufferBuilder buff;
-
-    std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> fbb_traces;
-    std::transform(traces_vector.begin(), traces_vector.end(), std::back_inserter(fbb_traces),
-                   [](const auto & trace) { return trace.pack(buff); });
-
-    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff, &fbb_traces);
-    auto msg = infcomp::protocol::CreateMessage(
-            buff,
-            infcomp::protocol::MessageBody::TracesFromPriorReply,
-            traces.Union());
-    buff.Finish(msg);
-
     if (!dump_folder_.empty()) {
         static auto rand_gen {boost::uuids::random_generator()};
 
@@ -83,7 +75,6 @@ void SocketCompile::send_batch(const std::vector<TraceCompile> & traces_vector)
         memcpy(reply.data(), buff.GetBufferPointer(), buff.GetSize());
         server_.send(reply);
     }
-    buff.Clear();
 }
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////          Inference            ////////////////////////
@@ -94,7 +85,7 @@ std::string SocketInfer::dump_file_;
 
 void SocketInfer::connect_client(const std::string& tcp_addr)
 {
-    client_.connect(tcp_addr);
+    client_.connect(tcp_addr.c_str());
     dump_file_.clear();
 }
 
@@ -103,25 +94,10 @@ void SocketInfer::config_file(const std::string & dump_file)
     dump_file_ = dump_file;
 }
 
-void SocketInfer::send_observe_init(const NDArray<double> & data) {
-    static flatbuffers::FlatBufferBuilder buff;
-
-    auto observe_init = infcomp::protocol::CreateObservesInitRequest(
-            buff,
-            infcomp::protocol::CreateNDArray(buff,
-                                             buff.CreateVector<double>(data.values()),
-                                             buff.CreateVector<int32_t>(data.shape())));
-
-    auto msg = infcomp::protocol::CreateMessage(
-            buff,
-            infcomp::protocol::MessageBody::ObservesInitRequest,
-            observe_init.Union());
-
-    buff.Finish(msg);
+void SocketInfer::send_observe_init(const flatbuffers::FlatBufferBuilder & buff) {
     zmq::message_t request (buff.GetSize());
     memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
     client_.send(request);
-    buff.Clear();
 
     // TODO (Lezcano) Is this answer is unnecessary?
     zmq::message_t reply;

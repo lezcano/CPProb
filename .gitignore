@@ -1,5 +1,6 @@
-build/
-deprecated/
-cmake-build-debug/
-cmake-build-release/
-.idea/
+/build/
+/dependencies/build/
+/dependencies/install/
+/cmake-build-debug/
+/cmake-build-release/
+/.idea/

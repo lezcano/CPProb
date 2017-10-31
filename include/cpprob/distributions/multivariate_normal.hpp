@@ -1,13 +1,12 @@
 #ifndef CPPROB_MULTIVARIATE_NORMAL_HPP_HPP
 #define CPPROB_MULTIVARIATE_NORMAL_HPP_HPP
 
-#include <istream>
-#include <ostream>
-#include <vector>
-#include <iterator>
-#include <initializer_list>
 #include <algorithm>
+#include <initializer_list>
+#include <iostream>
+#include <iterator>
 #include <tuple> // std::tie
+#include <vector>
 
 #include <boost/random/normal_distribution.hpp>
 

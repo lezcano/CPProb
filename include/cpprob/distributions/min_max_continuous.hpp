@@ -183,4 +183,4 @@ private:
 };
 
 
-#endif //CPPROB_MIN_MAX_CONTINUOUS_HPP
+#endif  // CPPROB_MIN_MAX_CONTINUOUS_HPP

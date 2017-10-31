@@ -13,6 +13,7 @@
 
 namespace cpprob {
 
+// TODO(Lezcano): All this section is not general enough
 namespace detail {
 template<typename T>
 auto is_object_callable_impl(int)

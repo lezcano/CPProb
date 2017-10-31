@@ -1,33 +1,21 @@
 #include "cpprob/utils.hpp"
 
-#include <execinfo.h>
-#include <cxxabi.h>
-#include <cstdio>
-#include <cstdlib>
+#include <cxxabi.h>    // for __cxa_demangle
+#include <execinfo.h>  // for backtrace, backtrace_symbols
 
-#include <algorithm>
-#include <cstdlib>
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <boost/random/random_device.hpp>
+#include <cstdio>      // for perror
+#include <cstdlib>     // for exit, free, EXIT_FAILURE
+#include <iostream>    // for cerr
+#include <random>      // for mt19937
+#include <regex>       // for regex_search, regex, smatch
+#include <string>      // for string, basic_string, operator+
+#include <vector>      // for vector
 
 namespace cpprob{
 
-boost::random::mt19937& get_sample_rng()
+std::mt19937& get_rng()
 {
-    static boost::random::mt19937 rng{detail::seeded_rng()};
-    return rng;
-}
-
-boost::random::mt19937& get_observe_rng()
-{
-    static boost::random::mt19937 rng{detail::seeded_rng()};
+    static std::mt19937 rng{detail::seeded_rng()};
     return rng;
 }
 

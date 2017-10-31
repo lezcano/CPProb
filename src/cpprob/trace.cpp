@@ -1,14 +1,15 @@
 #include "cpprob/trace.hpp"
 
-#include <exception>
-#include <iostream>
-#include <string>
-#include <unordered_map>
+#include <algorithm>                        // for transform
+#include <cstdint>                          // for int32_t
+#include <exception>                        // for terminate
+#include <iostream>                         // for operator<<, endl, basic_o...
+#include <memory>                           // for allocator_traits<>::value...
+#include <string>                           // for string
+#include <unordered_map>                    // for unordered_map, _Node_iter...
 
-#include <boost/any.hpp>
-
-#include "cpprob/sample.hpp"
-#include "flatbuffers/infcomp_generated.h"
+#include "cpprob/sample.hpp"                // for Sample
+#include "flatbuffers/infcomp_generated.h"  // for CreateNDArray, CreateTrac...
 
 namespace cpprob {
 
@@ -19,7 +20,7 @@ namespace cpprob {
 flatbuffers::Offset<infcomp::protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferBuilder &buff) const {
     std::vector<flatbuffers::Offset<infcomp::protocol::Sample>> vec_sample(samples_.size());
     std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
-                   [&](const Sample &s) { return s.pack(buff); });
+                   [&](const Sample & s) { return s.pack(buff); });
 
     // TODO(Lezcano) Currently we only support one multidimensional observe or many one-dimensional observes
     if (observes_.size() == 1) {
@@ -34,10 +35,9 @@ flatbuffers::Offset<infcomp::protocol::Trace> TraceCompile::pack(flatbuffers::Fl
         std::vector<double> obs_flat;
         for (auto obs : observes_) {
             if (!obs.is_scalar()) {
-                std::cerr << "Multiple observes where one of them is multidimensional is not supported.\n" << std::endl;
-                std::terminate();
+                throw std::runtime_error("Multiple observes where one of them is multidimensional is not supported.\n");
             }
-            obs_flat.emplace_back(obs.values().front());
+            obs_flat.emplace_back(static_cast<double>(obs));
         }
         return infcomp::protocol::CreateTraceDirect(
                 buff,
