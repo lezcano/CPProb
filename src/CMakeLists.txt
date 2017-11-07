@@ -11,10 +11,9 @@ target_link_libraries(models_main PUBLIC cpprob ${Boost_LIBRARIES} ${CMAKE_THREA
 
 if (BUILD_SHERPA)
     target_link_libraries(main PUBLIC cpprob sherpa sherpa_mini)
-    target_compile_definitions(main PRIVATE BUILD_SHERPA=1)
+    target_compile_definitions(main PRIVATE BUILD_SHERPA)
     target_link_libraries(models_main PUBLIC cpprob sherpa sherpa_mini)
 else()
     target_link_libraries(main PUBLIC cpprob models)
-    target_compile_definitions(main PRIVATE BUILD_SHERPA=0)
     target_link_libraries(models_main PUBLIC cpprob models)
 endif()
