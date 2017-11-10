@@ -15,6 +15,7 @@
 #include "ATOOLS/Org/CXXFLAGS_PACKAGES.H"
 #include "ATOOLS/Org/My_MPI.H"
 #include "ATOOLS/Org/AnalysisJailbreak.H"
+#include "models/calorimeter.hpp"
 
 #include "cpprob/distributions/multivariate_normal.hpp"
 #include "cpprob/cpprob.hpp"
@@ -50,7 +51,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     int channel_index;
     std::vector<double> mother_momentum;
 
-    std::tie(channel_index, mother_momentum, img) = sherpa();
+    std::tie(channel_index, mother_momentum) = sherpa();
     auto calo_histo = calo_simulation(jailbreak::instance().m_final_state_particles);
 
     cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), OBS_WIDTH);
