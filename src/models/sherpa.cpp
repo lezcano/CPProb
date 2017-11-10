@@ -1,4 +1,5 @@
 #include "models/sherpa.hpp"
+#include "models/calorimeter.hpp"
 
 #include <string>
 #include <vector>
@@ -25,7 +26,6 @@ namespace models {
 
 SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
 {
-    jailbreak::instance().m_histo3d.clear();
     try {
         const int sherpa_argc = 7;
         char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
@@ -71,9 +71,13 @@ SherpaWrapper::sherpa() const
         std::terminate();
     }
 
+    std::vector<std::vector<double> > final_state_momenta(1,std::vector<double>(8,-99999));
+    final_state_momenta[0] = {0,0,0,40,0,0,11,1};
+    auto calo_histo = calo_simulation(jailbreak::instance().m_final_state_particles);
+
     return std::make_tuple(jailbreak::instance().m_selected_channel_index,
                            jailbreak::instance().m_mother_momentum,
-                           jailbreak::instance().m_histo3d);
+                           calo_histo);
 }
 
 } // end namespace models
