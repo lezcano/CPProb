@@ -4,7 +4,7 @@ if(BUILD_SHERPA)
 
     find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
     MESSAGE(STATUS "Linking to SHERPA")
-    add_library(sherpa SHARED sherpa.cpp)
+    add_library(sherpa SHARED sherpa.cpp calorimeter.cpp)
     target_link_libraries(sherpa PUBLIC cpprob ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
     target_include_directories(sherpa PRIVATE /usr/local/include/SHERPA-MC)
     target_compile_options(sherpa PRIVATE -rdynamic -Wl,--no-as-needed)

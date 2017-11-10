@@ -26,7 +26,6 @@ namespace models {
 
 SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
 {
-    jailbreak::instance().m_histo3d.clear();
     try {
         const int sherpa_argc = 7;
         char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
@@ -63,6 +62,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 
 std::tuple<int,
         std::vector<double>,
+        std::vector<std::vector<double>>
         >
 SherpaWrapper::sherpa() const
 {

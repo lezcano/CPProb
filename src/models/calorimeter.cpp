@@ -1,4 +1,4 @@
-#include "models/calorimeter.hpp
+#include "models/calorimeter.hpp"
 
 #include <vector>
 #include <boost/random/uniform_real.hpp>

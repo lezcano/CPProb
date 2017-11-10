@@ -17,7 +17,8 @@ namespace models {
 
         std::tuple<int,
                    std::vector<double>,
-                   std::vector<std::vector<std::vector<double>>>>
+                   std::vector<std::vector<double>>
+									>
             sherpa() const;
 
         ~SherpaWrapper();
