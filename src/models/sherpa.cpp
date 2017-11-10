@@ -49,19 +49,17 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     const double OBS_WIDTH = 0.001;
     int channel_index;
     std::vector<double> mother_momentum;
-    std::vector<std::vector<std::vector<double>>> img;
 
     std::tie(channel_index, mother_momentum, img) = sherpa();
+    auto calo_histo = calo_simulation(jailbreak::instance().m_final_state_particles);
 
-    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(img), OBS_WIDTH);
+    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), OBS_WIDTH);
     cpprob::observe(likelihood, observes);
     cpprob::predict(channel_index);
     cpprob::predict(mother_momentum);
 }
 
-std::tuple<int,
-           std::vector<double>,
-           std::vector<std::vector<std::vector<double>>>>
+std::tuple<int, std::vector<double>>
 SherpaWrapper::sherpa() const
 {
     try {
@@ -72,8 +70,7 @@ SherpaWrapper::sherpa() const
     }
 
     return std::make_tuple(jailbreak::instance().m_selected_channel_index,
-                           jailbreak::instance().m_mother_momentum,
-                           jailbreak::instance().m_histo3d);
+                           jailbreak::instance().m_mother_momentum);
 }
 
 } // end namespace models
