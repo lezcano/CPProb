@@ -270,9 +270,9 @@ public:
         return ret;
     }
 
-    template<class CharT>
-    friend std::basic_ostream<CharT> &
-    operator<<(std::basic_ostream<CharT> & os, const NDArray & v)
+    template<class CharT, class Traits>
+    friend std::basic_ostream<CharT, Traits> &
+    operator<<(std::basic_ostream<CharT, Traits> & os, const NDArray & v)
     {
         if (v.shape_.size() == 1 && v.shape_[0] == 1) {
             os << v.values_[0];
@@ -288,8 +288,8 @@ public:
     }
 
     template<class CharT, class Traits>
-    friend std::basic_istream< CharT, Traits > &
-    operator>>(std::basic_istream< CharT, Traits > & is, NDArray & v)
+    friend std::basic_istream<CharT, Traits> &
+    operator>>(std::basic_istream<CharT, Traits> & is, NDArray & v)
     {
         CharT ch;
         T scalar;

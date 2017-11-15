@@ -8,8 +8,6 @@ project(CPProb LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 ##############################################################################
 # Dependancies
 ##############################################################################
@@ -31,8 +29,7 @@ if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_compile_options(-pedantic)
 endif()
 
-
-include_directories(include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_subdirectory(src)
 
 ##############################################################################
