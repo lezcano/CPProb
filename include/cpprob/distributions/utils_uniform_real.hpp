@@ -2,6 +2,7 @@
 #define CPPROB_UTILS_UNIFORM_REAL_HPP
 
 #include <cmath>
+#include <limits>
 
 #include <boost/random/uniform_real_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -20,8 +21,11 @@ namespace cpprob {
 template<typename RealType>
 struct logpdf<boost::random::uniform_real_distribution<RealType>> {
     RealType operator()(const boost::random::uniform_real_distribution<RealType>& distr,
-                        const typename boost::random::uniform_real_distribution<RealType>::result_type &) const
+                        const typename boost::random::uniform_real_distribution<RealType>::result_type & x) const
     {
+        if (x < distr.min() || x > distr.max()) {
+            return -std::numeric_limits<RealType>::infinity();
+        }
         return -std::log(distr.b()-distr.a());
     }
 };

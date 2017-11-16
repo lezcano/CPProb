@@ -26,7 +26,7 @@ flatbuffers::Offset<protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilde
             serialised_distr);
 }
 
-void Sample::set_value(const NDArray<double> &value)
+void Sample::set_value(const boost::any &value)
 {
     val_ = value;
 }

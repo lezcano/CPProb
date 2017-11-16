@@ -41,6 +41,7 @@ table NDArray {
 table Beta {
     mode:double;      // [0, 1]
     certainty:double; // R^+
+    value:double;     // [0, 1]
 }
 
 table Discrete {

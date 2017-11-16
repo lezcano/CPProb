@@ -403,7 +403,8 @@ inline flatbuffers::Offset<NDArray> CreateNDArrayDirect(
 struct Beta FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_MODE = 4,
-    VT_CERTAINTY = 6
+    VT_CERTAINTY = 6,
+    VT_VALUE = 8
   };
   double mode() const {
     return GetField<double>(VT_MODE, 0.0);
@@ -411,10 +412,14 @@ struct Beta FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   double certainty() const {
     return GetField<double>(VT_CERTAINTY, 0.0);
   }
+  double value() const {
+    return GetField<double>(VT_VALUE, 0.0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<double>(verifier, VT_MODE) &&
            VerifyField<double>(verifier, VT_CERTAINTY) &&
+           VerifyField<double>(verifier, VT_VALUE) &&
            verifier.EndTable();
   }
 };
@@ -428,13 +433,16 @@ struct BetaBuilder {
   void add_certainty(double certainty) {
     fbb_.AddElement<double>(Beta::VT_CERTAINTY, certainty, 0.0);
   }
+  void add_value(double value) {
+    fbb_.AddElement<double>(Beta::VT_VALUE, value, 0.0);
+  }
   BetaBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
   BetaBuilder &operator=(const BetaBuilder &);
   flatbuffers::Offset<Beta> Finish() {
-    const auto end = fbb_.EndTable(start_, 2);
+    const auto end = fbb_.EndTable(start_, 3);
     auto o = flatbuffers::Offset<Beta>(end);
     return o;
   }
@@ -443,8 +451,10 @@ struct BetaBuilder {
 inline flatbuffers::Offset<Beta> CreateBeta(
     flatbuffers::FlatBufferBuilder &_fbb,
     double mode = 0.0,
-    double certainty = 0.0) {
+    double certainty = 0.0,
+    double value = 0.0) {
   BetaBuilder builder_(_fbb);
+  builder_.add_value(value);
   builder_.add_certainty(certainty);
   builder_.add_mode(mode);
   return builder_.Finish();
@@ -1221,8 +1231,7 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_ADDRESS = 4,
     VT_DISTRIBUTION_TYPE = 6,
-    VT_DISTRIBUTION = 8,
-    VT_VALUE = 10
+    VT_DISTRIBUTION = 8
   };
   const flatbuffers::String *address() const {
     return GetPointer<const flatbuffers::String *>(VT_ADDRESS);
@@ -1270,9 +1279,6 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const UniformDiscrete *distribution_as_UniformDiscrete() const {
     return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
   }
-  const NDArray *value() const {
-    return GetPointer<const NDArray *>(VT_VALUE);
-  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ADDRESS) &&
@@ -1280,8 +1286,6 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint8_t>(verifier, VT_DISTRIBUTION_TYPE) &&
            VerifyOffset(verifier, VT_DISTRIBUTION) &&
            VerifyDistribution(verifier, distribution(), distribution_type()) &&
-           VerifyOffset(verifier, VT_VALUE) &&
-           verifier.VerifyTable(value()) &&
            verifier.EndTable();
   }
 };
@@ -1346,16 +1350,13 @@ struct SampleBuilder {
   void add_distribution(flatbuffers::Offset<void> distribution) {
     fbb_.AddOffset(Sample::VT_DISTRIBUTION, distribution);
   }
-  void add_value(flatbuffers::Offset<NDArray> value) {
-    fbb_.AddOffset(Sample::VT_VALUE, value);
-  }
   SampleBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
   SampleBuilder &operator=(const SampleBuilder &);
   flatbuffers::Offset<Sample> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
+    const auto end = fbb_.EndTable(start_, 3);
     auto o = flatbuffers::Offset<Sample>(end);
     return o;
   }
@@ -1365,10 +1366,8 @@ inline flatbuffers::Offset<Sample> CreateSample(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> address = 0,
     Distribution distribution_type = Distribution::NONE,
-    flatbuffers::Offset<void> distribution = 0,
-    flatbuffers::Offset<NDArray> value = 0) {
+    flatbuffers::Offset<void> distribution = 0) {
   SampleBuilder builder_(_fbb);
-  builder_.add_value(value);
   builder_.add_distribution(distribution);
   builder_.add_address(address);
   builder_.add_distribution_type(distribution_type);
@@ -1379,14 +1378,12 @@ inline flatbuffers::Offset<Sample> CreateSampleDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *address = nullptr,
     Distribution distribution_type = Distribution::NONE,
-    flatbuffers::Offset<void> distribution = 0,
-    flatbuffers::Offset<NDArray> value = 0) {
+    flatbuffers::Offset<void> distribution = 0) {
   return protocol::CreateSample(
       _fbb,
       address ? _fbb.CreateString(address) : 0,
       distribution_type,
-      distribution,
-      value);
+      distribution);
 }
 
 struct Trace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

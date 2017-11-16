@@ -5,6 +5,7 @@
 #include <string>             // for string
 #include <unordered_map>      // for unordered_map
 
+
 #include "cpprob/socket.hpp"  // for SocketInfer, SocketCompile
 #include "cpprob/trace.hpp"   // for TraceCompile, TraceInfer, TraceInfer::i...
 
@@ -162,7 +163,7 @@ void StateInfer::finish_infer()
 }
 
 
-void StateInfer::add_value_to_sample(const NDArray<double> & x)
+void StateInfer::add_value_to_sample(const boost::any & x)
 {
     trace_.curr_sample_.set_value(x);
 }

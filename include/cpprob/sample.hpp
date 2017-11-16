@@ -21,7 +21,7 @@ public:
            const boost::any & val = boost::any{}) :
             addr_(addr),
             serialise_distr_(
-                    [distr, val](flatbuffers::FlatBufferBuilder& buff, const boost::any & value)
+                    [distr](flatbuffers::FlatBufferBuilder& buff, const boost::any & value)
                     {
                         using boost::any_cast;
                         return serialise<Distr>::to_flatbuffers(buff, distr, any_cast<typename Distr::result_type>(value));
@@ -31,7 +31,7 @@ public:
 
     flatbuffers::Offset<protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
 
-    void set_value(const NDArray<double> &value);
+    void set_value(const boost::any &value);
 
     std::string address() const;
 

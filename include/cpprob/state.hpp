@@ -8,9 +8,10 @@
 #include <type_traits>                                  // for enable_if_t
 #include <utility>                                      // for make_pair
 #include <vector>                                       // for vector
+#include <boost/any.hpp>                                // for any
 
 #include "flatbuffers/infcomp_generated.h"
-#include "cpprob/distributions/utils_base.hpp"  // for proposal
+#include "cpprob/distributions/utils_base.hpp"          // for proposal
 #include "cpprob/ndarray.hpp"                           // for NDArray
 #include "cpprob/sample.hpp"                            // for Sample
 #include "cpprob/socket.hpp"                            // for SocketInfer
@@ -80,7 +81,7 @@ private:
     template<class Distr>
     static void add_sample( const std::string & addr,
                             const Distr & distr,
-                            const NDArray<double> val)
+                            const boost::any & val)
     {
         auto sample = Sample(addr, distr, val);
 
@@ -291,7 +292,7 @@ private:
         trace_.curr_sample_ = Sample(addr, distr);
     }
 
-    static void add_value_to_sample(const NDArray<double> & x);
+    static void add_value_to_sample(const boost::any & x);
 
     // TODO(Lezcano) Hack to get around the fact that we do not support many multidimensional observes
     // TODO(Lezcano) C++17 This should be done with an if constexpr
