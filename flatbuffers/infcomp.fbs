@@ -1,12 +1,14 @@
-namespace infcomp.protocol;
+namespace protocol;
 
 union MessageBody {
-    TracesFromPriorRequest,
-    ObservesInitRequest,
-    ProposalRequest,
-    TracesFromPriorReply,
-    ObservesInitReply,
-    ProposalReply
+    // Compile
+    RequestTraces,
+    ReplyTraces,
+    // Inference
+    StartInference,
+    StartTrace,
+    RequestProposal,
+    ReplyProposal
 }
 
 table Message {
@@ -18,18 +20,17 @@ file_identifier "INFC";
 
 union Distribution {
     Beta,
-    Categorical,
     Discrete,
     Flip,
     Gamma,
     Laplace,
+    MixtureTruncated,
     MultivariateNormal,
     Normal,
     Poisson,
+    Truncated,
     UniformContinuous,
-    UniformContinuousAlt,
-    UniformDiscrete,
-    VMF
+    UniformDiscrete
 }
 
 table NDArray {
@@ -38,118 +39,110 @@ table NDArray {
 }
 
 table Beta {
-    proposal_mode:double;      // [0, 1]
-    proposal_certainty:double; // [0, infinity)
-}
-
-table Categorical {
-    prior_size:int;
-    proposal_probabilities:NDArray;
+    mode:double;      // [0, 1]
+    certainty:double; // R^+
 }
 
 table Discrete {
-    prior_size:int;
-    proposal_probabilities:NDArray;
+    min:int;                // N
+    probabilities:[double]; // \sum probabilities = 1, probabilities >= 0
+    value:int;              //  [min, min + size(probabilities)-1]
 }
 
 table Flip {
-    proposal_probability:double;
+    probability:double; // [0, 1]
+    value:int;          // {0, 1}
 }
 
 table Gamma {
-    proposal_location:double; // [0, infinity)
-    proposal_scale:double;    // [0, infinity)
+    shape: double;    // (alpha) R^+
+    scale: double;    // (beta)  R^+
+    value: double;    // R^+
 }
 
 table Laplace {
-    prior_location:double;
-    prior_scale:double;
-    proposal_location:double;
-    proposal_scale:double;
+    mean: double;    // R
+    scale: double;   // R^+
+    value: double;   // R^+
+}
+
+// We cannot make the code truly generic (Mixture table) since flatbuffer python does not support it
+// Error: Vector of unions are not yet supported in Flatbuffers python
+table MixtureTruncated {
+    // size(coefficients) == size(distributions)
+    coefficients: [double];         // \sum coefficients = 1, coefficients >= 0
+    distributions: [Truncated];
 }
 
 table MultivariateNormal {
-    prior_mean:NDArray;
-    prior_std:NDArray;
-    proposal_mean:NDArray;
-    proposal_std:NDArray; // TODO: check why this is proposal_vars. We should prefer proposal_stds.
+    // size(mean) == size(covariance)
+    mean: [double];       // R^n
+    covariance: [double]; // R^n (Diagonal matrix)
+    value: [double];      // R^n
 }
 
 table Normal {
-    prior_mean:double;
-    prior_std:double;
-    proposal_mean:double;
-    proposal_std:double;
+    mean: double;    // R
+    std: double;     // R^+
+    value: double;   // R
 }
 
 table Poisson {
-    prior_lambda:double;
-    proposal_lambda:double;
+    mean: double;   // R
+    value: int;     // N
+}
+
+table Truncated {
+    min: double;                    // R
+    max: double;                    // R
+    distribution: Distribution;
 }
 
 table UniformContinuous {
-    prior_min:double;
-    prior_max:double;
-    proposal_mode:double;      // [prior_min, prior_max]
-    proposal_certainty:double; // [0, infinity)
-}
-
-table UniformContinuousAlt {
-    prior_min:double;
-    prior_max:double;
-    proposal_means:NDArray;  // (-infinity, infinity)
-    proposal_stds:NDArray;   // (0, infinity)
-    proposal_coeffs:NDArray; // [0, 1]
+    min: double;     // R
+    max: double;     // R
+    value: double;  // [min, max]
 }
 
 table UniformDiscrete {
-    prior_min:int;
-    prior_size:int;
-    proposal_probabilities:NDArray;
-}
-
-table VMF {
-    prior_mu:NDArray;
-    prior_kappa:double;
-    proposal_mu:NDArray;
-    proposal_kappa:double;
+    min: int;    // N
+    max: int;    // N
+    value: int;  // {min, ..., max}
 }
 
 table Sample {
-    time:int;
     address:string;
-    instance:int;
     distribution:Distribution;
-    value:NDArray;
 }
 
 table Trace {
-    observes:NDArray;
+    observe:NDArray;
     samples:[Sample];
 }
 
-table TracesFromPriorRequest {
+
+// Messages
+// Compilation
+table RequestTraces {
     num_traces:int;
 }
 
-table TracesFromPriorReply {
+table ReplyTraces {
     traces:[Trace];
 }
 
-table ObservesInitRequest {
-    observes:NDArray;
+// Inference
+table StartInference {
+    observation:NDArray;
 }
 
-table ObservesInitReply {
-    success:bool;
-}
+table StartTrace {}
 
-table ProposalRequest {
+table RequestProposal {
     current_sample:Sample;
     previous_sample:Sample;
 }
 
-table ProposalReply {
-    success:bool;
+table ReplyProposal {
     distribution:Distribution;
 }

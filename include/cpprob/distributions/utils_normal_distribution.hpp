@@ -49,22 +49,24 @@ struct proposal<boost::random::normal_distribution<RealType>> {
 
 template<class RealType>
 struct buffer<boost::random::normal_distribution<RealType>> {
-    using type = infcomp::protocol::Normal;
+    using type = protocol::Normal;
 };
 
 template<class RealType>
 struct serialise<boost::random::normal_distribution<RealType>> {
     using prior = boost::random::normal_distribution<RealType>;
 
-    static proposal_t<prior> from_flatbuffers(const infcomp::protocol::ProposalReply *msg)
+    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg)
     {
         auto distr = static_cast<const buffer_t<prior> *>(msg->distribution());
-        return proposal_t<prior>(distr->proposal_mean(), distr->proposal_std());
+        return proposal_t<prior>(distr->mean(), distr->std());
     }
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff, const prior & distr)
+    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
+                                                    const prior & distr,
+                                                    typename prior::result_type value)
     {
-        return infcomp::protocol::CreateNormal(buff, distr.mean(), distr.sigma()).Union();
+        return protocol::CreateNormal(buff, distr.mean(), distr.sigma(), value).Union();
     }
 };
 

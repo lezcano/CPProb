@@ -37,42 +37,35 @@ struct proposal<boost::random::uniform_real_distribution<RealType>> {
 
 template<class RealType>
 struct buffer<boost::random::uniform_real_distribution<RealType>> {
-    using type = infcomp::protocol::UniformContinuousAlt;
+    using type = protocol::MixtureTruncated;
 };
 
 template<class RealType>
 struct serialise<boost::random::uniform_real_distribution<RealType>> {
     using prior = boost::random::uniform_real_distribution<RealType>;
 
-    static proposal_t<prior> from_flatbuffers(const infcomp::protocol::ProposalReply *msg) {
+    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
         auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
 
-        // We suppose that hte three vectors have the same length
-        auto num_components = distr->proposal_coeffs()->data()->size();
+        std::vector<truncated<boost::random::normal_distribution<RealType>>> v_distr(distr->distributions()->size());
+        auto truncated_ptr = distr->distributions()->begin();
+        for(std::size_t i = 0; i < distr->distributions()->size(); ++i) {
+            auto normal_i = static_cast<const protocol::Normal *>(truncated_ptr->distribution());
 
-        auto coef_ptr = distr->proposal_coeffs()->data()->begin();
-        const auto coef = std::vector<RealType>(coef_ptr, coef_ptr + num_components);
-
-        auto means_ptr = distr->proposal_means()->data()->begin();
-        auto std_ptr = distr->proposal_stds()->data()->begin();
-
-        const auto min = distr->prior_min();
-        const auto max = distr->prior_max();
-
-        std::vector<truncated<boost::random::normal_distribution<RealType>>> v_distr(num_components);
-        for (std::size_t i = 0; i < num_components; ++i) {
             v_distr[i] = truncated<boost::normal_distribution<RealType>>(
-                    boost::normal_distribution<RealType>(*means_ptr, *std_ptr),
-                            min, max);
-            ++means_ptr;
-            ++std_ptr;
-        }
+                    boost::normal_distribution<RealType>(normal_i->mean(), normal_i->std()),
+                    truncated_ptr->min(), truncated_ptr->max());
 
-        return proposal_t<prior>(coef.begin(), coef.end(), v_distr.begin(), v_distr.end());
+            ++truncated_ptr;
+        }
+        return proposal_t<prior>(distr->coefficients()->begin(), distr->coefficients()->end(),
+                                 v_distr.begin(), v_distr.end());
     }
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff, const prior & distr) {
-        return infcomp::protocol::CreateUniformContinuous(buff, distr.a(), distr.b()).Union();
+    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
+                                                    const prior & distr,
+                                                    const typename prior::result_type value) {
+        return protocol::CreateUniformContinuous(buff, distr.a(), distr.b(), value).Union();
     }
 };
 

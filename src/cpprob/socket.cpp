@@ -50,8 +50,8 @@ std::size_t SocketCompile::get_batch_size()
     zmq::message_t request;
     server_.recv(&request);
 
-    auto message = infcomp::protocol::GetMessage(request.data());
-    auto request_msg = static_cast<const infcomp::protocol::TracesFromPriorRequest *>(message->body());
+    auto message = protocol::GetMessage(request.data());
+    auto request_msg = static_cast<const protocol::RequestTraces *>(message->body());
 
     return request_msg->num_traces();
 }
@@ -94,20 +94,10 @@ void SocketInfer::config_file(const std::string & dump_file)
     dump_file_ = dump_file;
 }
 
-void SocketInfer::send_observe_init(const flatbuffers::FlatBufferBuilder & buff) {
+void SocketInfer::send_start_inference(const flatbuffers::FlatBufferBuilder & buff) {
     zmq::message_t request (buff.GetSize());
     memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
     client_.send(request);
-
-    // TODO (Lezcano) Is this answer is unnecessary?
-    zmq::message_t reply;
-    client_.recv (&reply);
-
-    auto message = infcomp::protocol::GetMessage(reply.data());
-    auto reply_msg = static_cast<const infcomp::protocol::ObservesInitReply*>(message->body());
-    if(!reply_msg->success()) {
-        std::cerr << "Invalid command" << std::endl;
-    }
 }
 
 void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict)

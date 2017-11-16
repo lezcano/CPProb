@@ -8,27 +8,22 @@ namespace cpprob {
 ////////////////////////            Sample              ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-flatbuffers::Offset<infcomp::protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilder & buff) const
+flatbuffers::Offset<protocol::Sample> Sample::pack(flatbuffers::FlatBufferBuilder & buff) const
 {
     auto serialised_distr = [&] () -> flatbuffers::Offset<void> {
-        if (this->distr_enum_ == infcomp::protocol::Distribution::NONE) {
+        if (this->distr_enum_ == protocol::Distribution::NONE) {
            return 0;
         }
         else {
-            return serialise_distr_(buff);
+            return serialise_distr_(buff, val_);
         }
     }();
 
-    return infcomp::protocol::CreateSample(
+    return protocol::CreateSample(
             buff,
-            time_index_,
             buff.CreateString(addr_),
-            sample_instance_,
             distr_enum_,
-            serialised_distr,
-            infcomp::protocol::CreateNDArray(buff,
-                                             buff.CreateVector<double>(val_.values()),
-                                             buff.CreateVector<int32_t>(val_.shape())));
+            serialised_distr);
 }
 
 void Sample::set_value(const NDArray<double> &value)

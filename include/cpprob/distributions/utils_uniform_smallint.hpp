@@ -32,25 +32,26 @@ struct proposal<boost::random::uniform_smallint<IntType>> {
 
 template<class IntType>
 struct buffer<boost::random::uniform_smallint<IntType>> {
-    using type = infcomp::protocol::UniformDiscrete;
+    using type = protocol::Discrete;
 };
 
 template<class IntType>
 struct serialise<boost::random::uniform_smallint<IntType>> {
     using prior = boost::random::uniform_smallint<IntType>;
 
-    static proposal_t<prior> from_flatbuffers(const infcomp::protocol::ProposalReply *msg)
+    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg)
     {
         auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        flatbuffers::Vector<double>::iterator probs_ptr = distr->proposal_probabilities()->data()->begin();
-        return proposal_t<prior>(distr->prior_min(),
-                                 distr->prior_min() + distr->prior_size() - 1,
-                                 probs_ptr, probs_ptr+distr->prior_size());
+        return proposal_t<prior>(distr->min(),
+                                 distr->min() + distr->probabilities()->size() - 1,
+                                 distr->probabilities()->begin(), distr->probabilities()->end());
     }
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff, const prior & distr)
+    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
+                                                    const prior & distr,
+                                                    const typename prior::result_type value)
     {
-        return infcomp::protocol::CreateUniformDiscrete(buff,distr.a(), distr.b()-distr.a()+1).Union();
+        return protocol::CreateUniformDiscrete(buff,distr.a(), distr.b(), value).Union();
     }
 };
 

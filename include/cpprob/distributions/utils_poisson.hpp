@@ -46,20 +46,22 @@ struct proposal<boost::random::poisson_distribution<IntType, RealType>> {
 
 template<class IntType, class RealType>
 struct buffer<boost::random::poisson_distribution<IntType, RealType>> {
-    using type = infcomp::protocol::Poisson;
+    using type = protocol::Poisson;
 };
 
 template<class IntType, class RealType>
 struct serialise<boost::random::poisson_distribution<IntType, RealType>> {
     using prior = boost::random::poisson_distribution<IntType, RealType>;
 
-    static proposal_t<prior> from_flatbuffers(const infcomp::protocol::ProposalReply *msg) {
+    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
         auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        return proposal_t<prior>(distr->proposal_lambda());
+        return proposal_t<prior>(distr->mean());
     }
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff, const prior & distr) {
-        return infcomp::protocol::CreatePoisson(buff, distr.mean()).Union();
+    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
+                                                    const prior & distr,
+                                                    const typename prior::result_type value) {
+        return protocol::CreatePoisson(buff, distr.mean(), value).Union();
     }
 };
 

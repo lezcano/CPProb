@@ -78,14 +78,14 @@ void StateCompile::start_batch()
 
 void StateCompile::finish_batch()
 {
-    std::vector<flatbuffers::Offset<infcomp::protocol::Trace>> fbb_traces;
+    std::vector<flatbuffers::Offset<protocol::Trace>> fbb_traces;
     std::transform(batch_.begin(), batch_.end(), std::back_inserter(fbb_traces),
                    [](const TraceCompile & trace) { return trace.pack(buff_); });
 
-    auto traces = infcomp::protocol::CreateTracesFromPriorReplyDirect(buff_, &fbb_traces);
-    auto msg = infcomp::protocol::CreateMessage(
+    auto traces = protocol::CreateReplyTracesDirect(buff_, &fbb_traces);
+    auto msg = protocol::CreateMessage(
             buff_,
-            infcomp::protocol::MessageBody::TracesFromPriorReply,
+            protocol::MessageBody::ReplyTraces,
             traces.Union());
     buff_.Finish(msg);
     SocketCompile::send_batch(buff_);
@@ -100,22 +100,6 @@ void StateCompile::start_trace()
 void StateCompile::finish_trace()
 {
     batch_.emplace_back(std::move(trace_));
-}
-
-int StateCompile::sample_instance(const std::string & addr)
-{
-    // ids start in 1
-    return ++StateCompile::trace_.sample_instance_[addr];
-}
-
-int StateCompile::time_index()
-{
-    return StateCompile::trace_.time_index_;
-}
-
-void StateCompile::increment_time()
-{
-    ++StateCompile::trace_.time_index_;
 }
 
 void StateCompile::add_observe(const NDArray<double>& x)

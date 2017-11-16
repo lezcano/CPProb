@@ -14,8 +14,8 @@
 #include "cpprob/any.hpp"                               // for any
 #include "cpprob/ndarray.hpp"                           // for NDArray
 #include "cpprob/sample.hpp"                            // for Sample
+#include "flatbuffers/infcomp_generated.h"
 
-#include "flatbuffers/infcomp_generated.h"              // for CreateMessage
 namespace cpprob { class TraceCompile; }
 
 namespace cpprob{
@@ -52,9 +52,9 @@ public:
     static void connect_client(const std::string& tcp_addr);
     static void config_file(const std::string & dump_file);
 
-    static void send_observe_init(const flatbuffers::FlatBufferBuilder & buff);
+    static void send_start_inference(const flatbuffers::FlatBufferBuilder & buff);
 
-    template<class Distribution>
+    template<class Prior>
     static auto get_proposal(const flatbuffers::FlatBufferBuilder & buff){
         zmq::message_t request {buff.GetSize()};
         memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
@@ -63,13 +63,13 @@ public:
         zmq::message_t reply;
         client_.recv(&reply);
 
-        auto message = infcomp::protocol::GetMessage(reply.data());
-        auto reply_msg = static_cast<const infcomp::protocol::ProposalReply*>(message->body());
+        auto message = protocol::GetMessage(reply.data());
+        auto reply_msg = static_cast<const protocol::ReplyProposal *>(message->body());
         // TODO(Lezcano) C++17 std::expected would solve this in a cleaner way
-        if (!reply_msg->success()) {
+        if (reply_msg->distribution_type() == protocol::Distribution::NONE) {
             throw std::runtime_error("NN could not propose parameters.");
         }
-        return serialise<Distribution>::from_flatbuffers(reply_msg);
+        return serialise<Prior>::from_flatbuffers(reply_msg);
     }
 
 private:

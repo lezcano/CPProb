@@ -42,38 +42,26 @@ struct proposal<multivariate_normal_distribution<RealType>> {
 
 template<class RealType>
 struct buffer<multivariate_normal_distribution<RealType>> {
-    using type = infcomp::protocol::MultivariateNormal;
+    using type = protocol::MultivariateNormal;
 };
 
 template<class RealType>
 struct serialise<multivariate_normal_distribution<RealType>> {
     using prior = multivariate_normal_distribution<RealType>;
 
-    static proposal_t<prior> from_flatbuffers(const infcomp::protocol::ProposalReply *msg) {
+    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
         auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        auto mean_ptr = distr->proposal_mean()->data()->begin();
-        auto shape_ptr = distr->proposal_mean()->shape()->begin();
-        auto sigma_ptr = distr->proposal_std()->data()->begin();
-        auto dim = distr->proposal_mean()->data()->size();
-        auto shape_size = distr->proposal_mean()->shape()->size();
-
-        auto vec_data = std::vector<RealType>(mean_ptr, mean_ptr+dim);
-        auto vec_shape = std::vector<int>(shape_ptr, shape_ptr+shape_size);
-        return proposal_t<prior>(NDArray<RealType>(std::move(vec_data), std::move(vec_shape)), sigma_ptr, sigma_ptr + dim);
+        return proposal_t<prior>(distr->mean()->begin(), distr->mean()->end(),
+                                 distr->covariance()->begin(), distr->covariance()->end());
     }
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff, const prior & distr) {
-        auto mean = distr.mean();
-        auto sigma = distr.sigma();
-        auto mean_nd = NDArray<double>(mean.begin(), mean.end());
-        auto sigma_nd = NDArray<double>(sigma.begin(), sigma.end());
-        return infcomp::protocol::CreateMultivariateNormal(buff,
-                                                           infcomp::protocol::CreateNDArray(buff,
-                                                                                            buff.CreateVector<double>(mean_nd.values()),
-                                                                                            buff.CreateVector<int32_t>(mean_nd.shape())),
-                                                           infcomp::protocol::CreateNDArray(buff,
-                                                                                            buff.CreateVector<double>(sigma_nd.values()),
-                                                                                            buff.CreateVector<int32_t>(sigma_nd.shape()))
+    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
+                                                    const prior & distr,
+                                                    const typename prior::result_type & value) {
+        return protocol::CreateMultivariateNormal(buff,
+                    buff.CreateVector<double>(distr.mean().values()),
+                    buff.CreateVector<double>(distr.covariance()),
+                    buff.CreateVector<double>(value.values())
         ).Union();
     }
 };

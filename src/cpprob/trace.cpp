@@ -17,18 +17,18 @@ namespace cpprob {
 /////////////////////////        Compilation            ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-flatbuffers::Offset<infcomp::protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferBuilder &buff) const {
-    std::vector<flatbuffers::Offset<infcomp::protocol::Sample>> vec_sample(samples_.size());
+flatbuffers::Offset<protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferBuilder &buff) const {
+    std::vector<flatbuffers::Offset<protocol::Sample>> vec_sample(samples_.size());
     std::transform(samples_.begin(), samples_.end(), vec_sample.begin(),
                    [&](const Sample & s) { return s.pack(buff); });
 
     // TODO(Lezcano) Currently we only support one multidimensional observe or many one-dimensional observes
     if (observes_.size() == 1) {
-        return infcomp::protocol::CreateTraceDirect(
+        return protocol::CreateTraceDirect(
                 buff,
-                infcomp::protocol::CreateNDArray(buff,
-                                                 buff.CreateVector<double>(observes_.front().values()),
-                                                 buff.CreateVector<int32_t>(observes_.front().shape())),
+                protocol::CreateNDArray(buff,
+                    buff.CreateVector<double>(observes_.front().values()),
+                    buff.CreateVector<int32_t>(observes_.front().shape())),
                 &vec_sample);
     }
     else {
@@ -39,11 +39,11 @@ flatbuffers::Offset<infcomp::protocol::Trace> TraceCompile::pack(flatbuffers::Fl
             }
             obs_flat.emplace_back(static_cast<double>(obs));
         }
-        return infcomp::protocol::CreateTraceDirect(
+        return protocol::CreateTraceDirect(
                 buff,
-                infcomp::protocol::CreateNDArray(buff,
-                                                 buff.CreateVector<double>(obs_flat),
-                                                 buff.CreateVector<int32_t>(std::vector<int32_t>{static_cast<int32_t>(obs_flat.size())})),
+                protocol::CreateNDArray(buff,
+                    buff.CreateVector<double>(obs_flat),
+                    buff.CreateVector<int32_t>(std::vector<int32_t>{static_cast<int32_t>(obs_flat.size())})),
                 &vec_sample);
     }
 }

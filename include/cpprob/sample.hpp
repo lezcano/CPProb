@@ -18,19 +18,18 @@ public:
     template<class Distr>
     Sample(const std::string & addr,
            const Distr & distr,
-           const NDArray<double> & val = 0,
-           int sample_instance = 0,
-           int time_index = 0) :
+           const boost::any & val = boost::any{}) :
             addr_(addr),
             serialise_distr_(
-                    [distr](flatbuffers::FlatBufferBuilder& buff)
-                    { return serialise<Distr>::to_flatbuffers(buff, distr); }),
-            distr_enum_(infcomp::protocol::DistributionTraits<cpprob::buffer_t<Distr>>::enum_value),
-            val_(val),
-            sample_instance_(sample_instance),
-            time_index_(time_index) {}
+                    [distr, val](flatbuffers::FlatBufferBuilder& buff, const boost::any & value)
+                    {
+                        using boost::any_cast;
+                        return serialise<Distr>::to_flatbuffers(buff, distr, any_cast<typename Distr::result_type>(value));
+                    }),
+            val_{val},
+            distr_enum_(protocol::DistributionTraits<cpprob::buffer_t<Distr>>::enum_value) {}
 
-    flatbuffers::Offset<infcomp::protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
+    flatbuffers::Offset<protocol::Sample> pack(flatbuffers::FlatBufferBuilder & buff) const;
 
     void set_value(const NDArray<double> &value);
 
@@ -40,11 +39,9 @@ private:
 
     std::string addr_;
     // Store a function that, given a buffer, serialises the given distribution
-    std::function<flatbuffers::Offset<void>(flatbuffers::FlatBufferBuilder& buff)> serialise_distr_;
-    infcomp::protocol::Distribution distr_enum_;
-    NDArray<double> val_ = 0;
-    int sample_instance_ = 0;
-    int time_index_ = 0;
+    std::function<flatbuffers::Offset<void>(flatbuffers::FlatBufferBuilder& buff, const boost::any&)> serialise_distr_;
+    boost::any val_;
+    protocol::Distribution distr_enum_;
 };
 
 } // end namespace cpprob

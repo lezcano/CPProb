@@ -12,23 +12,20 @@
 #include "flatbuffers/infcomp_generated.h"
 #include "flatbuffers/flatbuffers.h"  // for FlatBufferBuilder (ptr only)
 
-namespace infcomp { namespace protocol { struct Trace; } }
+namespace protocol { struct Trace; }
 
 namespace cpprob {
 
 class TraceCompile {
 public:
 
-    flatbuffers::Offset<infcomp::protocol::Trace> pack(flatbuffers::FlatBufferBuilder& buff) const;
+    flatbuffers::Offset<protocol::Trace> pack(flatbuffers::FlatBufferBuilder& buff) const;
 
 private:
     // Friends
     friend class StateCompile;
 
     // Attributes
-    int time_index_ = 1;
-    std::unordered_map<std::string, int> sample_instance_;
-
     std::vector<Sample> samples_;
     std::vector<Sample> samples_rejection_;
     std::vector<cpprob::NDArray<double>> observes_;

@@ -82,7 +82,7 @@ private:
                             const Distr & distr,
                             const NDArray<double> val)
     {
-        auto sample = Sample(addr, distr, val, StateCompile::sample_instance(addr), StateCompile::time_index());
+        auto sample = Sample(addr, distr, val);
 
         if (State::rejection_sampling()) {
             StateCompile::trace_.samples_rejection_.emplace_back(std::move(sample));
@@ -93,11 +93,6 @@ private:
     }
 
     static void add_observe(const NDArray<double> & x);
-
-    static int sample_instance(const std::string & addr);
-
-    static int time_index();
-    static void increment_time();
 
     // Functions to handle accept / reject
     static void start_rejection_sampling();
@@ -193,26 +188,26 @@ class StateInfer {
 public:
 
     template<class... Args>
-    static void send_observe_init(const std::tuple<Args...> & observes)
+    static void send_start_inference(const std::tuple<Args...> & observes)
     {
-        NDArray<double> obs_nd = StateInfer::obs_to_ndarr(observes,
-                                                          std::integral_constant<bool,
-                                                                  std::tuple_size<decltype(
-                                                                  discard_build(std::declval<std::tuple<Args...>>())
-                                                                  )>::value == 1>{});
+        NDArray<double> obs_nd = StateInfer::obs_to_ndarray(observes,
+                                                            std::integral_constant<bool,
+                                                                    std::tuple_size<decltype(
+                                                                    discard_build(std::declval<std::tuple<Args...>>())
+                                                                    )>::value == 1>{});
 
-        auto observe_init = infcomp::protocol::CreateObservesInitRequest(
+        auto observe_init = protocol::CreateStartInference(
                 buff_,
-                infcomp::protocol::CreateNDArray(buff_,
-                                                 buff_.CreateVector<double>(obs_nd.values()),
-                                                 buff_.CreateVector<int32_t>(obs_nd.shape())));
+                protocol::CreateNDArray(buff_,
+                                        buff_.CreateVector<double>(obs_nd.values()),
+                                        buff_.CreateVector<int32_t>(obs_nd.shape())));
 
-        auto msg = infcomp::protocol::CreateMessage(
+        auto msg = protocol::CreateMessage(
                 buff_,
-                infcomp::protocol::MessageBody::ObservesInitRequest,
+                protocol::MessageBody::StartInference,
                 observe_init.Union());
         buff_.Finish(msg);
-        SocketInfer::send_observe_init(buff_);
+        SocketInfer::send_start_inference(buff_);
         buff_.Clear();
     }
 
@@ -270,10 +265,10 @@ private:
         // we ask for the distribution
         auto curr = trace_.curr_sample_.pack(buff_);
         auto last = trace_.prev_sample_.pack(buff_);
-        auto msg = infcomp::protocol::CreateMessage(
+        auto msg = protocol::CreateMessage(
                 buff_,
-                infcomp::protocol::MessageBody::ProposalRequest,
-                infcomp::protocol::CreateProposalRequest(buff_, curr, last).Union());
+                protocol::MessageBody::RequestProposal,
+                protocol::CreateRequestProposal(buff_, curr, last).Union());
 
         buff_.Finish(msg);
         const auto distr = SocketInfer::get_proposal<Distribution>(buff_);
@@ -290,8 +285,7 @@ private:
 
     // Functions to manipulate samples
     template<class Distr>
-    static void new_sample( const std::string & addr,
-                     const Distr & distr)
+    static void new_sample( const std::string & addr, const Distr & distr)
     {
         trace_.prev_sample_ = trace_.curr_sample_;
         trace_.curr_sample_ = Sample(addr, distr);
@@ -303,13 +297,13 @@ private:
     // TODO(Lezcano) C++17 This should be done with an if constexpr
     // We just support either one tensorial observe or many scalar observes
     template<class... Args>
-    static NDArray<double> obs_to_ndarr(const std::tuple<Args...> & observes, std::true_type)
+    static NDArray<double> obs_to_ndarray(const std::tuple<Args...> & observes, std::true_type)
     {
         return std::get<0>(observes);
     }
 
     template<class... Args>
-    static NDArray<double> obs_to_ndarr(const std::tuple<Args...> & observes, std::false_type)
+    static NDArray<double> obs_to_ndarray(const std::tuple<Args...> & observes, std::false_type)
     {
         return NDArray<double>(detail::to_vec<double>(discard_build(observes)));
     }

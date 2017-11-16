@@ -2,6 +2,7 @@
 #define CPPROB_MULTIVARIATE_NORMAL_HPP_HPP
 
 #include <algorithm>
+#include <cmath>
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
@@ -34,57 +35,57 @@ public:
         param_type() : distr_{boost::random::normal_distribution<RealType>(0, 1)}, shape_{1} {};
 
         template<class Iter>
-        param_type(Iter mean_first, Iter mean_last, RealType sigma)
+        param_type(Iter mean_first, Iter mean_last, RealType covariance)
         {
-            init(mean_first, mean_last, sigma);
+            init(mean_first, mean_last, covariance);
             init_shape();
         }
 
         template<class IterMean, class IterSigma>
-        param_type(IterMean mean_first, IterMean mean_last, IterSigma sigma_first, IterSigma sigma_last)
+        param_type(IterMean mean_first, IterMean mean_last, IterSigma covariance_first, IterSigma covariance_last)
         {
-            init(mean_first, mean_last, sigma_first, sigma_last);
+            init(mean_first, mean_last, covariance_first, covariance_last);
             init_shape();
         }
 
-        param_type(const std::initializer_list<RealType> & mean, RealType sigma)
+        param_type(const std::initializer_list<RealType> & mean, RealType covariance)
         {
-            init(mean.begin(), mean.end(),sigma);
+            init(mean.begin(), mean.end(),covariance);
             init_shape();
         }
 
-        param_type(const std::initializer_list<RealType> & mean,  const std::initializer_list<RealType> & sigma)
+        param_type(const std::initializer_list<RealType> & mean,  const std::initializer_list<RealType> & covariance)
         {
-            init(mean.begin(), mean.end(), sigma.begin(), sigma.end());
+            init(mean.begin(), mean.end(), covariance.begin(), covariance.end());
             init_shape();
         }
 
         template<typename RangeMean>
-        explicit param_type(const RangeMean & mean,  RealType sigma)
+        explicit param_type(const RangeMean & mean,  RealType covariance)
         {
-            init(mean.begin(), mean.end(), sigma);
+            init(mean.begin(), mean.end(), covariance);
             init_shape();
         }
 
         template<typename RangeMean, class RangeSigma>
-        explicit param_type(const RangeMean & mean,  const RangeSigma & sigma)
+        explicit param_type(const RangeMean & mean,  const RangeSigma & covariance)
         {
-            init(mean.begin(), mean.end(), sigma.begin(), sigma.end());
+            init(mean.begin(), mean.end(), covariance.begin(), covariance.end());
             init_shape();
         }
 
-        param_type(const NDArray<RealType> & mean,  RealType sigma)
+        param_type(const NDArray<RealType> & mean,  RealType covariance)
         {
             auto mean_v = mean.values();
-            init(mean_v.begin(), mean_v.end(), sigma);
+            init(mean_v.begin(), mean_v.end(), covariance);
             init_shape(mean.shape());
         }
 
         template<class IterSigma>
-        param_type(const NDArray<RealType> & mean, IterSigma sigma_first, IterSigma sigma_last)
+        param_type(const NDArray<RealType> & mean, IterSigma covariance_first, IterSigma covariance_last)
         {
             auto mean_v = mean.values();
-            init(mean_v.begin(), mean_v.end(), sigma_first, sigma_last);
+            init(mean_v.begin(), mean_v.end(), covariance_first, covariance_last);
             init_shape(mean.shape());
         }
 
@@ -96,11 +97,11 @@ public:
             return NDArray<RealType>(std::move(mean), shape_);
         }
 
-        std::vector<RealType> sigma() const
+        std::vector<RealType> covariance() const
         {
-            std::vector<RealType> sigma;
-            std::transform(distr_.begin(), distr_.end(), std::back_inserter(sigma), [](const auto & distr) { return distr.sigma(); });
-            return sigma;
+            std::vector<RealType> covariance;
+            std::transform(distr_.begin(), distr_.end(), std::back_inserter(covariance), [](const auto & distr) { return distr.sigma()*distr.sigma(); });
+            return covariance;
         }
 
         std::vector<int> shape() const
@@ -119,7 +120,7 @@ public:
         operator<<(std::basic_ostream< CharT, Traits > & os, const param_type & param)
         {
             using namespace detail; // operator<< for std::vector
-            return os << param.mean() << os.widen(' ') << param.sigma();
+            return os << param.mean() << os.widen(' ') << param.covariance();
         }
 
         template<typename CharT, typename Traits>
@@ -127,17 +128,17 @@ public:
         operator>>(std::basic_istream< CharT, Traits > & is, param_type &  param)
         {
             using namespace detail; // operator>> for std::vector
-            std::vector<RealType> mean_temp, sigma_temp;
-            if(!(is >> mean_temp >> std::ws >> sigma_temp)) {
+            std::vector<RealType> mean_temp, covariance_temp;
+            if(!(is >> mean_temp >> std::ws >> covariance_temp)) {
                 return is;
             }
 
-            if (sigma_temp.size() == 1) {
-                param.init(mean_temp.begin(), mean_temp.end(), sigma_temp.front());
+            if (covariance_temp.size() == 1) {
+                param.init(mean_temp.begin(), mean_temp.end(), covariance_temp.front());
                 return is;
             }
 
-            param.init(mean_temp.begin(), mean_temp.end(), sigma_temp.begin(), sigma_temp.end());
+            param.init(mean_temp.begin(), mean_temp.end(), covariance_temp.begin(), covariance_temp.end());
 
             return is;
         }
@@ -156,18 +157,24 @@ public:
     private:
 
         template<class Iter>
-        void init(Iter mean_first, Iter mean_last, RealType sigma)
+        void init(Iter mean_first, Iter mean_last, RealType covariance)
         {
+            using std::sqrt;
             distr_.clear();
-            for (; mean_first != mean_last; ++mean_first)
-                distr_.emplace_back(*mean_first, sigma);
+            for (; mean_first != mean_last; ++mean_first){
+                // boost::random::normal uses the standard deviation
+                distr_.emplace_back(*mean_first, sqrt(covariance));
+            }
         }
 
         template<class IterMean, class IterSigma>
-        void init(IterMean mean_first, IterMean mean_last, IterSigma sigma_first, IterSigma sigma_last)
+        void init(IterMean mean_first, IterMean mean_last, IterSigma covariance_first, IterSigma covariance_last)
         {
-            for (; mean_first != mean_last && sigma_first != sigma_last; ++mean_first, ++sigma_first)
-                distr_.emplace_back(*mean_first, *sigma_first);
+            using std::sqrt;
+            for (; mean_first != mean_last && covariance_first != covariance_last; ++mean_first, ++covariance_first) {
+                // boost::random::normal uses the standard deviation
+                distr_.emplace_back(*mean_first, sqrt(*covariance_first));
+            }
         }
 
         void init_shape(std::vector<int> shape = std::vector<int>())
@@ -190,30 +197,30 @@ public:
     multivariate_normal_distribution(const param_type & param) : param_{param} {}
 
     template<class Iter>
-    multivariate_normal_distribution(Iter mean_first, Iter mean_last, RealType sigma)
-            : param_(mean_first, mean_last, sigma) {}
+    multivariate_normal_distribution(Iter mean_first, Iter mean_last, RealType covariance)
+            : param_(mean_first, mean_last, covariance) {}
 
     template<class IterMean, class IterSigma>
-    multivariate_normal_distribution(IterMean mean_first, IterMean mean_last, IterSigma sigma_first, IterSigma sigma_last)
-            : param_(mean_first, mean_last, sigma_first, sigma_last) {}
+    multivariate_normal_distribution(IterMean mean_first, IterMean mean_last, IterSigma covariance_first, IterSigma covariance_last)
+            : param_(mean_first, mean_last, covariance_first, covariance_last) {}
 
-    multivariate_normal_distribution(const std::initializer_list<RealType> & mean, RealType sigma)
-            : param_(mean, sigma) {}
+    multivariate_normal_distribution(const std::initializer_list<RealType> & mean, RealType covariance)
+            : param_(mean, covariance) {}
 
 
-    multivariate_normal_distribution(const std::initializer_list<RealType> & mean,  const std::initializer_list<RealType> & sigma)
-            : param_(mean, sigma) {}
+    multivariate_normal_distribution(const std::initializer_list<RealType> & mean,  const std::initializer_list<RealType> & covariance)
+            : param_(mean, covariance) {}
 
     template<typename RangeMean>
-    explicit multivariate_normal_distribution(const RangeMean & mean,  RealType sigma) : param_(mean, sigma) {}
+    explicit multivariate_normal_distribution(const RangeMean & mean,  RealType covariance) : param_(mean, covariance) {}
 
     template<typename RangeMean, class RangeSigma>
-    explicit multivariate_normal_distribution(const RangeMean & mean,  const RangeSigma & sigma) : param_(mean, sigma) {}
+    explicit multivariate_normal_distribution(const RangeMean & mean,  const RangeSigma & covariance) : param_(mean, covariance) {}
 
-    multivariate_normal_distribution(const NDArray<RealType> & mean,  RealType sigma) : param_(mean, sigma) {}
+    multivariate_normal_distribution(const NDArray<RealType> & mean,  RealType covariance) : param_(mean, covariance) {}
 
     template<class IterSigma>
-    multivariate_normal_distribution(const NDArray<RealType> & mean, IterSigma sigma_first, IterSigma sigma_last) : param_(mean, sigma_first, sigma_last) {}
+    multivariate_normal_distribution(const NDArray<RealType> & mean, IterSigma covariance_first, IterSigma covariance_last) : param_(mean, covariance_first, covariance_last) {}
 
     // public member functions
     NDArray<RealType> mean() const
@@ -221,9 +228,9 @@ public:
         return param_.mean();
     }
 
-    std::vector<RealType> sigma() const
+    std::vector<RealType> covariance() const
     {
-        return param_.sigma();
+        return param_.covariance();
     }
 
     std::vector<boost::random::normal_distribution<RealType>> distr() const

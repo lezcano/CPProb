@@ -41,8 +41,6 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
     if (State::state() == StateType::compile) {
         x = distr(get_rng());
         StateCompile::add_sample(addr, distr, x);
-        StateCompile::increment_time();
-
     }
     else if (State::state() == StateType::inference) {
         StateInfer::new_sample(addr, distr);
@@ -142,8 +140,10 @@ void generate_posterior(
 
     State::set(state);
     StateInfer::start_infer();
+
     if (State::state() == StateType::inference) {
         SocketInfer::connect_client(tcp_addr);
+        StateInfer::send_start_inference(observes);
     }
 
     SocketInfer::config_file(file_name);
@@ -151,11 +151,6 @@ void generate_posterior(
     for (std::size_t i = 0; i < n; ++i) {
         std::cout << "Generating trace " << i << std::endl;
         StateInfer::start_trace();
-
-        if (State::state() == StateType::inference) {
-            StateInfer::send_observe_init(observes);
-        }
-
         call_f_tuple(f, observes);
         StateInfer::finish_trace();
     }
