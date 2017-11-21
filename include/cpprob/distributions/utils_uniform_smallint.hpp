@@ -11,8 +11,9 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+/////////// Prior  ///////////
 //////////////////////////////
+
 template <class IntType>
 struct logpdf<boost::random::uniform_smallint<IntType>> {
     double operator()(const boost::random::uniform_smallint<IntType>& distr,
@@ -22,36 +23,25 @@ struct logpdf<boost::random::uniform_smallint<IntType>> {
     }
 };
 
-//////////////////////////////
-/////////// Prior  ///////////
-//////////////////////////////
-template<class IntType>
-struct proposal<boost::random::uniform_smallint<IntType>> {
-    using type = min_max_discrete_distribution<IntType, double>;
-};
-
 template<class IntType>
 struct buffer<boost::random::uniform_smallint<IntType>> {
     using type = protocol::Discrete;
 };
 
 template<class IntType>
-struct serialise<boost::random::uniform_smallint<IntType>> {
-    using prior = boost::random::uniform_smallint<IntType>;
+struct proposal<boost::random::uniform_smallint<IntType>> {
+    using type = min_max_discrete_distribution<IntType, double>;
+};
 
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg)
-    {
-        auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        return proposal_t<prior>(distr->min(),
-                                 distr->min() + distr->probabilities()->size() - 1,
-                                 distr->probabilities()->begin(), distr->probabilities()->end());
-    }
+template<class IntType>
+struct to_flatbuffers<boost::random::uniform_smallint<IntType>> {
+    using distr_t = boost::random::uniform_smallint<IntType>;
 
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    const typename prior::result_type value)
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+                                         const distr_t & distr,
+                                         const typename distr_t::result_type value)
     {
-        return protocol::CreateUniformDiscrete(buff,distr.a(), distr.b(), value).Union();
+        return protocol::CreateUniformDiscrete(buff, distr.a(), distr.b(), value).Union();
     }
 };
 

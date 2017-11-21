@@ -54,7 +54,7 @@ public:
 
     static void send_start_inference(const flatbuffers::FlatBufferBuilder & buff);
 
-    template<class Prior>
+    template<class Proposal>
     static auto get_proposal(const flatbuffers::FlatBufferBuilder & buff){
         zmq::message_t request {buff.GetSize()};
         memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
@@ -69,7 +69,13 @@ public:
         if (reply_msg->distribution_type() == protocol::Distribution::NONE) {
             throw std::runtime_error("NN could not propose parameters.");
         }
-        return serialise<Prior>::from_flatbuffers(reply_msg);
+
+        auto distr = reply_msg->template distribution_as<buffer_t<Proposal>>();
+        if (distr == nullptr) {
+            throw std::runtime_error("NN proposed parameters for an incorrect proposal distribution.");
+        }
+
+        return from_flatbuffers<Proposal>()(distr);
     }
 
 private:

@@ -24,6 +24,26 @@ struct logpdf<min_max_discrete_distribution<IntType, WeightType>> {
     }
 };
 
+template<class IntType, class WeightType>
+struct buffer<min_max_discrete_distribution<IntType, WeightType>> {
+    using type = protocol::Discrete;
+};
+
+template<class IntType, class WeightType>
+struct from_flatbuffers<min_max_discrete_distribution<IntType, WeightType>> {
+    using distr_t = min_max_discrete_distribution<IntType, WeightType>;
+
+    distr_t operator()(const buffer_t<distr_t> * distr)
+    {
+
+        return distr_t(distr->min(),
+                       distr->min() + distr->probabilities()->size() - 1,
+                       distr->probabilities()->begin(),
+                       distr->probabilities()->end());
+
+    }
+};
+
 } // end namespace cpprob
 
 #endif //CPPROB_UTILS_MIN_MAX_DISCRETE_HPP

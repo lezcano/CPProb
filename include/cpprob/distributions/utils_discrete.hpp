@@ -11,7 +11,7 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+////// Prior & Proposal //////
 //////////////////////////////
 
 template<class IntType, class WeightType>
@@ -26,6 +26,11 @@ struct logpdf <boost::random::discrete_distribution<IntType, WeightType>>{
     }
 };
 
+template<class IntType, class WeightType>
+struct buffer<boost::random::discrete_distribution<IntType, WeightType>> {
+    using type = protocol::Discrete;
+};
+
 //////////////////////////////
 /////////// Prior  ///////////
 //////////////////////////////
@@ -36,27 +41,28 @@ struct proposal<boost::random::discrete_distribution<IntType, WeightType>> {
 };
 
 template<class IntType, class WeightType>
-struct buffer<boost::random::discrete_distribution<IntType, WeightType>> {
-    using type = protocol::Discrete;
-};
+struct to_flatbuffers<boost::random::discrete_distribution<IntType, WeightType>> {
+    using distr_t = boost::random::discrete_distribution<IntType, WeightType>;
 
-template<class IntType, class WeightType>
-struct serialise<boost::random::discrete_distribution<IntType, WeightType>> {
-    using prior = boost::random::discrete_distribution<IntType, WeightType>;
-
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg)
-    {
-        auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        flatbuffers::Vector<double>::iterator probs_ptr = distr->probabilities()->begin();
-        return proposal_t<prior>(probs_ptr, distr->probabilities()->end());
-
-    }
-
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    typename prior::result_type value)
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+                                                    const distr_t & distr,
+                                                    typename distr_t::result_type value)
     {
         return protocol::CreateDiscrete(buff, 0, buff.CreateVector<double>(distr.probabilities()), value).Union();
+    }
+};
+
+//////////////////////////////
+///////// Proposal  //////////
+//////////////////////////////
+
+template<class IntType, class WeightType>
+struct from_flatbuffers<boost::random::discrete_distribution<IntType, WeightType>> {
+    using distr_t = boost::random::discrete_distribution<IntType, WeightType>;
+
+    distr_t operator()(const buffer_t<distr_t> * distr)
+    {
+        return distr_t(distr->probabilities()->begin(), distr->probabilities()->end());
     }
 };
 

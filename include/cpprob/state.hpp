@@ -235,11 +235,11 @@ private:
 
     static void increment_log_prob(const double log_p);
 
-    template<class Distribution>
-    static typename proposal<Distribution>::type get_proposal()
+    template<class Proposal>
+    static Proposal get_proposal()
     {
         // Rejection Sampling Cache
-        static std::map<std::string, typename proposal<Distribution>::type> cache;
+        static std::map<std::string, Proposal> cache;
 
         std::string addr;
         typename decltype(cache)::iterator distr_iter;
@@ -272,7 +272,7 @@ private:
                 protocol::CreateRequestProposal(buff_, curr, last).Union());
 
         buff_.Finish(msg);
-        const auto distr = SocketInfer::get_proposal<Distribution>(buff_);
+        const auto distr = SocketInfer::get_proposal<Proposal>(buff_);
         buff_.Clear();
 
         if (State::rejection_sampling()) {

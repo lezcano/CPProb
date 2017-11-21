@@ -14,7 +14,7 @@ namespace cpprob {
 
 template <class Distribution>
 struct logpdf<truncated<Distribution>> {
-    auto operator()(const truncated<Distribution>& distr,
+    auto operator()(const truncated<Distribution> & distr,
                     const typename truncated<Distribution>::result_type & x) -> decltype(logpdf<Distribution>()(distr.distribution(), x)) const
     {
         if (x < distr.min() || x > distr.max()) {
@@ -22,7 +22,24 @@ struct logpdf<truncated<Distribution>> {
         }
         const auto underlying_distr = distr.distribution();
         return logpdf<Distribution>()(underlying_distr, x) -
-               std::log(truncated_normaliser<Distribution>::normalise(underlying_distr, distr.min(), distr.max()));
+               std::log(normalise<Distribution>()(underlying_distr, distr.min(), distr.max()));
+    }
+};
+
+template<class Distribution>
+struct buffer<truncated<Distribution>> {
+    using type = protocol::Truncated;
+};
+
+template<class Distribution>
+struct from_flatbuffers<truncated<Distribution>> {
+    using distr_t = truncated<Distribution>;
+
+    distr_t operator()(const buffer_t<distr_t> * distr_fbb)
+    {
+        const auto inner_distr_fbb = distr_fbb->template distribution_as<buffer_t<Distribution>>();
+        Distribution distr = from_flatbuffers<Distribution>()(inner_distr_fbb);
+        return truncated<Distribution>(distr, distr_fbb->min(), distr_fbb->max());
     }
 };
 

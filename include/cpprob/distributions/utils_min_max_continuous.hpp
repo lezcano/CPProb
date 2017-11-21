@@ -9,13 +9,17 @@
 
 #include "cpprob/distributions/min_max_continuous.hpp"
 
+// TODO(Lezcano) Deprecate
 namespace cpprob {
 
 //////////////////////////////
 ////////// Proposal //////////
 //////////////////////////////
 template<class RealType>
-struct logpdf<min_max_continuous_distribution<RealType>> {
+struct
+[[deprecated("The new proposal for uniform_continuous is a mixture of truncated")]]
+logpdf<min_max_continuous_distribution<RealType>> {
+
     RealType operator()(const min_max_continuous_distribution<RealType> & distr,
                         const typename min_max_continuous_distribution<RealType>::result_type & x) const
     {

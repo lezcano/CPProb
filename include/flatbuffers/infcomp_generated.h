@@ -22,7 +22,7 @@ struct Gamma;
 
 struct Laplace;
 
-struct MixtureTruncated;
+struct MixtureNormal;
 
 struct MultivariateNormal;
 
@@ -134,7 +134,7 @@ enum class Distribution : uint8_t {
   Flip = 3,
   Gamma = 4,
   Laplace = 5,
-  MixtureTruncated = 6,
+  MixtureNormal = 6,
   MultivariateNormal = 7,
   Normal = 8,
   Poisson = 9,
@@ -153,7 +153,7 @@ inline Distribution (&EnumValuesDistribution())[13] {
     Distribution::Flip,
     Distribution::Gamma,
     Distribution::Laplace,
-    Distribution::MixtureTruncated,
+    Distribution::MixtureNormal,
     Distribution::MultivariateNormal,
     Distribution::Normal,
     Distribution::Poisson,
@@ -172,7 +172,7 @@ inline const char **EnumNamesDistribution() {
     "Flip",
     "Gamma",
     "Laplace",
-    "MixtureTruncated",
+    "MixtureNormal",
     "MultivariateNormal",
     "Normal",
     "Poisson",
@@ -213,8 +213,8 @@ template<> struct DistributionTraits<Laplace> {
   static const Distribution enum_value = Distribution::Laplace;
 };
 
-template<> struct DistributionTraits<MixtureTruncated> {
-  static const Distribution enum_value = Distribution::MixtureTruncated;
+template<> struct DistributionTraits<MixtureNormal> {
+  static const Distribution enum_value = Distribution::MixtureNormal;
 };
 
 template<> struct DistributionTraits<MultivariateNormal> {
@@ -703,7 +703,7 @@ inline flatbuffers::Offset<Laplace> CreateLaplace(
   return builder_.Finish();
 }
 
-struct MixtureTruncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct MixtureNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_COEFFICIENTS = 4,
     VT_DISTRIBUTIONS = 6
@@ -711,8 +711,8 @@ struct MixtureTruncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<double> *coefficients() const {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_COEFFICIENTS);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<Truncated>> *distributions() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Truncated>> *>(VT_DISTRIBUTIONS);
+  const flatbuffers::Vector<flatbuffers::Offset<Normal>> *distributions() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Normal>> *>(VT_DISTRIBUTIONS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -725,45 +725,45 @@ struct MixtureTruncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct MixtureTruncatedBuilder {
+struct MixtureNormalBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_coefficients(flatbuffers::Offset<flatbuffers::Vector<double>> coefficients) {
-    fbb_.AddOffset(MixtureTruncated::VT_COEFFICIENTS, coefficients);
+    fbb_.AddOffset(MixtureNormal::VT_COEFFICIENTS, coefficients);
   }
-  void add_distributions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Truncated>>> distributions) {
-    fbb_.AddOffset(MixtureTruncated::VT_DISTRIBUTIONS, distributions);
+  void add_distributions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Normal>>> distributions) {
+    fbb_.AddOffset(MixtureNormal::VT_DISTRIBUTIONS, distributions);
   }
-  MixtureTruncatedBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  MixtureNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  MixtureTruncatedBuilder &operator=(const MixtureTruncatedBuilder &);
-  flatbuffers::Offset<MixtureTruncated> Finish() {
+  MixtureNormalBuilder &operator=(const MixtureNormalBuilder &);
+  flatbuffers::Offset<MixtureNormal> Finish() {
     const auto end = fbb_.EndTable(start_, 2);
-    auto o = flatbuffers::Offset<MixtureTruncated>(end);
+    auto o = flatbuffers::Offset<MixtureNormal>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<MixtureTruncated> CreateMixtureTruncated(
+inline flatbuffers::Offset<MixtureNormal> CreateMixtureNormal(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<double>> coefficients = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Truncated>>> distributions = 0) {
-  MixtureTruncatedBuilder builder_(_fbb);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Normal>>> distributions = 0) {
+  MixtureNormalBuilder builder_(_fbb);
   builder_.add_distributions(distributions);
   builder_.add_coefficients(coefficients);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<MixtureTruncated> CreateMixtureTruncatedDirect(
+inline flatbuffers::Offset<MixtureNormal> CreateMixtureNormalDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<double> *coefficients = nullptr,
-    const std::vector<flatbuffers::Offset<Truncated>> *distributions = nullptr) {
-  return protocol::CreateMixtureTruncated(
+    const std::vector<flatbuffers::Offset<Normal>> *distributions = nullptr) {
+  return protocol::CreateMixtureNormal(
       _fbb,
       coefficients ? _fbb.CreateVector<double>(*coefficients) : 0,
-      distributions ? _fbb.CreateVector<flatbuffers::Offset<Truncated>>(*distributions) : 0);
+      distributions ? _fbb.CreateVector<flatbuffers::Offset<Normal>>(*distributions) : 0);
 }
 
 struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -986,8 +986,8 @@ struct Truncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Laplace *distribution_as_Laplace() const {
     return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
   }
-  const MixtureTruncated *distribution_as_MixtureTruncated() const {
-    return distribution_type() == Distribution::MixtureTruncated ? static_cast<const MixtureTruncated *>(distribution()) : nullptr;
+  const MixtureNormal *distribution_as_MixtureNormal() const {
+    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
   }
   const MultivariateNormal *distribution_as_MultivariateNormal() const {
     return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
@@ -1038,8 +1038,8 @@ template<> inline const Laplace *Truncated::distribution_as<Laplace>() const {
   return distribution_as_Laplace();
 }
 
-template<> inline const MixtureTruncated *Truncated::distribution_as<MixtureTruncated>() const {
-  return distribution_as_MixtureTruncated();
+template<> inline const MixtureNormal *Truncated::distribution_as<MixtureNormal>() const {
+  return distribution_as_MixtureNormal();
 }
 
 template<> inline const MultivariateNormal *Truncated::distribution_as<MultivariateNormal>() const {
@@ -1258,8 +1258,8 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Laplace *distribution_as_Laplace() const {
     return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
   }
-  const MixtureTruncated *distribution_as_MixtureTruncated() const {
-    return distribution_type() == Distribution::MixtureTruncated ? static_cast<const MixtureTruncated *>(distribution()) : nullptr;
+  const MixtureNormal *distribution_as_MixtureNormal() const {
+    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
   }
   const MultivariateNormal *distribution_as_MultivariateNormal() const {
     return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
@@ -1310,8 +1310,8 @@ template<> inline const Laplace *Sample::distribution_as<Laplace>() const {
   return distribution_as_Laplace();
 }
 
-template<> inline const MixtureTruncated *Sample::distribution_as<MixtureTruncated>() const {
-  return distribution_as_MixtureTruncated();
+template<> inline const MixtureNormal *Sample::distribution_as<MixtureNormal>() const {
+  return distribution_as_MixtureNormal();
 }
 
 template<> inline const MultivariateNormal *Sample::distribution_as<MultivariateNormal>() const {
@@ -1687,8 +1687,8 @@ struct ReplyProposal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Laplace *distribution_as_Laplace() const {
     return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
   }
-  const MixtureTruncated *distribution_as_MixtureTruncated() const {
-    return distribution_type() == Distribution::MixtureTruncated ? static_cast<const MixtureTruncated *>(distribution()) : nullptr;
+  const MixtureNormal *distribution_as_MixtureNormal() const {
+    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
   }
   const MultivariateNormal *distribution_as_MultivariateNormal() const {
     return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
@@ -1737,8 +1737,8 @@ template<> inline const Laplace *ReplyProposal::distribution_as<Laplace>() const
   return distribution_as_Laplace();
 }
 
-template<> inline const MixtureTruncated *ReplyProposal::distribution_as<MixtureTruncated>() const {
-  return distribution_as_MixtureTruncated();
+template<> inline const MixtureNormal *ReplyProposal::distribution_as<MixtureNormal>() const {
+  return distribution_as_MixtureNormal();
 }
 
 template<> inline const MultivariateNormal *ReplyProposal::distribution_as<MultivariateNormal>() const {
@@ -1865,8 +1865,8 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
       auto ptr = reinterpret_cast<const Laplace *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Distribution::MixtureTruncated: {
-      auto ptr = reinterpret_cast<const MixtureTruncated *>(obj);
+    case Distribution::MixtureNormal: {
+      auto ptr = reinterpret_cast<const MixtureNormal *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Distribution::MultivariateNormal: {

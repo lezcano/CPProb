@@ -24,7 +24,7 @@ union Distribution {
     Flip,
     Gamma,
     Laplace,
-    MixtureTruncated,
+    MixtureNormal,
     MultivariateNormal,
     Normal,
     Poisson,
@@ -69,10 +69,10 @@ table Laplace {
 
 // We cannot make the code truly generic (Mixture table) since flatbuffer python does not support it
 // Error: Vector of unions are not yet supported in Flatbuffers python
-table MixtureTruncated {
+table MixtureNormal {
     // size(coefficients) == size(distributions)
     coefficients: [double];         // \sum coefficients = 1, coefficients >= 0
-    distributions: [Truncated];
+    distributions: [Normal];
 }
 
 table MultivariateNormal {

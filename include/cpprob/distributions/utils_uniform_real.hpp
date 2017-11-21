@@ -15,7 +15,7 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+/////////// Prior  ///////////
 //////////////////////////////
 
 template<typename RealType>
@@ -30,45 +30,24 @@ struct logpdf<boost::random::uniform_real_distribution<RealType>> {
     }
 };
 
-//////////////////////////////
-/////////// Prior  ///////////
-//////////////////////////////
+template<class RealType>
+struct buffer<boost::random::uniform_real_distribution<RealType>> {
+    using type = protocol::UniformContinuous;
+};
 
 template<class RealType>
 struct proposal<boost::random::uniform_real_distribution<RealType>> {
-    using type = mixture<truncated<boost::random::normal_distribution<RealType>>>;
+    using type = truncated<mixture<boost::random::normal_distribution<RealType>, RealType>>;
 };
 
 template<class RealType>
-struct buffer<boost::random::uniform_real_distribution<RealType>> {
-    using type = protocol::MixtureTruncated;
-};
+struct to_flatbuffers<boost::random::uniform_real_distribution<RealType>> {
+    using distr_t = boost::random::uniform_real_distribution<RealType>;
 
-template<class RealType>
-struct serialise<boost::random::uniform_real_distribution<RealType>> {
-    using prior = boost::random::uniform_real_distribution<RealType>;
-
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
-        auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-
-        std::vector<truncated<boost::random::normal_distribution<RealType>>> v_distr(distr->distributions()->size());
-        auto truncated_ptr = distr->distributions()->begin();
-        for(std::size_t i = 0; i < distr->distributions()->size(); ++i) {
-            auto normal_i = static_cast<const protocol::Normal *>(truncated_ptr->distribution());
-
-            v_distr[i] = truncated<boost::normal_distribution<RealType>>(
-                    boost::normal_distribution<RealType>(normal_i->mean(), normal_i->std()),
-                    truncated_ptr->min(), truncated_ptr->max());
-
-            ++truncated_ptr;
-        }
-        return proposal_t<prior>(distr->coefficients()->begin(), distr->coefficients()->end(),
-                                 v_distr.begin(), v_distr.end());
-    }
-
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    const typename prior::result_type value) {
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+                                                    const distr_t & distr,
+                                                    const typename distr_t::result_type value)
+    {
         return protocol::CreateUniformContinuous(buff, distr.a(), distr.b(), value).Union();
     }
 };

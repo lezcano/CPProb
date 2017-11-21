@@ -46,7 +46,7 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
         StateInfer::new_sample(addr, distr);
 
         try {
-            auto proposal = StateInfer::get_proposal<Distribution>();
+            auto proposal = StateInfer::get_proposal<proposal_t<Distribution>>();
             x = proposal(get_rng());
 
             StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x) - logpdf<proposal_t<Distribution>>()(proposal, x));

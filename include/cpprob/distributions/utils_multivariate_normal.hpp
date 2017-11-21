@@ -13,7 +13,7 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+////// Prior & Proposal //////
 //////////////////////////////
 
 template<typename RealType>
@@ -31,6 +31,11 @@ struct logpdf<multivariate_normal_distribution<RealType>> {
     }
 };
 
+template<class RealType>
+struct buffer<multivariate_normal_distribution<RealType>> {
+    using type = protocol::MultivariateNormal;
+};
+
 //////////////////////////////
 /////////// Prior  ///////////
 //////////////////////////////
@@ -41,28 +46,31 @@ struct proposal<multivariate_normal_distribution<RealType>> {
 };
 
 template<class RealType>
-struct buffer<multivariate_normal_distribution<RealType>> {
-    using type = protocol::MultivariateNormal;
+struct to_flatbuffers<multivariate_normal_distribution<RealType>> {
+    using distr_t = multivariate_normal_distribution<RealType>;
+
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+                                         const distr_t & distr,
+                                         const typename distr_t::result_type & value) {
+        return protocol::CreateMultivariateNormal(buff,
+                                                  buff.CreateVector<double>(distr.mean().values()),
+                                                  buff.CreateVector<double>(distr.covariance()),
+                                                  buff.CreateVector<double>(value.values())
+        ).Union();
+    }
 };
 
+//////////////////////////////
+///////// Proposal  //////////
+//////////////////////////////
+
 template<class RealType>
-struct serialise<multivariate_normal_distribution<RealType>> {
-    using prior = multivariate_normal_distribution<RealType>;
+struct from_flatbuffers<multivariate_normal_distribution<RealType>> {
+    using distr_t = multivariate_normal_distribution<RealType>;
 
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
-        auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        return proposal_t<prior>(distr->mean()->begin(), distr->mean()->end(),
-                                 distr->covariance()->begin(), distr->covariance()->end());
-    }
-
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    const typename prior::result_type & value) {
-        return protocol::CreateMultivariateNormal(buff,
-                    buff.CreateVector<double>(distr.mean().values()),
-                    buff.CreateVector<double>(distr.covariance()),
-                    buff.CreateVector<double>(value.values())
-        ).Union();
+    distr_t operator()(const buffer_t<distr_t> * distr) {
+        return distr_t(distr->mean()->begin(), distr->mean()->end(),
+                       distr->covariance()->begin(), distr->covariance()->end());
     }
 };
 

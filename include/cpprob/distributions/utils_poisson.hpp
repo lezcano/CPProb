@@ -11,7 +11,7 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+////// Prior & Proposal //////
 //////////////////////////////
 
 template<typename IntType, class RealType>
@@ -35,6 +35,11 @@ struct logpdf<boost::random::poisson_distribution<IntType, RealType>> {
     }
 };
 
+template<class IntType, class RealType>
+struct buffer<boost::random::poisson_distribution<IntType, RealType>> {
+    using type = protocol::Poisson;
+};
+
 //////////////////////////////
 /////////// Prior  ///////////
 //////////////////////////////
@@ -45,26 +50,28 @@ struct proposal<boost::random::poisson_distribution<IntType, RealType>> {
 };
 
 template<class IntType, class RealType>
-struct buffer<boost::random::poisson_distribution<IntType, RealType>> {
-    using type = protocol::Poisson;
-};
+struct to_flatbuffers<boost::random::poisson_distribution<IntType, RealType>> {
+    using distr_t = boost::random::poisson_distribution<IntType, RealType>;
 
-template<class IntType, class RealType>
-struct serialise<boost::random::poisson_distribution<IntType, RealType>> {
-    using prior = boost::random::poisson_distribution<IntType, RealType>;
-
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg) {
-        auto distr = static_cast<const buffer_t<prior>*>(msg->distribution());
-        return proposal_t<prior>(distr->mean());
-    }
-
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    const typename prior::result_type value) {
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+                                         const distr_t & distr,
+                                         const typename distr_t::result_type value) {
         return protocol::CreatePoisson(buff, distr.mean(), value).Union();
     }
 };
 
+//////////////////////////////
+///////// Proposal  //////////
+//////////////////////////////
+
+template<class IntType, class RealType>
+struct from_flatbuffers<boost::random::poisson_distribution<IntType, RealType>> {
+    using distr_t = boost::random::poisson_distribution<IntType, RealType>;
+
+    distr_t operator()(const buffer_t<distr_t> * distr) {
+        return distr_t(distr->mean());
+    }
+};
 
 } // end namespace cpprob
 

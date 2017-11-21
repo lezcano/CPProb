@@ -16,10 +16,13 @@ template<class Distr>
 using proposal_t = typename proposal<Distr>::type;
 
 template<class Distribution>
-struct truncated_normaliser;
+struct normalise;
 
 template<class Distribution>
-struct serialise;
+struct from_flatbuffers;
+
+template<class Distribution>
+struct to_flatbuffers;
 
 template<class Distribution>
 struct logpdf;

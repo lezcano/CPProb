@@ -14,7 +14,7 @@
 namespace cpprob {
 
 //////////////////////////////
-////////// Proposal //////////
+////// Prior & Proposal //////
 //////////////////////////////
 
 template <class RealType>
@@ -38,6 +38,12 @@ struct logpdf<boost::random::normal_distribution<RealType>> {
     }
 };
 
+template<class RealType>
+struct buffer<boost::random::normal_distribution<RealType>> {
+    using type = protocol::Normal;
+};
+
+
 //////////////////////////////
 /////////// Prior  ///////////
 //////////////////////////////
@@ -48,25 +54,28 @@ struct proposal<boost::random::normal_distribution<RealType>> {
 };
 
 template<class RealType>
-struct buffer<boost::random::normal_distribution<RealType>> {
-    using type = protocol::Normal;
-};
+struct to_flatbuffers<boost::random::normal_distribution<RealType>> {
+    using distr_t = boost::random::normal_distribution<RealType>;
 
-template<class RealType>
-struct serialise<boost::random::normal_distribution<RealType>> {
-    using prior = boost::random::normal_distribution<RealType>;
-
-    static proposal_t<prior> from_flatbuffers(const protocol::ReplyProposal *msg)
-    {
-        auto distr = static_cast<const buffer_t<prior> *>(msg->distribution());
-        return proposal_t<prior>(distr->mean(), distr->std());
-    }
-
-    static flatbuffers::Offset<void> to_flatbuffers(flatbuffers::FlatBufferBuilder& buff,
-                                                    const prior & distr,
-                                                    typename prior::result_type value)
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder & buff,
+                                         const distr_t & distr,
+                                         typename distr_t::result_type value)
     {
         return protocol::CreateNormal(buff, distr.mean(), distr.sigma(), value).Union();
+    }
+};
+
+//////////////////////////////
+///////// Proposal  //////////
+//////////////////////////////
+
+template<class RealType>
+struct from_flatbuffers<boost::random::normal_distribution<RealType>> {
+    using distr_t = boost::random::normal_distribution<RealType>;
+
+    distr_t operator()(const buffer_t<distr_t> * distr)
+    {
+        return distr_t(distr->mean(), distr->std());
     }
 };
 
@@ -74,14 +83,15 @@ struct serialise<boost::random::normal_distribution<RealType>> {
 //////////////////////////////
 ///////// Truncated  /////////
 //////////////////////////////
+
 template<class RealType>
-struct truncated_normaliser<boost::random::normal_distribution < RealType>> {
-static RealType normalise(const boost::random::normal_distribution <RealType> &distr,
-                          const RealType &min, const RealType &max) {
-    using namespace boost::math;
-    normal_distribution <RealType> normal(distr.mean(), distr.sigma());
-    return cdf(normal, max) - cdf(normal, min);
-}
+struct normalise<boost::random::normal_distribution<RealType>> {
+    using distr_t = boost::random::normal_distribution<RealType>;
+
+    RealType operator()(const distr_t & distr, const RealType & min, const RealType & max) {
+        boost::math::normal_distribution <RealType> normal(distr.mean(), distr.sigma());
+        return boost::math::cdf(normal, max) - boost::math::cdf(normal, min);
+    }
 };
 
 }
