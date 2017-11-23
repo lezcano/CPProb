@@ -5,8 +5,8 @@ union MessageBody {
     RequestTraces,
     ReplyTraces,
     // Inference
-    StartInference,
-    StartTrace,
+    RequestStartInference,
+    ReplyStartInference,
     RequestProposal,
     ReplyProposal
 }
@@ -133,11 +133,11 @@ table ReplyTraces {
 }
 
 // Inference
-table StartInference {
+table RequestStartInference {
     observation:NDArray;
 }
 
-table StartTrace {}
+table ReplyStartInference {}
 
 table RequestProposal {
     current_sample:Sample;

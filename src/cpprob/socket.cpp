@@ -51,7 +51,11 @@ std::size_t SocketCompile::get_batch_size()
     server_.recv(&request);
 
     auto message = protocol::GetMessage(request.data());
-    auto request_msg = static_cast<const protocol::RequestTraces *>(message->body());
+
+    auto request_msg = message->body_as_RequestTraces();
+    if (request_msg == nullptr) {
+        throw std::runtime_error("Message received is not a a ReplyStartInference");
+    }
 
     return request_msg->num_traces();
 }
@@ -98,6 +102,13 @@ void SocketInfer::send_start_inference(const flatbuffers::FlatBufferBuilder & bu
     zmq::message_t request (buff.GetSize());
     memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
     client_.send(request);
+
+    zmq::message_t reply;
+    client_.recv (&reply);
+    auto message = protocol::GetMessage(reply.data());
+    if (message->body_as_ReplyStartInference() == nullptr) {
+        throw std::runtime_error("Message received is not a a ReplyStartInference");
+    }
 }
 
 void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict)

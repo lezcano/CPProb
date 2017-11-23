@@ -44,9 +44,9 @@ struct RequestTraces;
 
 struct ReplyTraces;
 
-struct StartInference;
+struct RequestStartInference;
 
-struct StartTrace;
+struct ReplyStartInference;
 
 struct RequestProposal;
 
@@ -56,8 +56,8 @@ enum class MessageBody : uint8_t {
   NONE = 0,
   RequestTraces = 1,
   ReplyTraces = 2,
-  StartInference = 3,
-  StartTrace = 4,
+  RequestStartInference = 3,
+  ReplyStartInference = 4,
   RequestProposal = 5,
   ReplyProposal = 6,
   MIN = NONE,
@@ -69,8 +69,8 @@ inline MessageBody (&EnumValuesMessageBody())[7] {
     MessageBody::NONE,
     MessageBody::RequestTraces,
     MessageBody::ReplyTraces,
-    MessageBody::StartInference,
-    MessageBody::StartTrace,
+    MessageBody::RequestStartInference,
+    MessageBody::ReplyStartInference,
     MessageBody::RequestProposal,
     MessageBody::ReplyProposal
   };
@@ -82,8 +82,8 @@ inline const char **EnumNamesMessageBody() {
     "NONE",
     "RequestTraces",
     "ReplyTraces",
-    "StartInference",
-    "StartTrace",
+    "RequestStartInference",
+    "ReplyStartInference",
     "RequestProposal",
     "ReplyProposal",
     nullptr
@@ -108,12 +108,12 @@ template<> struct MessageBodyTraits<ReplyTraces> {
   static const MessageBody enum_value = MessageBody::ReplyTraces;
 };
 
-template<> struct MessageBodyTraits<StartInference> {
-  static const MessageBody enum_value = MessageBody::StartInference;
+template<> struct MessageBodyTraits<RequestStartInference> {
+  static const MessageBody enum_value = MessageBody::RequestStartInference;
 };
 
-template<> struct MessageBodyTraits<StartTrace> {
-  static const MessageBody enum_value = MessageBody::StartTrace;
+template<> struct MessageBodyTraits<ReplyStartInference> {
+  static const MessageBody enum_value = MessageBody::ReplyStartInference;
 };
 
 template<> struct MessageBodyTraits<RequestProposal> {
@@ -262,11 +262,11 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const ReplyTraces *body_as_ReplyTraces() const {
     return body_type() == MessageBody::ReplyTraces ? static_cast<const ReplyTraces *>(body()) : nullptr;
   }
-  const StartInference *body_as_StartInference() const {
-    return body_type() == MessageBody::StartInference ? static_cast<const StartInference *>(body()) : nullptr;
+  const RequestStartInference *body_as_RequestStartInference() const {
+    return body_type() == MessageBody::RequestStartInference ? static_cast<const RequestStartInference *>(body()) : nullptr;
   }
-  const StartTrace *body_as_StartTrace() const {
-    return body_type() == MessageBody::StartTrace ? static_cast<const StartTrace *>(body()) : nullptr;
+  const ReplyStartInference *body_as_ReplyStartInference() const {
+    return body_type() == MessageBody::ReplyStartInference ? static_cast<const ReplyStartInference *>(body()) : nullptr;
   }
   const RequestProposal *body_as_RequestProposal() const {
     return body_type() == MessageBody::RequestProposal ? static_cast<const RequestProposal *>(body()) : nullptr;
@@ -291,12 +291,12 @@ template<> inline const ReplyTraces *Message::body_as<ReplyTraces>() const {
   return body_as_ReplyTraces();
 }
 
-template<> inline const StartInference *Message::body_as<StartInference>() const {
-  return body_as_StartInference();
+template<> inline const RequestStartInference *Message::body_as<RequestStartInference>() const {
+  return body_as_RequestStartInference();
 }
 
-template<> inline const StartTrace *Message::body_as<StartTrace>() const {
-  return body_as_StartTrace();
+template<> inline const ReplyStartInference *Message::body_as<ReplyStartInference>() const {
+  return body_as_ReplyStartInference();
 }
 
 template<> inline const RequestProposal *Message::body_as<RequestProposal>() const {
@@ -1539,7 +1539,7 @@ inline flatbuffers::Offset<ReplyTraces> CreateReplyTracesDirect(
       traces ? _fbb.CreateVector<flatbuffers::Offset<Trace>>(*traces) : 0);
 }
 
-struct StartInference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct RequestStartInference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_OBSERVATION = 4
   };
@@ -1554,57 +1554,57 @@ struct StartInference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct StartInferenceBuilder {
+struct RequestStartInferenceBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_observation(flatbuffers::Offset<NDArray> observation) {
-    fbb_.AddOffset(StartInference::VT_OBSERVATION, observation);
+    fbb_.AddOffset(RequestStartInference::VT_OBSERVATION, observation);
   }
-  StartInferenceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  RequestStartInferenceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  StartInferenceBuilder &operator=(const StartInferenceBuilder &);
-  flatbuffers::Offset<StartInference> Finish() {
+  RequestStartInferenceBuilder &operator=(const RequestStartInferenceBuilder &);
+  flatbuffers::Offset<RequestStartInference> Finish() {
     const auto end = fbb_.EndTable(start_, 1);
-    auto o = flatbuffers::Offset<StartInference>(end);
+    auto o = flatbuffers::Offset<RequestStartInference>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<StartInference> CreateStartInference(
+inline flatbuffers::Offset<RequestStartInference> CreateRequestStartInference(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<NDArray> observation = 0) {
-  StartInferenceBuilder builder_(_fbb);
+  RequestStartInferenceBuilder builder_(_fbb);
   builder_.add_observation(observation);
   return builder_.Finish();
 }
 
-struct StartTrace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ReplyStartInference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
 };
 
-struct StartTraceBuilder {
+struct ReplyStartInferenceBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  StartTraceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  ReplyStartInferenceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  StartTraceBuilder &operator=(const StartTraceBuilder &);
-  flatbuffers::Offset<StartTrace> Finish() {
+  ReplyStartInferenceBuilder &operator=(const ReplyStartInferenceBuilder &);
+  flatbuffers::Offset<ReplyStartInference> Finish() {
     const auto end = fbb_.EndTable(start_, 0);
-    auto o = flatbuffers::Offset<StartTrace>(end);
+    auto o = flatbuffers::Offset<ReplyStartInference>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<StartTrace> CreateStartTrace(
+inline flatbuffers::Offset<ReplyStartInference> CreateReplyStartInference(
     flatbuffers::FlatBufferBuilder &_fbb) {
-  StartTraceBuilder builder_(_fbb);
+  ReplyStartInferenceBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
@@ -1809,12 +1809,12 @@ inline bool VerifyMessageBody(flatbuffers::Verifier &verifier, const void *obj, 
       auto ptr = reinterpret_cast<const ReplyTraces *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case MessageBody::StartInference: {
-      auto ptr = reinterpret_cast<const StartInference *>(obj);
+    case MessageBody::RequestStartInference: {
+      auto ptr = reinterpret_cast<const RequestStartInference *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case MessageBody::StartTrace: {
-      auto ptr = reinterpret_cast<const StartTrace *>(obj);
+    case MessageBody::ReplyStartInference: {
+      auto ptr = reinterpret_cast<const ReplyStartInference *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageBody::RequestProposal: {

@@ -44,9 +44,9 @@ template<class RealType>
 struct to_flatbuffers<boost::random::uniform_real_distribution<RealType>> {
     using distr_t = boost::random::uniform_real_distribution<RealType>;
 
-    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
-                                                    const distr_t & distr,
-                                                    const typename distr_t::result_type value)
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder & buff,
+                                         const distr_t & distr,
+                                         const typename distr_t::result_type value)
     {
         return protocol::CreateUniformContinuous(buff, distr.a(), distr.b(), value).Union();
     }

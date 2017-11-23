@@ -53,9 +53,10 @@ template<class IntType, class RealType>
 struct to_flatbuffers<boost::random::poisson_distribution<IntType, RealType>> {
     using distr_t = boost::random::poisson_distribution<IntType, RealType>;
 
-    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder & buff,
                                          const distr_t & distr,
-                                         const typename distr_t::result_type value) {
+                                         const typename distr_t::result_type value)
+    {
         return protocol::CreatePoisson(buff, distr.mean(), value).Union();
     }
 };

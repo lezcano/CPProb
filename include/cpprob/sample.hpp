@@ -24,7 +24,12 @@ public:
                     [distr](flatbuffers::FlatBufferBuilder& buff, const boost::any & value)
                     {
                         using boost::any_cast;
-                        return to_flatbuffers<Distr>()(buff, distr, any_cast<typename Distr::result_type>(value));
+                        if(value.empty()) {
+                            return to_flatbuffers<Distr>()(buff, distr, typename Distr::result_type{});
+                        }
+                        else {
+                            return to_flatbuffers<Distr>()(buff, distr, any_cast<typename Distr::result_type>(value));
+                        }
                     }),
             val_{val},
             distr_enum_(protocol::DistributionTraits<cpprob::buffer_t<Distr>>::enum_value) {}

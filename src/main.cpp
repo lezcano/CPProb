@@ -69,7 +69,7 @@ int main(int argc, const char* const* argv) {
       ("dump_folder", po::value<std::string>(&dump_folder), "(Compilation) Dump traces into a file.")
       ("observes,o", po::value<std::string>(&observes_str), "(Inference | Regular) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(Inference | Regular) File with the observed values.")
-      ("posterior_file,p", po::value<std::string>(&posterior_file), "(Inference | Regular | Estimate) Posterior distribution file.")
+      ("posterior_file,p", po::value<std::string>(&posterior_file)->default_value("posterior"), "(Inference | Regular | Estimate) Posterior distribution file.")
       ;
 
     po::variables_map vm;

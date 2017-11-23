@@ -64,7 +64,7 @@ public:
         client_.recv(&reply);
 
         auto message = protocol::GetMessage(reply.data());
-        auto reply_msg = static_cast<const protocol::ReplyProposal *>(message->body());
+        auto reply_msg = message->body_as_ReplyProposal();
         // TODO(Lezcano) C++17 std::expected would solve this in a cleaner way
         if (reply_msg->distribution_type() == protocol::Distribution::NONE) {
             throw std::runtime_error("NN could not propose parameters.");

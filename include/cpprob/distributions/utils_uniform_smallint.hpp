@@ -37,7 +37,7 @@ template<class IntType>
 struct to_flatbuffers<boost::random::uniform_smallint<IntType>> {
     using distr_t = boost::random::uniform_smallint<IntType>;
 
-    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
+    flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder & buff,
                                          const distr_t & distr,
                                          const typename distr_t::result_type value)
     {

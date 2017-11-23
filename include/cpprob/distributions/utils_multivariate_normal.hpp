@@ -51,7 +51,8 @@ struct to_flatbuffers<multivariate_normal_distribution<RealType>> {
 
     flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
                                          const distr_t & distr,
-                                         const typename distr_t::result_type & value) {
+                                         const typename distr_t::result_type & value)
+    {
         return protocol::CreateMultivariateNormal(buff,
                                                   buff.CreateVector<double>(distr.mean().values()),
                                                   buff.CreateVector<double>(distr.covariance()),

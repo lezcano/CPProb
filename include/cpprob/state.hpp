@@ -197,7 +197,7 @@ public:
                                                                     discard_build(std::declval<std::tuple<Args...>>())
                                                                     )>::value == 1>{});
 
-        auto observe_init = protocol::CreateStartInference(
+        auto observe_init = protocol::CreateRequestStartInference(
                 buff_,
                 protocol::CreateNDArray(buff_,
                                         buff_.CreateVector<double>(obs_nd.values()),
@@ -205,7 +205,7 @@ public:
 
         auto msg = protocol::CreateMessage(
                 buff_,
-                protocol::MessageBody::StartInference,
+                protocol::MessageBody::RequestStartInference,
                 observe_init.Union());
         buff_.Finish(msg);
         SocketInfer::send_start_inference(buff_);

@@ -46,7 +46,7 @@ struct to_flatbuffers<boost::random::discrete_distribution<IntType, WeightType>>
 
     flatbuffers::Offset<void> operator()(flatbuffers::FlatBufferBuilder& buff,
                                                     const distr_t & distr,
-                                                    typename distr_t::result_type value)
+                                                    const typename distr_t::result_type value)
     {
         return protocol::CreateDiscrete(buff, 0, buff.CreateVector<double>(distr.probabilities()), value).Union();
     }
