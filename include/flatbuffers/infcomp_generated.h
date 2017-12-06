@@ -463,11 +463,15 @@ inline flatbuffers::Offset<Beta> CreateBeta(
 struct Discrete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_MIN = 4,
-    VT_PROBABILITIES = 6,
-    VT_VALUE = 8
+    VT_MAX = 6,
+    VT_PROBABILITIES = 8,
+    VT_VALUE = 10
   };
   int32_t min() const {
     return GetField<int32_t>(VT_MIN, 0);
+  }
+  int32_t max() const {
+    return GetField<int32_t>(VT_MAX, 0);
   }
   const flatbuffers::Vector<double> *probabilities() const {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_PROBABILITIES);
@@ -478,6 +482,7 @@ struct Discrete FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_MIN) &&
+           VerifyField<int32_t>(verifier, VT_MAX) &&
            VerifyOffset(verifier, VT_PROBABILITIES) &&
            verifier.Verify(probabilities()) &&
            VerifyField<int32_t>(verifier, VT_VALUE) &&
@@ -491,6 +496,9 @@ struct DiscreteBuilder {
   void add_min(int32_t min) {
     fbb_.AddElement<int32_t>(Discrete::VT_MIN, min, 0);
   }
+  void add_max(int32_t max) {
+    fbb_.AddElement<int32_t>(Discrete::VT_MAX, max, 0);
+  }
   void add_probabilities(flatbuffers::Offset<flatbuffers::Vector<double>> probabilities) {
     fbb_.AddOffset(Discrete::VT_PROBABILITIES, probabilities);
   }
@@ -503,7 +511,7 @@ struct DiscreteBuilder {
   }
   DiscreteBuilder &operator=(const DiscreteBuilder &);
   flatbuffers::Offset<Discrete> Finish() {
-    const auto end = fbb_.EndTable(start_, 3);
+    const auto end = fbb_.EndTable(start_, 4);
     auto o = flatbuffers::Offset<Discrete>(end);
     return o;
   }
@@ -512,11 +520,13 @@ struct DiscreteBuilder {
 inline flatbuffers::Offset<Discrete> CreateDiscrete(
     flatbuffers::FlatBufferBuilder &_fbb,
     int32_t min = 0,
+    int32_t max = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> probabilities = 0,
     int32_t value = 0) {
   DiscreteBuilder builder_(_fbb);
   builder_.add_value(value);
   builder_.add_probabilities(probabilities);
+  builder_.add_max(max);
   builder_.add_min(min);
   return builder_.Finish();
 }
@@ -524,11 +534,13 @@ inline flatbuffers::Offset<Discrete> CreateDiscrete(
 inline flatbuffers::Offset<Discrete> CreateDiscreteDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     int32_t min = 0,
+    int32_t max = 0,
     const std::vector<double> *probabilities = nullptr,
     int32_t value = 0) {
   return protocol::CreateDiscrete(
       _fbb,
       min,
+      max,
       probabilities ? _fbb.CreateVector<double>(*probabilities) : 0,
       value);
 }

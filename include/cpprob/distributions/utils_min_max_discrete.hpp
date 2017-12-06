@@ -35,12 +35,10 @@ struct from_flatbuffers<min_max_discrete_distribution<IntType, WeightType>> {
 
     distr_t operator()(const buffer_t<distr_t> * distr)
     {
-
         return distr_t(distr->min(),
-                       distr->min() + distr->probabilities()->size() - 1,
+                       distr->max(),
                        distr->probabilities()->begin(),
                        distr->probabilities()->end());
-
     }
 };
 

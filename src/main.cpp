@@ -96,8 +96,8 @@ int main(int argc, const char* const* argv) {
     #else
     // auto f = &models::normal_rejection_sampling<>;
     // auto f = &models::linear_gaussian_1d<50>;
-    auto f = &models::gaussian_unknown_mean<>;
-    // auto f = &models::hmm<16>;
+    // auto f = &models::gaussian_unknown_mean<>;
+    auto f = &models::hmm<16>;
     // auto f = &models::poly_adjustment<1, 6>; // Linear adjustment (Deg = 1, Points = 6)
     //models::Gauss<> f{};
     #endif

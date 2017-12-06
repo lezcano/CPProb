@@ -17,15 +17,18 @@ namespace cpprob {
 template <class IntType>
 struct logpdf<boost::random::uniform_smallint<IntType>> {
     double operator()(const boost::random::uniform_smallint<IntType>& distr,
-                      const typename boost::random::uniform_smallint<IntType>::result_type &) const
+                      const typename boost::random::uniform_smallint<IntType>::result_type & x) const
     {
+        if (x < distr.min() || x > distr.max()) {
+            return -std::numeric_limits<double>::infinity();
+        }
         return -std::log(distr.max() - distr.min() + 1.0);
     }
 };
 
 template<class IntType>
 struct buffer<boost::random::uniform_smallint<IntType>> {
-    using type = protocol::Discrete;
+    using type = protocol::UniformDiscrete;
 };
 
 template<class IntType>

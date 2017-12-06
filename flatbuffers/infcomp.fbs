@@ -46,8 +46,9 @@ table Beta {
 
 table Discrete {
     min:int;                // N
-    probabilities:[double]; // \sum probabilities = 1, probabilities >= 0
-    value:int;              //  [min, min + size(probabilities)-1]
+    max:int;                // N
+    probabilities:[double]; // \sum probabilities = 1, probabilities >= 0, size(probabilities) = max - min + 1
+    value:int;              //  [min, max]
 }
 
 table Flip {
