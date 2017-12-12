@@ -37,7 +37,7 @@ struct from_flatbuffers<truncated<Distribution>> {
 
     distr_t operator()(const buffer_t<distr_t> * distr_fbb)
     {
-        const auto inner_distr_fbb = distr_fbb->template distribution_as<buffer_t<Distribution>>();
+        const auto inner_distr_fbb = distr_fbb->distribution()->template distribution_as<buffer_t<Distribution>>();
         Distribution distr = from_flatbuffers<Distribution>()(inner_distr_fbb);
         return truncated<Distribution>(distr, distr_fbb->min(), distr_fbb->max());
     }

@@ -22,7 +22,9 @@ struct Gamma;
 
 struct Laplace;
 
-struct MixtureNormal;
+struct TableDistribution;
+
+struct Mixture;
 
 struct MultivariateNormal;
 
@@ -134,7 +136,7 @@ enum class Distribution : uint8_t {
   Flip = 3,
   Gamma = 4,
   Laplace = 5,
-  MixtureNormal = 6,
+  Mixture = 6,
   MultivariateNormal = 7,
   Normal = 8,
   Poisson = 9,
@@ -153,7 +155,7 @@ inline Distribution (&EnumValuesDistribution())[13] {
     Distribution::Flip,
     Distribution::Gamma,
     Distribution::Laplace,
-    Distribution::MixtureNormal,
+    Distribution::Mixture,
     Distribution::MultivariateNormal,
     Distribution::Normal,
     Distribution::Poisson,
@@ -172,7 +174,7 @@ inline const char **EnumNamesDistribution() {
     "Flip",
     "Gamma",
     "Laplace",
-    "MixtureNormal",
+    "Mixture",
     "MultivariateNormal",
     "Normal",
     "Poisson",
@@ -213,8 +215,8 @@ template<> struct DistributionTraits<Laplace> {
   static const Distribution enum_value = Distribution::Laplace;
 };
 
-template<> struct DistributionTraits<MixtureNormal> {
-  static const Distribution enum_value = Distribution::MixtureNormal;
+template<> struct DistributionTraits<Mixture> {
+  static const Distribution enum_value = Distribution::Mixture;
 };
 
 template<> struct DistributionTraits<MultivariateNormal> {
@@ -715,7 +717,143 @@ inline flatbuffers::Offset<Laplace> CreateLaplace(
   return builder_.Finish();
 }
 
-struct MixtureNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct TableDistribution FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_DISTRIBUTION_TYPE = 4,
+    VT_DISTRIBUTION = 6
+  };
+  Distribution distribution_type() const {
+    return static_cast<Distribution>(GetField<uint8_t>(VT_DISTRIBUTION_TYPE, 0));
+  }
+  const void *distribution() const {
+    return GetPointer<const void *>(VT_DISTRIBUTION);
+  }
+  template<typename T> const T *distribution_as() const;
+  const Beta *distribution_as_Beta() const {
+    return distribution_type() == Distribution::Beta ? static_cast<const Beta *>(distribution()) : nullptr;
+  }
+  const Discrete *distribution_as_Discrete() const {
+    return distribution_type() == Distribution::Discrete ? static_cast<const Discrete *>(distribution()) : nullptr;
+  }
+  const Flip *distribution_as_Flip() const {
+    return distribution_type() == Distribution::Flip ? static_cast<const Flip *>(distribution()) : nullptr;
+  }
+  const Gamma *distribution_as_Gamma() const {
+    return distribution_type() == Distribution::Gamma ? static_cast<const Gamma *>(distribution()) : nullptr;
+  }
+  const Laplace *distribution_as_Laplace() const {
+    return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
+  }
+  const Mixture *distribution_as_Mixture() const {
+    return distribution_type() == Distribution::Mixture ? static_cast<const Mixture *>(distribution()) : nullptr;
+  }
+  const MultivariateNormal *distribution_as_MultivariateNormal() const {
+    return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
+  }
+  const Normal *distribution_as_Normal() const {
+    return distribution_type() == Distribution::Normal ? static_cast<const Normal *>(distribution()) : nullptr;
+  }
+  const Poisson *distribution_as_Poisson() const {
+    return distribution_type() == Distribution::Poisson ? static_cast<const Poisson *>(distribution()) : nullptr;
+  }
+  const Truncated *distribution_as_Truncated() const {
+    return distribution_type() == Distribution::Truncated ? static_cast<const Truncated *>(distribution()) : nullptr;
+  }
+  const UniformContinuous *distribution_as_UniformContinuous() const {
+    return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
+  }
+  const UniformDiscrete *distribution_as_UniformDiscrete() const {
+    return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_DISTRIBUTION_TYPE) &&
+           VerifyOffset(verifier, VT_DISTRIBUTION) &&
+           VerifyDistribution(verifier, distribution(), distribution_type()) &&
+           verifier.EndTable();
+  }
+};
+
+template<> inline const Beta *TableDistribution::distribution_as<Beta>() const {
+  return distribution_as_Beta();
+}
+
+template<> inline const Discrete *TableDistribution::distribution_as<Discrete>() const {
+  return distribution_as_Discrete();
+}
+
+template<> inline const Flip *TableDistribution::distribution_as<Flip>() const {
+  return distribution_as_Flip();
+}
+
+template<> inline const Gamma *TableDistribution::distribution_as<Gamma>() const {
+  return distribution_as_Gamma();
+}
+
+template<> inline const Laplace *TableDistribution::distribution_as<Laplace>() const {
+  return distribution_as_Laplace();
+}
+
+template<> inline const Mixture *TableDistribution::distribution_as<Mixture>() const {
+  return distribution_as_Mixture();
+}
+
+template<> inline const MultivariateNormal *TableDistribution::distribution_as<MultivariateNormal>() const {
+  return distribution_as_MultivariateNormal();
+}
+
+template<> inline const Normal *TableDistribution::distribution_as<Normal>() const {
+  return distribution_as_Normal();
+}
+
+template<> inline const Poisson *TableDistribution::distribution_as<Poisson>() const {
+  return distribution_as_Poisson();
+}
+
+template<> inline const Truncated *TableDistribution::distribution_as<Truncated>() const {
+  return distribution_as_Truncated();
+}
+
+template<> inline const UniformContinuous *TableDistribution::distribution_as<UniformContinuous>() const {
+  return distribution_as_UniformContinuous();
+}
+
+template<> inline const UniformDiscrete *TableDistribution::distribution_as<UniformDiscrete>() const {
+  return distribution_as_UniformDiscrete();
+}
+
+struct TableDistributionBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_distribution_type(Distribution distribution_type) {
+    fbb_.AddElement<uint8_t>(TableDistribution::VT_DISTRIBUTION_TYPE, static_cast<uint8_t>(distribution_type), 0);
+  }
+  void add_distribution(flatbuffers::Offset<void> distribution) {
+    fbb_.AddOffset(TableDistribution::VT_DISTRIBUTION, distribution);
+  }
+  TableDistributionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  TableDistributionBuilder &operator=(const TableDistributionBuilder &);
+  flatbuffers::Offset<TableDistribution> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<TableDistribution>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<TableDistribution> CreateTableDistribution(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    Distribution distribution_type = Distribution::NONE,
+    flatbuffers::Offset<void> distribution = 0) {
+  TableDistributionBuilder builder_(_fbb);
+  builder_.add_distribution(distribution);
+  builder_.add_distribution_type(distribution_type);
+  return builder_.Finish();
+}
+
+struct Mixture FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_COEFFICIENTS = 4,
     VT_DISTRIBUTIONS = 6
@@ -723,8 +861,8 @@ struct MixtureNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<double> *coefficients() const {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_COEFFICIENTS);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<Normal>> *distributions() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Normal>> *>(VT_DISTRIBUTIONS);
+  const flatbuffers::Vector<flatbuffers::Offset<TableDistribution>> *distributions() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TableDistribution>> *>(VT_DISTRIBUTIONS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -737,45 +875,45 @@ struct MixtureNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct MixtureNormalBuilder {
+struct MixtureBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_coefficients(flatbuffers::Offset<flatbuffers::Vector<double>> coefficients) {
-    fbb_.AddOffset(MixtureNormal::VT_COEFFICIENTS, coefficients);
+    fbb_.AddOffset(Mixture::VT_COEFFICIENTS, coefficients);
   }
-  void add_distributions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Normal>>> distributions) {
-    fbb_.AddOffset(MixtureNormal::VT_DISTRIBUTIONS, distributions);
+  void add_distributions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TableDistribution>>> distributions) {
+    fbb_.AddOffset(Mixture::VT_DISTRIBUTIONS, distributions);
   }
-  MixtureNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  MixtureBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  MixtureNormalBuilder &operator=(const MixtureNormalBuilder &);
-  flatbuffers::Offset<MixtureNormal> Finish() {
+  MixtureBuilder &operator=(const MixtureBuilder &);
+  flatbuffers::Offset<Mixture> Finish() {
     const auto end = fbb_.EndTable(start_, 2);
-    auto o = flatbuffers::Offset<MixtureNormal>(end);
+    auto o = flatbuffers::Offset<Mixture>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<MixtureNormal> CreateMixtureNormal(
+inline flatbuffers::Offset<Mixture> CreateMixture(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<double>> coefficients = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Normal>>> distributions = 0) {
-  MixtureNormalBuilder builder_(_fbb);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TableDistribution>>> distributions = 0) {
+  MixtureBuilder builder_(_fbb);
   builder_.add_distributions(distributions);
   builder_.add_coefficients(coefficients);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<MixtureNormal> CreateMixtureNormalDirect(
+inline flatbuffers::Offset<Mixture> CreateMixtureDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<double> *coefficients = nullptr,
-    const std::vector<flatbuffers::Offset<Normal>> *distributions = nullptr) {
-  return protocol::CreateMixtureNormal(
+    const std::vector<flatbuffers::Offset<TableDistribution>> *distributions = nullptr) {
+  return protocol::CreateMixture(
       _fbb,
       coefficients ? _fbb.CreateVector<double>(*coefficients) : 0,
-      distributions ? _fbb.CreateVector<flatbuffers::Offset<Normal>>(*distributions) : 0);
+      distributions ? _fbb.CreateVector<flatbuffers::Offset<TableDistribution>>(*distributions) : 0);
 }
 
 struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -967,8 +1105,7 @@ struct Truncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_MIN = 4,
     VT_MAX = 6,
-    VT_DISTRIBUTION_TYPE = 8,
-    VT_DISTRIBUTION = 10
+    VT_DISTRIBUTION = 8
   };
   double min() const {
     return GetField<double>(VT_MIN, 0.0);
@@ -976,107 +1113,18 @@ struct Truncated FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   double max() const {
     return GetField<double>(VT_MAX, 0.0);
   }
-  Distribution distribution_type() const {
-    return static_cast<Distribution>(GetField<uint8_t>(VT_DISTRIBUTION_TYPE, 0));
-  }
-  const void *distribution() const {
-    return GetPointer<const void *>(VT_DISTRIBUTION);
-  }
-  template<typename T> const T *distribution_as() const;
-  const Beta *distribution_as_Beta() const {
-    return distribution_type() == Distribution::Beta ? static_cast<const Beta *>(distribution()) : nullptr;
-  }
-  const Discrete *distribution_as_Discrete() const {
-    return distribution_type() == Distribution::Discrete ? static_cast<const Discrete *>(distribution()) : nullptr;
-  }
-  const Flip *distribution_as_Flip() const {
-    return distribution_type() == Distribution::Flip ? static_cast<const Flip *>(distribution()) : nullptr;
-  }
-  const Gamma *distribution_as_Gamma() const {
-    return distribution_type() == Distribution::Gamma ? static_cast<const Gamma *>(distribution()) : nullptr;
-  }
-  const Laplace *distribution_as_Laplace() const {
-    return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
-  }
-  const MixtureNormal *distribution_as_MixtureNormal() const {
-    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
-  }
-  const MultivariateNormal *distribution_as_MultivariateNormal() const {
-    return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
-  }
-  const Normal *distribution_as_Normal() const {
-    return distribution_type() == Distribution::Normal ? static_cast<const Normal *>(distribution()) : nullptr;
-  }
-  const Poisson *distribution_as_Poisson() const {
-    return distribution_type() == Distribution::Poisson ? static_cast<const Poisson *>(distribution()) : nullptr;
-  }
-  const Truncated *distribution_as_Truncated() const {
-    return distribution_type() == Distribution::Truncated ? static_cast<const Truncated *>(distribution()) : nullptr;
-  }
-  const UniformContinuous *distribution_as_UniformContinuous() const {
-    return distribution_type() == Distribution::UniformContinuous ? static_cast<const UniformContinuous *>(distribution()) : nullptr;
-  }
-  const UniformDiscrete *distribution_as_UniformDiscrete() const {
-    return distribution_type() == Distribution::UniformDiscrete ? static_cast<const UniformDiscrete *>(distribution()) : nullptr;
+  const TableDistribution *distribution() const {
+    return GetPointer<const TableDistribution *>(VT_DISTRIBUTION);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<double>(verifier, VT_MIN) &&
            VerifyField<double>(verifier, VT_MAX) &&
-           VerifyField<uint8_t>(verifier, VT_DISTRIBUTION_TYPE) &&
            VerifyOffset(verifier, VT_DISTRIBUTION) &&
-           VerifyDistribution(verifier, distribution(), distribution_type()) &&
+           verifier.VerifyTable(distribution()) &&
            verifier.EndTable();
   }
 };
-
-template<> inline const Beta *Truncated::distribution_as<Beta>() const {
-  return distribution_as_Beta();
-}
-
-template<> inline const Discrete *Truncated::distribution_as<Discrete>() const {
-  return distribution_as_Discrete();
-}
-
-template<> inline const Flip *Truncated::distribution_as<Flip>() const {
-  return distribution_as_Flip();
-}
-
-template<> inline const Gamma *Truncated::distribution_as<Gamma>() const {
-  return distribution_as_Gamma();
-}
-
-template<> inline const Laplace *Truncated::distribution_as<Laplace>() const {
-  return distribution_as_Laplace();
-}
-
-template<> inline const MixtureNormal *Truncated::distribution_as<MixtureNormal>() const {
-  return distribution_as_MixtureNormal();
-}
-
-template<> inline const MultivariateNormal *Truncated::distribution_as<MultivariateNormal>() const {
-  return distribution_as_MultivariateNormal();
-}
-
-template<> inline const Normal *Truncated::distribution_as<Normal>() const {
-  return distribution_as_Normal();
-}
-
-template<> inline const Poisson *Truncated::distribution_as<Poisson>() const {
-  return distribution_as_Poisson();
-}
-
-template<> inline const Truncated *Truncated::distribution_as<Truncated>() const {
-  return distribution_as_Truncated();
-}
-
-template<> inline const UniformContinuous *Truncated::distribution_as<UniformContinuous>() const {
-  return distribution_as_UniformContinuous();
-}
-
-template<> inline const UniformDiscrete *Truncated::distribution_as<UniformDiscrete>() const {
-  return distribution_as_UniformDiscrete();
-}
 
 struct TruncatedBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -1087,10 +1135,7 @@ struct TruncatedBuilder {
   void add_max(double max) {
     fbb_.AddElement<double>(Truncated::VT_MAX, max, 0.0);
   }
-  void add_distribution_type(Distribution distribution_type) {
-    fbb_.AddElement<uint8_t>(Truncated::VT_DISTRIBUTION_TYPE, static_cast<uint8_t>(distribution_type), 0);
-  }
-  void add_distribution(flatbuffers::Offset<void> distribution) {
+  void add_distribution(flatbuffers::Offset<TableDistribution> distribution) {
     fbb_.AddOffset(Truncated::VT_DISTRIBUTION, distribution);
   }
   TruncatedBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -1099,7 +1144,7 @@ struct TruncatedBuilder {
   }
   TruncatedBuilder &operator=(const TruncatedBuilder &);
   flatbuffers::Offset<Truncated> Finish() {
-    const auto end = fbb_.EndTable(start_, 4);
+    const auto end = fbb_.EndTable(start_, 3);
     auto o = flatbuffers::Offset<Truncated>(end);
     return o;
   }
@@ -1109,13 +1154,11 @@ inline flatbuffers::Offset<Truncated> CreateTruncated(
     flatbuffers::FlatBufferBuilder &_fbb,
     double min = 0.0,
     double max = 0.0,
-    Distribution distribution_type = Distribution::NONE,
-    flatbuffers::Offset<void> distribution = 0) {
+    flatbuffers::Offset<TableDistribution> distribution = 0) {
   TruncatedBuilder builder_(_fbb);
   builder_.add_max(max);
   builder_.add_min(min);
   builder_.add_distribution(distribution);
-  builder_.add_distribution_type(distribution_type);
   return builder_.Finish();
 }
 
@@ -1270,8 +1313,8 @@ struct Sample FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Laplace *distribution_as_Laplace() const {
     return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
   }
-  const MixtureNormal *distribution_as_MixtureNormal() const {
-    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
+  const Mixture *distribution_as_Mixture() const {
+    return distribution_type() == Distribution::Mixture ? static_cast<const Mixture *>(distribution()) : nullptr;
   }
   const MultivariateNormal *distribution_as_MultivariateNormal() const {
     return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
@@ -1322,8 +1365,8 @@ template<> inline const Laplace *Sample::distribution_as<Laplace>() const {
   return distribution_as_Laplace();
 }
 
-template<> inline const MixtureNormal *Sample::distribution_as<MixtureNormal>() const {
-  return distribution_as_MixtureNormal();
+template<> inline const Mixture *Sample::distribution_as<Mixture>() const {
+  return distribution_as_Mixture();
 }
 
 template<> inline const MultivariateNormal *Sample::distribution_as<MultivariateNormal>() const {
@@ -1699,8 +1742,8 @@ struct ReplyProposal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Laplace *distribution_as_Laplace() const {
     return distribution_type() == Distribution::Laplace ? static_cast<const Laplace *>(distribution()) : nullptr;
   }
-  const MixtureNormal *distribution_as_MixtureNormal() const {
-    return distribution_type() == Distribution::MixtureNormal ? static_cast<const MixtureNormal *>(distribution()) : nullptr;
+  const Mixture *distribution_as_Mixture() const {
+    return distribution_type() == Distribution::Mixture ? static_cast<const Mixture *>(distribution()) : nullptr;
   }
   const MultivariateNormal *distribution_as_MultivariateNormal() const {
     return distribution_type() == Distribution::MultivariateNormal ? static_cast<const MultivariateNormal *>(distribution()) : nullptr;
@@ -1749,8 +1792,8 @@ template<> inline const Laplace *ReplyProposal::distribution_as<Laplace>() const
   return distribution_as_Laplace();
 }
 
-template<> inline const MixtureNormal *ReplyProposal::distribution_as<MixtureNormal>() const {
-  return distribution_as_MixtureNormal();
+template<> inline const Mixture *ReplyProposal::distribution_as<Mixture>() const {
+  return distribution_as_Mixture();
 }
 
 template<> inline const MultivariateNormal *ReplyProposal::distribution_as<MultivariateNormal>() const {
@@ -1877,8 +1920,8 @@ inline bool VerifyDistribution(flatbuffers::Verifier &verifier, const void *obj,
       auto ptr = reinterpret_cast<const Laplace *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Distribution::MixtureNormal: {
-      auto ptr = reinterpret_cast<const MixtureNormal *>(obj);
+    case Distribution::Mixture: {
+      auto ptr = reinterpret_cast<const Mixture *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Distribution::MultivariateNormal: {

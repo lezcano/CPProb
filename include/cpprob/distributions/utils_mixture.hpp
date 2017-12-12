@@ -41,12 +41,9 @@ struct logpdf<mixture<Distribution, RealType>> {
     }
 };
 
-// This could be done in general, but flatbuffers python does not support
-//  lists of unions yet...
-
-template<class RealTypeA, class RealTypeB>
-struct buffer<mixture<boost::random::normal_distribution<RealTypeA>, RealTypeB>> {
-    using type = protocol::MixtureNormal;
+template<class Distribution, class RealType>
+struct buffer<mixture<Distribution, RealType>> {
+    using type = protocol::Mixture;
 };
 
 template<class Distribution, class RealType>
@@ -57,7 +54,7 @@ struct from_flatbuffers<mixture<Distribution, RealType>> {
         std::vector<Distribution> v_distr(distr->distributions()->size());
         auto distr_fbb = distr->distributions()->begin();
         for (auto & distr_i : v_distr) {
-            distr_i = from_flatbuffers<Distribution>()(*distr_fbb);
+            distr_i = from_flatbuffers<Distribution>()(distr_fbb->template distribution_as<buffer_t<Distribution>>());
             ++distr_fbb;
         }
         return distr_t(distr->coefficients()->begin(), distr->coefficients()->end(),
