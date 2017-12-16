@@ -15,26 +15,21 @@
 #include "ATOOLS/Org/CXXFLAGS_PACKAGES.H"
 #include "ATOOLS/Org/My_MPI.H"
 #include "ATOOLS/Org/AnalysisJailbreak.H"
-#include "models/calorimeter.hpp"
 
 #include "cpprob/distributions/multivariate_normal.hpp"
 #include "cpprob/cpprob.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/ndarray.hpp"
+#include "models/calorimeter.hpp"
 
 namespace models {
 
 SherpaWrapper::SherpaWrapper() : generator_{new ::SHERPA::Sherpa}
 {
-    try {
-        const int sherpa_argc = 7;
-        char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
-        generator_->InitializeTheRun(sherpa_argc, sherpa_argv);
-        generator_->InitializeTheEventHandler();
-    }
-    catch (::ATOOLS::Exception exception) {
-        std::terminate();
-    }
+    const int sherpa_argc = 7;
+    char* sherpa_argv[] = {"some_binary","-f","Gun.dat","EXTERNAL_RNG=ProbProbRNG","SHERPA_LDADD=ProbProgRNG","OUTPUT=0","LOG_FILE=/dev/null"};
+    generator_->InitializeTheRun(sherpa_argc, sherpa_argv);
+    generator_->InitializeTheEventHandler();
 }
 
 SherpaWrapper::~SherpaWrapper()
@@ -44,7 +39,7 @@ SherpaWrapper::~SherpaWrapper()
 }
 
 
-void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes) const
+void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> & observes) const
 {
     const double OBS_WIDTH = 0.001;
     int channel_index;
@@ -61,9 +56,8 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 }
 
 std::tuple<int,
-        std::vector<double>,
-        std::vector<std::vector<double>>
-        >
+           std::vector<double>,
+           std::vector<std::vector<double>>>
 SherpaWrapper::sherpa() const
 {
     try {

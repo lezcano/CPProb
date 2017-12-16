@@ -922,23 +922,23 @@ struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_COVARIANCE = 6,
     VT_VALUE = 8
   };
-  const flatbuffers::Vector<double> *mean() const {
-    return GetPointer<const flatbuffers::Vector<double> *>(VT_MEAN);
+  const NDArray *mean() const {
+    return GetPointer<const NDArray *>(VT_MEAN);
   }
   const flatbuffers::Vector<double> *covariance() const {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_COVARIANCE);
   }
-  const flatbuffers::Vector<double> *value() const {
-    return GetPointer<const flatbuffers::Vector<double> *>(VT_VALUE);
+  const NDArray *value() const {
+    return GetPointer<const NDArray *>(VT_VALUE);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_MEAN) &&
-           verifier.Verify(mean()) &&
+           verifier.VerifyTable(mean()) &&
            VerifyOffset(verifier, VT_COVARIANCE) &&
            verifier.Verify(covariance()) &&
            VerifyOffset(verifier, VT_VALUE) &&
-           verifier.Verify(value()) &&
+           verifier.VerifyTable(value()) &&
            verifier.EndTable();
   }
 };
@@ -946,13 +946,13 @@ struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct MultivariateNormalBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_mean(flatbuffers::Offset<flatbuffers::Vector<double>> mean) {
+  void add_mean(flatbuffers::Offset<NDArray> mean) {
     fbb_.AddOffset(MultivariateNormal::VT_MEAN, mean);
   }
   void add_covariance(flatbuffers::Offset<flatbuffers::Vector<double>> covariance) {
     fbb_.AddOffset(MultivariateNormal::VT_COVARIANCE, covariance);
   }
-  void add_value(flatbuffers::Offset<flatbuffers::Vector<double>> value) {
+  void add_value(flatbuffers::Offset<NDArray> value) {
     fbb_.AddOffset(MultivariateNormal::VT_VALUE, value);
   }
   MultivariateNormalBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -969,9 +969,9 @@ struct MultivariateNormalBuilder {
 
 inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<double>> mean = 0,
+    flatbuffers::Offset<NDArray> mean = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> covariance = 0,
-    flatbuffers::Offset<flatbuffers::Vector<double>> value = 0) {
+    flatbuffers::Offset<NDArray> value = 0) {
   MultivariateNormalBuilder builder_(_fbb);
   builder_.add_value(value);
   builder_.add_covariance(covariance);
@@ -981,14 +981,14 @@ inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormal(
 
 inline flatbuffers::Offset<MultivariateNormal> CreateMultivariateNormalDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<double> *mean = nullptr,
+    flatbuffers::Offset<NDArray> mean = 0,
     const std::vector<double> *covariance = nullptr,
-    const std::vector<double> *value = nullptr) {
+    flatbuffers::Offset<NDArray> value = 0) {
   return protocol::CreateMultivariateNormal(
       _fbb,
-      mean ? _fbb.CreateVector<double>(*mean) : 0,
+      mean,
       covariance ? _fbb.CreateVector<double>(*covariance) : 0,
-      value ? _fbb.CreateVector<double>(*value) : 0);
+      value);
 }
 
 struct Normal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

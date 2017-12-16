@@ -83,9 +83,9 @@ table Mixture {
 
 table MultivariateNormal {
     // size(mean) == size(covariance)
-    mean: [double];       // R^n
+    mean: NDArray;        // Tensor
     covariance: [double]; // R^n (Diagonal matrix)
-    value: [double];      // R^n
+    value: NDArray;       // Tensor
 }
 
 table Normal {
