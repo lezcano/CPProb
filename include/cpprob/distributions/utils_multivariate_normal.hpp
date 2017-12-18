@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <type_traits>
+#include <vector>
 
 #include "cpprob/distributions/utils_base.hpp"
 #include "cpprob/distributions/multivariate_normal.hpp"
@@ -53,10 +54,15 @@ struct to_flatbuffers<multivariate_normal_distribution<RealType>> {
                                          const distr_t & distr,
                                          const typename distr_t::result_type & value)
     {
+        auto mean = distr.mean();
         return protocol::CreateMultivariateNormal(buff,
-                                                  buff.CreateVector<double>(distr.mean().values()),
-                                                  buff.CreateVector<double>(distr.covariance()),
-                                                  buff.CreateVector<double>(value.values())
+                protocol::CreateNDArray(buff,
+                    buff.CreateVector<double>(mean.values()),
+                    buff.CreateVector<int32_t>(mean.shape())),
+                buff.CreateVector<double>(distr.covariance()),
+                protocol::CreateNDArray(buff,
+                    buff.CreateVector<double>(value.values()),
+                    buff.CreateVector<int32_t>(value.shape()))
         ).Union();
     }
 };
@@ -70,8 +76,11 @@ struct from_flatbuffers<multivariate_normal_distribution<RealType>> {
     using distr_t = multivariate_normal_distribution<RealType>;
 
     distr_t operator()(const buffer_t<distr_t> * distr) {
-        return distr_t(distr->mean()->begin(), distr->mean()->end(),
-                       distr->covariance()->begin(), distr->covariance()->end());
+        auto mean = NDArray<double>(
+                std::vector<double>(distr->mean()->data()->begin(), distr->mean()->data()->end()),
+                std::vector<int>(distr->mean()->shape()->begin(), distr->mean()->shape()->end()));
+
+        return distr_t(std::move(mean), distr->covariance()->begin(), distr->covariance()->end());
     }
 };
 
