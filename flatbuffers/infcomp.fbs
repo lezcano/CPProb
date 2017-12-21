@@ -12,11 +12,8 @@ union MessageBody {
 }
 
 table Message {
-    body:MessageBody;
+    body: MessageBody;
 }
-
-root_type Message;
-file_identifier "INFC";
 
 union Distribution {
     Beta,
@@ -34,26 +31,26 @@ union Distribution {
 }
 
 table NDArray {
-    data:[double];
-    shape:[int];
+    data: [double];
+    shape: [int];
 }
 
 table Beta {
-    mode:double;      // [0, 1]
-    certainty:double; // R^+
-    value:double;     // [0, 1]
+    mode: double;      // [0, 1]
+    certainty: double; // R^+
+    value: double;     // [0, 1]
 }
 
 table Discrete {
-    min:int;                // N
-    max:int;                // N
-    probabilities:[double]; // \sum probabilities = 1, probabilities >= 0, size(probabilities) = max - min + 1
-    value:int;              //  [min, max]
+    min: int;                // N
+    max: int;                // N
+    probabilities: [double]; // \sum probabilities = 1, probabilities >= 0, size(probabilities) = max - min + 1
+    value: int;              //  [min, max]
 }
 
 table Flip {
-    probability:double; // [0, 1]
-    value:int;          // {0, 1}
+    probability: double; // [0, 1]
+    value: int;          // {0, 1}
 }
 
 table Gamma {
@@ -79,6 +76,11 @@ table Mixture {
     // size(coefficients) == size(distributions)
     coefficients: [double];         // \sum coefficients = 1, coefficients >= 0
     distributions: [TableDistribution];
+}
+
+table ProductDistribution {
+    distributions: [TableDistribution];
+    shape: [int];
 }
 
 table MultivariateNormal {
@@ -118,38 +120,40 @@ table UniformDiscrete {
 }
 
 table Sample {
-    address:string;
-    distribution:Distribution;
+    address: string;
+    distribution: Distribution;
 }
 
 table Trace {
-    observe:NDArray;
-    samples:[Sample];
+    observe: NDArray;
+    samples: [Sample];
 }
 
 
 // Messages
 // Compilation
 table RequestTraces {
-    num_traces:int;
+    num_traces: int;
 }
 
 table ReplyTraces {
-    traces:[Trace];
+    traces: [Trace];
 }
 
 // Inference
 table RequestStartInference {
-    observation:NDArray;
+    observation: NDArray;
 }
 
 table ReplyStartInference {}
 
 table RequestProposal {
-    current_sample:Sample;
-    previous_sample:Sample;
+    current_sample: Sample;
+    previous_sample: Sample;
 }
 
 table ReplyProposal {
-    distribution:Distribution;
+    distribution: Distribution;
 }
+
+root_type Message;

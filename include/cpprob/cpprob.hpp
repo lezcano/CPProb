@@ -44,17 +44,18 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
     }
     else if (State::state() == StateType::inference) {
         StateInfer::new_sample(addr, distr);
+        double radon_nikodym = 1;
 
         try {
             auto proposal = StateInfer::get_proposal<proposal_t<Distribution>>();
             x = proposal(get_rng());
-
-            StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x) - logpdf<proposal_t<Distribution>>()(proposal, x));
+            radon_nikodym = logpdf<Distribution>()(distr, x) - logpdf<proposal_t<Distribution>>()(proposal, x);
         }
         // No proposal -> Default to prior as proposal
         catch (const std::runtime_error &) {
             x = distr(get_rng());
         }
+        StateInfer::increment_log_prob(radon_nikodym, addr);
 
         StateInfer::add_value_to_sample(x);
     }
@@ -73,7 +74,7 @@ void observe(Distribution & distr, const typename Distribution::result_type & x)
         StateCompile::add_observe(distr(get_rng()));
     }
     else if (State::inference()) {
-        StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x));
+        StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x), "");
     }
 }
 

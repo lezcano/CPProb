@@ -1,6 +1,7 @@
 #include "cpprob/state.hpp"
 
 #include <iterator>           // for make_move_iterator, move_iterator, oper...
+#include <numeric>            // for accumulate
 #include <set>                // for set
 #include <string>             // for string
 #include <unordered_map>      // for unordered_map
@@ -72,6 +73,7 @@ TraceCompile StateCompile::trace_;
 std::vector<TraceCompile> StateCompile::batch_;
 flatbuffers::FlatBufferBuilder StateCompile::buff_;
 
+
 void StateCompile::start_batch()
 {
     batch_.clear();
@@ -135,6 +137,7 @@ void StateCompile::finish_rejection_sampling()
 
 TraceInfer StateInfer::trace_;
 flatbuffers::FlatBufferBuilder StateInfer::buff_;
+std::map<std::string, double> StateInfer::log_prob_rej_samp_;
 bool StateInfer::all_int_empty = true;
 bool StateInfer::all_real_empty = true;
 bool StateInfer::all_any_empty = true;
@@ -192,17 +195,33 @@ void StateInfer::clear_empty_flags()
 }
 
 
-void StateInfer::increment_log_prob(const double log_p)
+void StateInfer::increment_log_prob(const double log_p, const std::string & addr)
 {
-    trace_.log_w_ += log_p;
+    // If the address is empty it's because it's an observe. Probs a variant here would be better...
+
+    if (State::state() == StateType::inference &&
+        State::rejection_sampling() &&
+        !addr.empty()) {
+        log_prob_rej_samp_[addr] = log_p;
+    }
+    else {
+        trace_.log_w_ += log_p;
+    }
 }
 
 void StateInfer::finish_rejection_sampling()
 {
+    const auto log_p = std::accumulate(std::begin(log_prob_rej_samp_),
+                                       std::end(log_prob_rej_samp_),
+                                       0.0,
+                                       [](const double previous,
+                                          const auto & p) { return previous + p.second; });
+    trace_.log_w_ += log_p;
     for(const auto & f : clear_functions_) {
         f();
     }
     clear_functions_.clear();
+    log_prob_rej_samp_.clear();
 }
 
 }  // namespace cpprob

@@ -26,6 +26,8 @@ struct TableDistribution;
 
 struct Mixture;
 
+struct ProductDistribution;
+
 struct MultivariateNormal;
 
 struct Normal;
@@ -914,6 +916,69 @@ inline flatbuffers::Offset<Mixture> CreateMixtureDirect(
       _fbb,
       coefficients ? _fbb.CreateVector<double>(*coefficients) : 0,
       distributions ? _fbb.CreateVector<flatbuffers::Offset<TableDistribution>>(*distributions) : 0);
+}
+
+struct ProductDistribution FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_DISTRIBUTIONS = 4,
+    VT_SHAPE = 6
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<TableDistribution>> *distributions() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TableDistribution>> *>(VT_DISTRIBUTIONS);
+  }
+  const flatbuffers::Vector<int32_t> *shape() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_SHAPE);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_DISTRIBUTIONS) &&
+           verifier.Verify(distributions()) &&
+           verifier.VerifyVectorOfTables(distributions()) &&
+           VerifyOffset(verifier, VT_SHAPE) &&
+           verifier.Verify(shape()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ProductDistributionBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_distributions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TableDistribution>>> distributions) {
+    fbb_.AddOffset(ProductDistribution::VT_DISTRIBUTIONS, distributions);
+  }
+  void add_shape(flatbuffers::Offset<flatbuffers::Vector<int32_t>> shape) {
+    fbb_.AddOffset(ProductDistribution::VT_SHAPE, shape);
+  }
+  ProductDistributionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ProductDistributionBuilder &operator=(const ProductDistributionBuilder &);
+  flatbuffers::Offset<ProductDistribution> Finish() {
+    const auto end = fbb_.EndTable(start_, 2);
+    auto o = flatbuffers::Offset<ProductDistribution>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ProductDistribution> CreateProductDistribution(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TableDistribution>>> distributions = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> shape = 0) {
+  ProductDistributionBuilder builder_(_fbb);
+  builder_.add_shape(shape);
+  builder_.add_distributions(distributions);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<ProductDistribution> CreateProductDistributionDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<TableDistribution>> *distributions = nullptr,
+    const std::vector<int32_t> *shape = nullptr) {
+  return protocol::CreateProductDistribution(
+      _fbb,
+      distributions ? _fbb.CreateVector<flatbuffers::Offset<TableDistribution>>(*distributions) : 0,
+      shape ? _fbb.CreateVector<int32_t>(*shape) : 0);
 }
 
 struct MultivariateNormal FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -1967,24 +2032,15 @@ inline const protocol::Message *GetMessage(const void *buf) {
   return flatbuffers::GetRoot<protocol::Message>(buf);
 }
 
-inline const char *MessageIdentifier() {
-  return "INFC";
-}
-
-inline bool MessageBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
-      buf, MessageIdentifier());
-}
-
 inline bool VerifyMessageBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<protocol::Message>(MessageIdentifier());
+  return verifier.VerifyBuffer<protocol::Message>(nullptr);
 }
 
 inline void FinishMessageBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<protocol::Message> root) {
-  fbb.Finish(root, MessageIdentifier());
+  fbb.Finish(root);
 }
 
 }  // namespace protocol

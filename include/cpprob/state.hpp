@@ -96,7 +96,6 @@ private:
     static void add_observe(const NDArray<double> & x);
 
     // Functions to handle accept / reject
-    static void start_rejection_sampling();
     static void finish_rejection_sampling();
 
     // Friends
@@ -223,6 +222,7 @@ private:
     // Attributes
     static TraceInfer trace_;
     static flatbuffers::FlatBufferBuilder buff_;
+    static std::map<std::string, double> log_prob_rej_samp_;
 
     static bool all_int_empty;
     static bool all_real_empty;
@@ -233,7 +233,7 @@ private:
 
     static void clear_empty_flags();
 
-    static void increment_log_prob(const double log_p);
+    static void increment_log_prob(const double log_p, const std::string & addr="");
 
     template<class Proposal>
     static Proposal get_proposal()
@@ -349,6 +349,7 @@ private:
     friend void predict(const T & x, const std::string & addr);
 
     friend class State;
+
 };
 
 }  // namespace cpprob
