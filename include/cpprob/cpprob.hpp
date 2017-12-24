@@ -30,19 +30,18 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
 {
 
     if (!control ||
-        State::state() == StateType::dryrun ||
-        State::state() == StateType::importance_sampling) {
+        State::dryrun() || State::sis()) {
         return distr(get_rng());
     }
 
     typename Distribution::result_type x{};
     std::string addr {get_addr()};
 
-    if (State::state() == StateType::compile) {
+    if (State::compile()) {
         x = distr(get_rng());
         StateCompile::add_sample(addr, distr, x);
     }
-    else if (State::state() == StateType::inference) {
+    else if (State::csis()) {
         StateInfer::new_sample(addr, distr);
         double radon_nikodym = 1;
 
@@ -73,7 +72,8 @@ void observe(Distribution & distr, const typename Distribution::result_type & x)
     if (State::compile()) {
         StateCompile::add_observe(distr(get_rng()));
     }
-    else if (State::inference()) {
+
+    else if (State::csis() || State::sis()) {
         StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x), "");
     }
 }
@@ -82,7 +82,7 @@ void observe(Distribution & distr, const typename Distribution::result_type & x)
 template<class T>
 void predict(const T & x, const std::string & addr)
 {
-    if (State::inference()) {
+    if (State::csis() || State::sis()) {
         if (addr.empty()) {
             StateInfer::add_predict(x, get_addr());
         }
@@ -100,22 +100,23 @@ template<class Func>
 void compile(const Func & f,
              const std::string & tcp_addr,
              const std::string & dump_folder,
-             std::size_t batch_size)
+             std::size_t batch_size,
+             int n_traces)
 {
+    const bool online_training = dump_folder.empty();
     State::set(StateType::compile);
-    const bool to_file = !dump_folder.empty();
 
-    if (to_file) {
-        SocketCompile::config_file(dump_folder);
+    if (online_training) {
+        SocketCompile::connect_server(tcp_addr);
     }
     else {
-        SocketCompile::connect_server(tcp_addr);
+        SocketCompile::config_file(dump_folder);
     }
 
     for (std::size_t i = 0; /* Forever */ ; ++i) {
         std::cout << "Generating batch " << i << std::endl;
         StateCompile::start_batch();
-        if (!to_file) {
+        if (online_training) {
             batch_size = SocketCompile::get_batch_size();
         }
 
@@ -125,6 +126,13 @@ void compile(const Func & f,
             StateCompile::finish_trace();
         }
         StateCompile::finish_batch();
+        // If n_traces != 0, keep track of the generated traces
+        if (n_traces != 0) {
+            n_traces -= batch_size;
+            if(n_traces < 0) {
+                break;
+            }
+        }
     }
 }
 
@@ -142,7 +150,7 @@ void generate_posterior(
     State::set(state);
     StateInfer::start_infer();
 
-    if (State::state() == StateType::inference) {
+    if (State::csis()) {
         SocketInfer::connect_client(tcp_addr);
         StateInfer::send_start_inference(observes);
     }

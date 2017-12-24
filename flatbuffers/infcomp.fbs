@@ -7,6 +7,8 @@ union MessageBody {
     // Inference
     RequestStartInference,
     ReplyStartInference,
+    RequestFinishInference,
+    ReplyFinishInference,
     RequestProposal,
     ReplyProposal
 }
@@ -147,6 +149,9 @@ table RequestStartInference {
 
 table ReplyStartInference {}
 
+table RequestFinishInference {}
+table ReplyFinishInference {}
+
 table RequestProposal {
     current_sample: Sample;
     previous_sample: Sample;
@@ -155,5 +160,6 @@ table RequestProposal {
 table ReplyProposal {
     distribution: Distribution;
 }
+
 
 root_type Message;

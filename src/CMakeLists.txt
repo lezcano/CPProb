@@ -4,16 +4,9 @@ add_subdirectory(models)
 find_package(Threads)
 
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE cpprob ${Boost_LIBRARIES})
-
-add_executable(models_main models_main.cpp)
-target_link_libraries(models_main PRIVATE cpprob ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(main PRIVATE cpprob models ${Boost_LIBRARIES})
 
 if (BUILD_SHERPA)
     target_link_libraries(main PRIVATE sherpa sherpa_mini)
     target_compile_definitions(main PRIVATE BUILD_SHERPA)
-    target_link_libraries(models_main PRIVATE sherpa sherpa_mini)
-else()
-    target_link_libraries(main PRIVATE models)
-    target_link_libraries(models_main PRIVATE models)
 endif()

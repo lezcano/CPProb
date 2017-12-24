@@ -37,7 +37,8 @@ void State::finish_rejection_sampling()
         rejection_sampling_ = false;
         if (state_ == StateType::compile) {
             StateCompile::finish_rejection_sampling();
-        } else if (state_ == StateType::inference) {
+        }
+        else if (state_ == StateType::csis) {
             StateInfer::finish_rejection_sampling();
         }
     }
@@ -53,16 +54,19 @@ bool State::compile ()
     return state_ == StateType::compile;
 }
 
-bool State::inference ()
+bool State::csis ()
 {
-    return state_ == StateType::inference ||
-           state_ == StateType::importance_sampling;
-
+    return state_ == StateType::csis;
 }
 
-StateType State::state()
+bool State::sis ()
 {
-    return state_;
+    return state_ == StateType::sis;
+}
+
+bool State::dryrun ()
+{
+    return state_ == StateType::dryrun;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +167,8 @@ void StateInfer::finish_infer()
         SocketInfer::delete_file("_any");
     }
     clear_empty_flags();
+
+
 }
 
 
@@ -199,7 +205,7 @@ void StateInfer::increment_log_prob(const double log_p, const std::string & addr
 {
     // If the address is empty it's because it's an observe. Probs a variant here would be better...
 
-    if (State::state() == StateType::inference &&
+    if (State::csis()&&
         State::rejection_sampling() &&
         !addr.empty()) {
         log_prob_rej_samp_[addr] = log_p;

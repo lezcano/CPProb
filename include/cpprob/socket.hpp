@@ -53,6 +53,7 @@ public:
     static void config_file(const std::string & dump_file);
 
     static void send_start_inference(const flatbuffers::FlatBufferBuilder & buff);
+    static void send_finish_inference();
 
     template<class Proposal>
     static auto get_proposal(const flatbuffers::FlatBufferBuilder & buff){

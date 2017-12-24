@@ -38,7 +38,7 @@ std::vector<Rivet::FourMomentum> select() {
 	int select = static_cast<int>(select_ran);
 	cpprob::predict(select, "Channel");
 
-	if (cpprob::State::state() == cpprob::StateType::dryrun) {
+	if (cpprob::State::dryrun()) {
 		std::cout << "Selected channel " << select << std::endl;
 	}
 

@@ -111,6 +111,24 @@ void SocketInfer::send_start_inference(const flatbuffers::FlatBufferBuilder & bu
     }
 }
 
+void SocketInfer::send_finish_inference() {
+    flatbuffers::FlatBufferBuilder buff;
+    auto msg = protocol::CreateMessage(
+            buff,
+            protocol::MessageBody::RequestFinishInference);
+    buff.Finish(msg);
+    zmq::message_t request (buff.GetSize());
+    memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
+    client_.send(request);
+
+    zmq::message_t reply;
+    client_.recv (&reply);
+    auto message = protocol::GetMessage(reply.data());
+    if (message->body_as_ReplyFinishInference() == nullptr) {
+        throw std::runtime_error("Message received is not a a ReplyFinishInference");
+    }
+}
+
 void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict)
 {
     std::ofstream out_file {dump_file_ + "_ids"};

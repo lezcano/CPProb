@@ -30,28 +30,26 @@ void predict(const T & x, const std::string & addr="");
 
 enum class StateType {
     compile,
-    inference,
-    dryrun,
-    importance_sampling
+    csis,
+    sis,
+    dryrun
 };
 
 class State {
 public:
     // Accept / Reject Sampling
     static void start_rejection_sampling();
-
     static void finish_rejection_sampling();
 
-    static bool rejection_sampling();
-
-    // State set / query
+    // State set
     static void set(StateType s);
 
+    // Query
+    static bool rejection_sampling();
     static bool compile ();
-
-    static bool inference ();
-
-    static StateType state();
+    static bool csis ();
+    static bool sis ();
+    static bool dryrun ();
 
 private:
     static StateType state_;

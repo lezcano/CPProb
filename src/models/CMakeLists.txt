@@ -1,9 +1,12 @@
+add_library(models SHARED models.cpp)
+target_link_libraries(models PUBLIC cpprob ${Boost_LIBRARIES})
+
 if(BUILD_SHERPA)
-    # TODO(Lezcano) Change for FindPackage YODA & Rivet
+    MESSAGE(STATUS "Linking to SHERPA")
+    # TODO(Lezcano) Change for find_library YODA & Rivet
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -l YODA -l Rivet")
 
     find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
-    MESSAGE(STATUS "Linking to SHERPA")
     add_library(sherpa SHARED sherpa.cpp calorimeter.cpp)
 
     target_link_libraries(sherpa PRIVATE cpprob ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
@@ -18,7 +21,4 @@ if(BUILD_SHERPA)
 
     add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
     target_link_libraries(sherpa_mini_gen PRIVATE sherpa_mini cpprob ${Boost_LIBRARIES})
-else()
-    add_library(models SHARED models.cpp)
-    target_link_libraries(models PUBLIC cpprob ${Boost_LIBRARIES})
 endif()
