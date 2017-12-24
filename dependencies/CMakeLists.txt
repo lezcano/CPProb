@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # For ZeroMQ
-find_package(Threads)
+# find_package(Threads)
 include(ExternalProject)
 
 ExternalProject_Add(googletest
@@ -17,8 +17,9 @@ ExternalProject_Add(googletest
   UPDATE_COMMAND ""    # Disable source work-tree update
 )
 
+# Stick to version 1.7.1 since version 1.8.0 breaks the g++7 build
 ExternalProject_Add(flatbuffers
-  URL            https://github.com/google/flatbuffers/archive/master.zip
+  URL            https://github.com/google/flatbuffers/archive/v1.7.1.zip
   INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"
   CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
   TEST_COMMAND   ""    # Disable test step
@@ -26,7 +27,7 @@ ExternalProject_Add(flatbuffers
 )
 
 # json.hpp, just download the .hpp file
-file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp "${CMAKE_INSTALL_PREFIX}/json.hpp" SHOW_PROGRESS)
+#file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp "${CMAKE_INSTALL_PREFIX}/json.hpp" SHOW_PROGRESS)
 
 #ExternalProject_Add(ZeroMQ
 #  URL            https://github.com/zeromq/libZMQ/archive/master.zip
@@ -41,15 +42,6 @@ file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp
 #                 -DBUILD_NC_TESTS=OFF
 #                 -BUILD_CONFIG_TESTS=OFF
 #                 -DINSTALL_HEADERS=ON
-#  TEST_COMMAND   ""    # Disable test step
-#  UPDATE_COMMAND ""    # Disable source work-tree update
-#)
-#
-#ExternalProject_Add(cppzmq
-#  URL            https://github.com/zeromq/cppzmq/archive/master.zip
-#  INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"
-#  UPDATE_COMMAND ""
-#  CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 #  TEST_COMMAND   ""    # Disable test step
 #  UPDATE_COMMAND ""    # Disable source work-tree update
 #)
