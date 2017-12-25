@@ -45,19 +45,36 @@ void SocketCompile::config_file(const std::string & dump_folder)
     dump_folder_ = dump_folder;
 }
 
-std::size_t SocketCompile::get_batch_size()
+int SocketCompile::get_batch_size()
 {
     zmq::message_t request;
     server_.recv(&request);
 
     auto message = protocol::GetMessage(request.data());
 
-    auto request_msg = message->body_as_RequestTraces();
-    if (request_msg == nullptr) {
-        throw std::runtime_error("Message received is not a a ReplyStartInference");
+    auto request_traces = message->body_as_RequestTraces();
+    if (request_traces == nullptr) {
+        auto request_finish = message->body_as_RequestFinishCompilation();
+        if (request_finish == nullptr) {
+            throw std::runtime_error("Message received is not a a RequestTraces or a RequestFinishCompilation");
+        }
+        return -1;
     }
 
-    return request_msg->num_traces();
+    return request_traces->num_traces();
+}
+
+void SocketCompile::send_finish_compilation()
+{
+
+    flatbuffers::FlatBufferBuilder buff;
+    auto msg = protocol::CreateMessage(
+            buff,
+            protocol::MessageBody::ReplyFinishCompilation);
+    buff.Finish(msg);
+    zmq::message_t request (buff.GetSize());
+    memcpy(request.data(), buff.GetBufferPointer(), buff.GetSize());
+    server_.send(request);
 }
 
 void SocketCompile::send_batch(const flatbuffers::FlatBufferBuilder & buff)

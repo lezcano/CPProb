@@ -48,6 +48,10 @@ struct RequestTraces;
 
 struct ReplyTraces;
 
+struct RequestFinishCompilation;
+
+struct ReplyFinishCompilation;
+
 struct RequestStartInference;
 
 struct ReplyStartInference;
@@ -64,21 +68,25 @@ enum class MessageBody : uint8_t {
   NONE = 0,
   RequestTraces = 1,
   ReplyTraces = 2,
-  RequestStartInference = 3,
-  ReplyStartInference = 4,
-  RequestFinishInference = 5,
-  ReplyFinishInference = 6,
-  RequestProposal = 7,
-  ReplyProposal = 8,
+  RequestFinishCompilation = 3,
+  ReplyFinishCompilation = 4,
+  RequestStartInference = 5,
+  ReplyStartInference = 6,
+  RequestFinishInference = 7,
+  ReplyFinishInference = 8,
+  RequestProposal = 9,
+  ReplyProposal = 10,
   MIN = NONE,
   MAX = ReplyProposal
 };
 
-inline MessageBody (&EnumValuesMessageBody())[9] {
+inline MessageBody (&EnumValuesMessageBody())[11] {
   static MessageBody values[] = {
     MessageBody::NONE,
     MessageBody::RequestTraces,
     MessageBody::ReplyTraces,
+    MessageBody::RequestFinishCompilation,
+    MessageBody::ReplyFinishCompilation,
     MessageBody::RequestStartInference,
     MessageBody::ReplyStartInference,
     MessageBody::RequestFinishInference,
@@ -94,6 +102,8 @@ inline const char **EnumNamesMessageBody() {
     "NONE",
     "RequestTraces",
     "ReplyTraces",
+    "RequestFinishCompilation",
+    "ReplyFinishCompilation",
     "RequestStartInference",
     "ReplyStartInference",
     "RequestFinishInference",
@@ -120,6 +130,14 @@ template<> struct MessageBodyTraits<RequestTraces> {
 
 template<> struct MessageBodyTraits<ReplyTraces> {
   static const MessageBody enum_value = MessageBody::ReplyTraces;
+};
+
+template<> struct MessageBodyTraits<RequestFinishCompilation> {
+  static const MessageBody enum_value = MessageBody::RequestFinishCompilation;
+};
+
+template<> struct MessageBodyTraits<ReplyFinishCompilation> {
+  static const MessageBody enum_value = MessageBody::ReplyFinishCompilation;
 };
 
 template<> struct MessageBodyTraits<RequestStartInference> {
@@ -284,6 +302,12 @@ struct Message FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const ReplyTraces *body_as_ReplyTraces() const {
     return body_type() == MessageBody::ReplyTraces ? static_cast<const ReplyTraces *>(body()) : nullptr;
   }
+  const RequestFinishCompilation *body_as_RequestFinishCompilation() const {
+    return body_type() == MessageBody::RequestFinishCompilation ? static_cast<const RequestFinishCompilation *>(body()) : nullptr;
+  }
+  const ReplyFinishCompilation *body_as_ReplyFinishCompilation() const {
+    return body_type() == MessageBody::ReplyFinishCompilation ? static_cast<const ReplyFinishCompilation *>(body()) : nullptr;
+  }
   const RequestStartInference *body_as_RequestStartInference() const {
     return body_type() == MessageBody::RequestStartInference ? static_cast<const RequestStartInference *>(body()) : nullptr;
   }
@@ -317,6 +341,14 @@ template<> inline const RequestTraces *Message::body_as<RequestTraces>() const {
 
 template<> inline const ReplyTraces *Message::body_as<ReplyTraces>() const {
   return body_as_ReplyTraces();
+}
+
+template<> inline const RequestFinishCompilation *Message::body_as<RequestFinishCompilation>() const {
+  return body_as_RequestFinishCompilation();
+}
+
+template<> inline const ReplyFinishCompilation *Message::body_as<ReplyFinishCompilation>() const {
+  return body_as_ReplyFinishCompilation();
 }
 
 template<> inline const RequestStartInference *Message::body_as<RequestStartInference>() const {
@@ -1691,6 +1723,62 @@ inline flatbuffers::Offset<ReplyTraces> CreateReplyTracesDirect(
       traces ? _fbb.CreateVector<flatbuffers::Offset<Trace>>(*traces) : 0);
 }
 
+struct RequestFinishCompilation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct RequestFinishCompilationBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  RequestFinishCompilationBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  RequestFinishCompilationBuilder &operator=(const RequestFinishCompilationBuilder &);
+  flatbuffers::Offset<RequestFinishCompilation> Finish() {
+    const auto end = fbb_.EndTable(start_, 0);
+    auto o = flatbuffers::Offset<RequestFinishCompilation>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<RequestFinishCompilation> CreateRequestFinishCompilation(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  RequestFinishCompilationBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct ReplyFinishCompilation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct ReplyFinishCompilationBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  ReplyFinishCompilationBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ReplyFinishCompilationBuilder &operator=(const ReplyFinishCompilationBuilder &);
+  flatbuffers::Offset<ReplyFinishCompilation> Finish() {
+    const auto end = fbb_.EndTable(start_, 0);
+    auto o = flatbuffers::Offset<ReplyFinishCompilation>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ReplyFinishCompilation> CreateReplyFinishCompilation(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  ReplyFinishCompilationBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct RequestStartInference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_OBSERVATION = 4
@@ -2015,6 +2103,14 @@ inline bool VerifyMessageBody(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageBody::ReplyTraces: {
       auto ptr = reinterpret_cast<const ReplyTraces *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageBody::RequestFinishCompilation: {
+      auto ptr = reinterpret_cast<const RequestFinishCompilation *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageBody::ReplyFinishCompilation: {
+      auto ptr = reinterpret_cast<const ReplyFinishCompilation *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageBody::RequestStartInference: {

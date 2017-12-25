@@ -100,8 +100,8 @@ template<class Func>
 void compile(const Func & f,
              const std::string & tcp_addr,
              const std::string & dump_folder,
-             std::size_t batch_size,
-             int n_traces)
+             int batch_size,
+             int n_batches)
 {
     const bool online_training = dump_folder.empty();
     State::set(StateType::compile);
@@ -113,23 +113,29 @@ void compile(const Func & f,
         SocketCompile::config_file(dump_folder);
     }
 
+    // It will break if n_batches != 0 or if it gets a RequestFinishCompilation
     for (std::size_t i = 0; /* Forever */ ; ++i) {
         std::cout << "Generating batch " << i << std::endl;
         StateCompile::start_batch();
         if (online_training) {
+            // TODO(Lezcano) C++17 Change to std::optional<int>, right now this is a hacky hack
             batch_size = SocketCompile::get_batch_size();
+            if (batch_size == -1) {
+                SocketCompile::send_finish_compilation();
+                break;
+            }
         }
 
-        for (std::size_t i = 0; i < batch_size; ++i) {
+        for (int n = 0; n < batch_size; ++n) {
             StateCompile::start_trace();
             call_f_default_params(f);
             StateCompile::finish_trace();
         }
         StateCompile::finish_batch();
-        // If n_traces != 0, keep track of the generated traces
-        if (n_traces != 0) {
-            n_traces -= batch_size;
-            if(n_traces < 0) {
+        // If n_batches != 0, keep track of the generated traces
+        if (n_batches != 0) {
+            --n_batches;
+            if (n_batches < 0) {
                 break;
             }
         }

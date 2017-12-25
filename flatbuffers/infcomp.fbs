@@ -4,6 +4,8 @@ union MessageBody {
     // Compile
     RequestTraces,
     ReplyTraces,
+    RequestFinishCompilation,
+    ReplyFinishCompilation,
     // Inference
     RequestStartInference,
     ReplyStartInference,
@@ -141,6 +143,9 @@ table RequestTraces {
 table ReplyTraces {
     traces: [Trace];
 }
+
+table RequestFinishCompilation { }
+table ReplyFinishCompilation { }
 
 // Inference
 table RequestStartInference {

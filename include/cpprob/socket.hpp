@@ -29,7 +29,8 @@ public:
     static void connect_server(const std::string & tcp_addr);
     static void config_file(const std::string & dump_folder);
 
-    static std::size_t get_batch_size();
+    static int get_batch_size();
+    static void send_finish_compilation();
 
 private:
     // Static Attributes
