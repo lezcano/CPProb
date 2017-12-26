@@ -167,7 +167,7 @@ void StateInfer::finish_infer()
         SocketInfer::delete_file("_any");
     }
     clear_empty_flags();
-    if (state::csis()) {
+    if (State::csis()) {
         SocketInfer::send_finish_inference();
     }
 }
@@ -206,7 +206,7 @@ void StateInfer::increment_log_prob(const double log_p, const std::string & addr
 {
     // If the address is empty it's because it's an observe. Probs a variant here would be better...
 
-    if (State::csis()&&
+    if (State::csis() &&
         State::rejection_sampling() &&
         !addr.empty()) {
         log_prob_rej_samp_[addr] = log_p;
