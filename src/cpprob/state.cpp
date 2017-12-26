@@ -167,7 +167,9 @@ void StateInfer::finish_infer()
         SocketInfer::delete_file("_any");
     }
     clear_empty_flags();
-    SocketInfer::send_finish_inference();
+    if (state::csis()) {
+        SocketInfer::send_finish_inference();
+    }
 }
 
 
