@@ -59,7 +59,7 @@ void execute(const F & model,
             cpprob::compile(model, tcp_addr_compile, "", batch_size, n_batches);
         }
     }
-    else if (csis || sis) {
+    if (csis || sis) {
         // Check that exactly one of the options is set
         if (observes_file.empty() == observes_str.empty()) {
             std::cerr << R"(In CSIS or SIS mode exactly one of the options "--observes" or "--observes_file" has to be set)" << std::endl;
@@ -92,7 +92,7 @@ void execute(const F & model,
             cpprob::generate_posterior(model, observes, "", sis_post.string(), n_samples, cpprob::StateType::sis);
         }
     }
-    else if (estimate) {
+    if (estimate) {
         std::cout << "Posterior Distribution Estimators" << std::endl;
         const auto print = [] (const bf::path & path) {
             if (bf::exists(path / bf::path("_ids"))) {
@@ -109,7 +109,7 @@ void execute(const F & model,
             std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found." << std::endl;
         }
     }
-    else if (dryrun) {
+    if (dryrun) {
         std::cout << "Dry Run" << std::endl;
         cpprob::State::set(cpprob::StateType::dryrun);
         cpprob::call_f_default_params(model);
@@ -168,7 +168,7 @@ int main(int argc, const char* const* argv) {
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(CSIS | SIS) Number of particles to be sampled from the posterior.")
       ("observes,o", po::value<std::string>(&observes_str), "(CSIS | SIS) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(CSIS | SIS) File with the observed values.")
-      ("generated_file", po::value<std::string>(&generated_file), "(CSIS | SIS | Estimate) File name for the samples from the posterior.")
+      ("generated_file", po::value<std::string>(&generated_file)->default_value(""), "(CSIS | SIS | Estimate) File for the samples from the posterior.")
       ;
     #ifdef BUILD_SHERPA
     std::cout << "SHERPA model built." << std::endl;
