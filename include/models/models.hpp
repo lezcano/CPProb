@@ -97,11 +97,11 @@ void normal_rejection_sampling(const RealType y1, const RealType y2)
     uniform_real_distribution<RealType> accept {0, maxval};
     RealType mu;
 
-    cpprob::start_rejection_sampling();
-    do {
-        mu = cpprob::sample(proposal, true);
-    } while (cpprob::sample(accept, true) > boost::math::pdf(pdf_prior, mu));
-    cpprob::finish_rejection_sampling();
+    {cpprob::rejection_sampling{};
+        do {
+            mu = cpprob::sample(proposal, true);
+        } while (cpprob::sample(accept, true) > boost::math::pdf(pdf_prior, mu));
+    }
 
     normal_distribution<RealType> likelihood {mu, sigma};
     cpprob::observe(likelihood, y1);

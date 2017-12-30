@@ -26,42 +26,44 @@ namespace bf = boost::filesystem;
 
 template<class F>
 void execute(const F & model,
-             const std::string & model_name,
+             const bf::path & model_folder,
              bool compile,  bool csis, bool sis, bool dryrun, bool estimate,
              const std::string & tcp_addr_compile,
              const std::string & tcp_addr_csis,
-             const bf::path & dump_folder,
+             const bool offline_training,
              const int batch_size,
              const int n_batches,
              const std::size_t n_samples,
              const bf::path & observes_file,
-             const std::string & observes_str)
+             const std::string & observes_str,
+             const bf::path & generated_file)
 {
-    auto model_folder = bf::path(model_name);
     // Create folder
     if (!bf::exists(model_folder)) {
         bf::create_directory(model_folder);
     }
 
+    const auto csis_post = model_folder / generated_file / "csis";
+    const auto sis_post = model_folder / generated_file / "sis";
+
     if (compile) {
         std::cout << "Compile" << std::endl;
-        bool online_training = dump_folder.empty();
-        if (online_training) {
-            std::cout << "Online Training" << std::endl;
-            cpprob::compile(model, tcp_addr_compile, "", batch_size, n_batches);
-        }
-        else {
-            auto dump_path = model_folder / dump_folder;
+        if (offline_training) {
+            auto dump_path = model_folder / bf::path("traces");
             std::cout << "Offline Training" << std::endl
                       << "Traces from Folder" << dump_path << std::endl;
             cpprob::compile(model, "", dump_path.string(), batch_size, n_batches);
+        }
+        else {
+            std::cout << "Online Training" << std::endl;
+            cpprob::compile(model, tcp_addr_compile, "", batch_size, n_batches);
         }
     }
     else if (csis || sis) {
         // Check that exactly one of the options is set
         if (observes_file.empty() == observes_str.empty()) {
             std::cerr << R"(In CSIS or SIS mode exactly one of the options "--observes" or "--observes_file" has to be set)" << std::endl;
-            std::exit (EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
         }
 
         cpprob::parameter_types_t<F, std::tuple> observes;
@@ -75,27 +77,23 @@ void execute(const F & model,
         }
 
         if (!ok) {
-            std::cerr << "Could not parse the arguments.\n"
-                      << "Please use spaces to separate the arguments and elements of an aggregate type instead of commas.\n"
+            std::cerr << "Could not parse the observations.\n"
+                      << "Please use spaces to separate the observations and elements of an aggregate type instead of commas.\n"
                       << "If using the -o option, please surround the arguments by quotes.\n";
-            std::exit (EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
         }
 
         if (csis) {
             std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
-            const auto csis_post = model_folder / "csis";
             cpprob::generate_posterior(model, observes, tcp_addr_csis, csis_post.string(), n_samples, cpprob::StateType::csis);
         }
         if (sis) {
             std::cout << "Sequential Importance Sampling (SIS)" << std::endl;
-            const auto sis_post = model_folder / "sis";
             cpprob::generate_posterior(model, observes, "", sis_post.string(), n_samples, cpprob::StateType::sis);
         }
     }
     else if (estimate) {
         std::cout << "Posterior Distribution Estimators" << std::endl;
-        const auto csis_post = model_folder / "csis";
-        const auto sis_post = model_folder / "sis";
         const auto print = [] (const bf::path & path) {
             if (bf::exists(path / bf::path("_ids"))) {
                 cpprob::Printer p;
@@ -122,8 +120,8 @@ void execute(const F & model,
 int main(int argc, const char* const* argv) {
     namespace po = boost::program_options;
 
-    bool compile, csis, sis, estimate, dryrun;
-    std::string model_name, tcp_addr_compile, tcp_addr_csis, observes_file, observes_str, dump_folder;
+    bool compile, csis, sis, estimate, dryrun, offline_training;
+    std::string model_name, model_folder, tcp_addr_compile, tcp_addr_csis, observes_file, observes_str, generated_file;
     int n_batches, batch_size;
     std::size_t n_samples;
     auto models = std::make_tuple(
@@ -154,18 +152,23 @@ int main(int argc, const char* const* argv) {
       ("sis", po::bool_switch(&sis), "Sequential Importance Sampling: Priors as proposals.")
       ("estimate", po::bool_switch(&estimate), "Estimators.")
       ("dryrun", po::bool_switch(&dryrun), "Execute the generative model.")
+
       ("model", po::value<std::string>(&model_name)->required()->value_name(model_names_str),
-          "(Compile | Inference | Regular | Dryrun) Select the model to be executed")
+          "(Compile | CSIS | SIS | Dryrun) Select the model to be executed")
+      ("model_folder", po::value<std::string>(&model_folder),
+       "(Compile + --dump_to_folder | CSIS | SIS | Estimate) Model folder for the generated files.\n"
+       "  Default value: Model name")
 
       ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "(Compile) Address and port to host the trace generator server.")
-      ("dump_folder", po::value<std::string>(&dump_folder), "(Compile) Dump traces into a file.")
-      ("batch_size", po::value<int>(&batch_size)->default_value(128), "(Compile + --dump_folder) Batch size.")
-      ("n_batches", po::value<int>(&n_batches)->default_value(0), "(Compile + --dump_fodler) Number of batches to generate. If equal to 0 it will generate batches forever.")
+      ("offline_training", po::bool_switch(&offline_training), "(Compile) Dump traces into a folder to perform offline training.")
+      ("batch_size", po::value<int>(&batch_size)->default_value(128), "(Compile + --offline_training) Batch size.")
+      ("n_batches", po::value<int>(&n_batches)->default_value(0), "(Compile + --offline_training) Number of batches to generate. If equal to 0 it will generate batches forever.")
 
       ("tcp_addr_infer", po::value<std::string>(&tcp_addr_csis)->default_value("tcp://127.0.0.1:6666"), "(CSIS) Address and port to connect to the NN.")
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(CSIS | SIS) Number of particles to be sampled from the posterior.")
       ("observes,o", po::value<std::string>(&observes_str), "(CSIS | SIS) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(CSIS | SIS) File with the observed values.")
+      ("generated_file", po::value<std::string>(&generated_file), "(CSIS | SIS | Estimate) File name for the samples from the posterior.")
       ;
     #ifdef BUILD_SHERPA
     std::cout << "SHERPA model built." << std::endl;
@@ -188,20 +191,16 @@ int main(int argc, const char* const* argv) {
         std::exit (EXIT_FAILURE);
     }
 
-
-    // Check that dump_folder exists
-    if (vm.count("dump_folder") != 0u) {
-        const bf::path path_dump_folder(dump_folder);
-        if (!bf::exists(path_dump_folder)) {
-            std::cerr << "Provided --dump_folder \"" + dump_folder + "\" does not exist.\n"
-                      << "Please provide a valid folder.\n";
-            std::exit(EXIT_FAILURE);
-        }
+    // Set model_folder to default
+    if (model_folder.empty()) {
+        model_folder = model_name;
     }
 
     const auto execute_params = [&](const auto & model) {
-        execute(model, model_name, compile, csis, sis, dryrun, estimate, tcp_addr_compile, tcp_addr_csis,
-                dump_folder, batch_size, n_batches, n_samples, observes_file, observes_str);
+        execute(model, bf::path(model_folder),
+                compile, csis, sis, dryrun, estimate,
+                tcp_addr_compile, tcp_addr_csis, offline_training, batch_size,
+                n_batches, n_samples, bf::path(observes_file), observes_str, bf::path(generated_file));
     };
 
     // This could be generated via template meta programming...

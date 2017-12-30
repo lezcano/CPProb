@@ -53,6 +53,7 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
         // No proposal -> Default to prior as proposal
         catch (const std::runtime_error &) {
             x = distr(get_rng());
+            radon_nikodym = 1;
         }
         StateInfer::increment_log_prob(radon_nikodym, addr);
 
@@ -92,9 +93,12 @@ void predict(const T & x, const std::string & addr)
     }
 }
 
-void start_rejection_sampling();
-
-void finish_rejection_sampling();
+struct rejection_sampling {
+    rejection_sampling();
+    rejection_sampling& operator=(const rejection_sampling&) = delete;
+    rejection_sampling& operator=(rejection_sampling &&) = delete;
+    ~rejection_sampling();
+};
 
 template<class Func>
 void compile(const Func & f,
