@@ -43,8 +43,7 @@ void execute(const F & model,
         bf::create_directory(model_folder);
     }
 
-    const auto csis_post = model_folder / generated_file / "csis";
-    const auto sis_post = model_folder / generated_file / "sis";
+    const auto post_file = model_folder / generated_file;
 
     if (compile) {
         std::cout << "Compile" << std::endl;
@@ -85,29 +84,17 @@ void execute(const F & model,
 
         if (csis) {
             std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
-            cpprob::generate_posterior(model, observes, tcp_addr_csis, csis_post.string(), n_samples, cpprob::StateType::csis);
+            cpprob::generate_posterior(model, observes, tcp_addr_csis, post_file, n_samples, cpprob::StateType::csis);
         }
         if (sis) {
             std::cout << "Sequential Importance Sampling (SIS)" << std::endl;
-            cpprob::generate_posterior(model, observes, "", sis_post.string(), n_samples, cpprob::StateType::sis);
+            cpprob::generate_posterior(model, observes, "", post_file, n_samples, cpprob::StateType::sis);
         }
     }
     if (estimate) {
         std::cout << "Posterior Distribution Estimators" << std::endl;
-        const auto print = [] (const bf::path & path) {
-            if (bf::exists(path / bf::path("_ids"))) {
-                cpprob::Printer p;
-                p.load(path.string());
-                p.print(std::cout);
-                return true;
-            }
-            else {
-                return false;
-            }
-        };
-        if (!(print(csis_post) || print(sis_post))) {
-            std::cerr << "None of the files " << csis_post << " or " << sis_post << " were found." << std::endl;
-        }
+        std::cout << cpprob::StatsPrinter{post_file.string() + "_csis"};
+        std::cout << cpprob::StatsPrinter{post_file.string() + "_sis"};
     }
     if (dryrun) {
         std::cout << "Dry Run" << std::endl;

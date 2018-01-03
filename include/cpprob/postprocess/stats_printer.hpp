@@ -9,32 +9,41 @@
 #include <vector>
 #include <utility>
 
+#include <boost/filesystem/operations.hpp>                  // for exists
+#include <boost/filesystem/path.hpp>                        // for path
+
 #include "cpprob/ndarray.hpp"
+#include "cpprob/state.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/postprocess/empirical_distribution.hpp"
 
 namespace cpprob {
 // TODO(Lezcano) Maybe factor into two classes
-class Printer {
+class StatsPrinter {
 public:
 
-    void load(const std::string & file_name)
+    StatsPrinter(const std::string & file_path)
     {
-        std::ifstream ids_file(file_name + "_ids");
+        namespace bf = boost::filesystem;
+        auto file_ids = file_path + ".ids";
+        if (!bf::exists(bf::path(file_ids))) {
+            return;
+        }
+        std::ifstream ids_file(file_ids.c_str());
         for (std::string line; std::getline(ids_file, line);) {
             ids_.emplace_back(std::move(line));
         }
 
-        load_distr(file_name + "_int", int_distr_);
-        load_distr(file_name + "_real", real_distr_);
+        load_distr(file_path + ".int", int_distr_);
+        load_distr(file_path + ".real", real_distr_);
     }
 
-    void print(std::ostream & out) const
+    friend std::ostream & operator<<(std::ostream & out, const StatsPrinter & sp)
     {
-        for (const auto & kv : real_distr_) {
+        for (const auto & kv : sp.real_distr_) {
             std::size_t i = 0;
             for (const auto & emp_distr : kv.second) {
-                out << ids_[kv.first];
+                out << sp.ids_[kv.first];
                 if (kv.second.size() > 1) {
                     out << ' ' << i;
                 }
@@ -45,10 +54,10 @@ public:
                 ++i;
             }
         }
-        for (const auto & kv : int_distr_) {
+        for (const auto & kv : sp.int_distr_) {
             std::size_t i = 0;
             for (const auto & emp_distr : kv.second) {
-                out << ids_[kv.first];
+                out << sp.ids_[kv.first];
                 if (kv.second.size() > 1) {
                     out << ' ' << i;
                 }
@@ -63,6 +72,7 @@ public:
                 ++i;
             }
         }
+        return out;
     }
 
 private:
@@ -74,7 +84,7 @@ private:
     template<class T>
     void load_distr(const std::string & file_name, std::map<int, std::vector<EmpiricalDistribution<T>>> & distributions)
     {
-        std::ifstream file(file_name);
+        std::ifstream file(file_name.c_str());
 
         if (!file.is_open()) {
             return;

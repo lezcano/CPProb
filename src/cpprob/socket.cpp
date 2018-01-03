@@ -2,7 +2,6 @@
 
 #include <algorithm>                          // for transform
 #include <cstdint>                            // for int32_t
-#include <cstdio>                             // for remove
 #include <exception>                          // for terminate
 #include <fstream>                            // for operator<<, ofstream
 #include <iostream>                           // for cerr, ios_base::failure
@@ -102,17 +101,10 @@ void SocketCompile::send_batch(const flatbuffers::FlatBufferBuilder & buff)
 ////////////////////////////////////////////////////////////////////////////////
 
 zmq::socket_t SocketInfer::client_ (context, ZMQ_REQ);
-std::string SocketInfer::dump_file_;
 
 void SocketInfer::connect_client(const std::string& tcp_addr)
 {
     client_.connect(tcp_addr.c_str());
-    dump_file_.clear();
-}
-
-void SocketInfer::config_file(const std::string & dump_file)
-{
-    dump_file_ = dump_file;
 }
 
 void SocketInfer::send_start_inference(const flatbuffers::FlatBufferBuilder & buff) {
@@ -146,29 +138,5 @@ void SocketInfer::send_finish_inference() {
     }
 }
 
-void SocketInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict)
-{
-    std::ofstream out_file {dump_file_ + "_ids"};
-    std::vector<std::string> addresses(ids_predict.size());
-    for(const auto& kv : ids_predict) {
-        addresses[kv.second] = kv.first;
-    }
-    for(const auto & address : addresses) {
-        out_file << address << std::endl;
-    }
-}
-
-void SocketInfer::dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix)
-{
-    std::ofstream f {dump_file_ + suffix, std::ios::app};
-    f.precision(std::numeric_limits<double>::digits10);
-    f << std::scientific << std::make_pair(predicts, log_w) << std::endl;
-}
-
-void SocketInfer::delete_file(const std::string & suffix)
-{
-    auto file_name = dump_file_ + suffix;
-    std::remove(file_name.c_str());
-}
 
 }  // namespace cpprob

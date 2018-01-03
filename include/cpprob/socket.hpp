@@ -51,7 +51,6 @@ private:
 class SocketInfer {
 public:
     static void connect_client(const std::string& tcp_addr);
-    static void config_file(const std::string & dump_file);
 
     static void send_start_inference(const flatbuffers::FlatBufferBuilder & buff);
     static void send_finish_inference();
@@ -83,13 +82,7 @@ public:
 private:
     friend class StateInfer;
 
-    static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const std::string & suffix);
-
-    static void dump_ids(const std::unordered_map<std::string, int> & ids_predict);
-    static void delete_file(const std::string & suffix);
-
     static zmq::socket_t client_;
-    static std::string dump_file_;
 };
 }       // namespace cpprob
 #endif  // INCLUDE_SOCKET_HPP_

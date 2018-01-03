@@ -13,6 +13,8 @@
 #include <utility>                                      // for move, index_s...
 #include <vector>                                       // for vector
 
+#include <boost/filesystem/path.hpp>                    // for path
+
 #include "cpprob/call_function.hpp"                     // for call_f_defaul...
 #include "cpprob/distributions/utils_distributions.hpp" // for logpdf
 #include "cpprob/metapriors.hpp"                        // for discard_build
@@ -151,7 +153,7 @@ void generate_posterior(
         const Func & f,
         const std::tuple<Args...> & observes,
         const std::string & tcp_addr,
-        const std::string & file_name,
+        const boost::filesystem::path & file_name,
         std::size_t n,
         const StateType state)
 {
@@ -165,7 +167,7 @@ void generate_posterior(
         StateInfer::send_start_inference(observes);
     }
 
-    SocketInfer::config_file(file_name);
+    StateInfer::config_file(file_name);
 
     for (std::size_t i = 0; i < n; ++i) {
         std::cout << "Generating trace " << i << std::endl;

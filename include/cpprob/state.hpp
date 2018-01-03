@@ -10,6 +10,8 @@
 #include <vector>                                       // for vector
 #include <boost/any.hpp>                                // for any
 
+#include <boost/filesystem/path.hpp>                    // for path
+
 #include "flatbuffers/infcomp_generated.h"
 #include "cpprob/distributions/utils_base.hpp"          // for proposal
 #include "cpprob/ndarray.hpp"                           // for NDArray
@@ -209,6 +211,8 @@ public:
         buff_.Clear();
     }
 
+    static void config_file(const boost::filesystem::path & dump_file);
+
     static void start_infer();
     static void finish_infer();
 
@@ -221,6 +225,7 @@ private:
     static TraceInfer trace_;
     static flatbuffers::FlatBufferBuilder buff_;
     static std::map<std::string, double> log_prob_rej_samp_;
+    static boost::filesystem::path dump_file_;
 
     static bool all_int_empty;
     static bool all_real_empty;
@@ -337,6 +342,10 @@ private:
         trace_.predict_any_.emplace_back(id, x);
     }
 
+    static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path);
+    static void dump_ids(const std::unordered_map<std::string, int> & ids_predict, const boost::filesystem::path & path);
+    static boost::filesystem::path get_file_name(const std::string & value);
+
     // Friends
     template<class Distribution>
     friend typename Distribution::result_type sample(Distribution & distr, const bool control);
@@ -347,7 +356,6 @@ private:
     friend void predict(const T & x, const std::string & addr);
 
     friend class State;
-
 };
 
 }  // namespace cpprob

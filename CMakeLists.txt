@@ -28,6 +28,7 @@ find_package(GTest REQUIRED)
 find_package(Backtrace REQUIRED)
 find_package(FlatBuffers REQUIRED)
 find_package(Boost COMPONENTS program_options filesystem system REQUIRED)
+add_definitions(-DBOOST_SYSTEM_NO_DEPRECATED)
 
 
 ##############################################################################

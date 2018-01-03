@@ -1,5 +1,6 @@
 #include "cpprob/state.hpp"
 
+#include <cstdio>             // for remove
 #include <iterator>           // for make_move_iterator, move_iterator, oper...
 #include <numeric>            // for accumulate
 #include <set>                // for set
@@ -145,6 +146,7 @@ std::map<std::string, double> StateInfer::log_prob_rej_samp_;
 bool StateInfer::all_int_empty = true;
 bool StateInfer::all_real_empty = true;
 bool StateInfer::all_any_empty = true;
+boost::filesystem::path StateInfer::dump_file_;
 std::vector<void (*)()> StateInfer::clear_functions_;
 
 void StateInfer::start_infer()
@@ -156,15 +158,15 @@ void StateInfer::start_infer()
 
 void StateInfer::finish_infer()
 {
-    SocketInfer::dump_ids(TraceInfer::ids_predict_);
+    dump_ids(TraceInfer::ids_predict_, get_file_name("ids"));
     if (all_int_empty) {
-        SocketInfer::delete_file("_int");
+        std::remove(get_file_name("int").c_str());
     }
     if (all_real_empty) {
-        SocketInfer::delete_file("_real");
+        std::remove(get_file_name("real").c_str());
     }
     if (all_any_empty) {
-        SocketInfer::delete_file("_any");
+        std::remove(get_file_name("any").c_str());
     }
     clear_empty_flags();
     if (State::csis()) {
@@ -186,9 +188,9 @@ void StateInfer::start_trace()
 void StateInfer::finish_trace()
 {
     buff_.Clear();
-    SocketInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, "_int");
-    SocketInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, "_real");
-    SocketInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, "_any");
+    StateInfer::dump_predicts(trace_.predict_int_, trace_.log_w_, get_file_name("int"));
+    StateInfer::dump_predicts(trace_.predict_real_, trace_.log_w_, get_file_name("real"));
+    StateInfer::dump_predicts(trace_.predict_any_, trace_.log_w_, get_file_name("any"));
     all_int_empty &= trace_.predict_int_.size() == 0;
     all_real_empty &= trace_.predict_real_.size() == 0;
     all_any_empty &= trace_.predict_any_.size() == 0;
@@ -229,6 +231,40 @@ void StateInfer::finish_rejection_sampling()
     }
     clear_functions_.clear();
     log_prob_rej_samp_.clear();
+}
+
+void StateInfer::config_file(const boost::filesystem::path & dump_file)
+{
+    dump_file_ = dump_file;
+}
+
+boost::filesystem::path StateInfer::get_file_name(const std::string & value)
+{
+    std::string mode = []{
+        if      (State::csis()) { return "_csis"; }
+        else if (State::sis())  { return "_sis"; }
+        else { throw std::runtime_error("Unsupported mode."); }
+    }();
+    return dump_file_.string() + mode + '.' + value;
+}
+
+void StateInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict, const boost::filesystem::path & path)
+{
+    std::ofstream f{path.c_str()};
+    std::vector<std::string> addresses(ids_predict.size());
+    for(const auto & kv : ids_predict) {
+        addresses[kv.second] = kv.first;
+    }
+    for(const auto & address : addresses) {
+        f << address << std::endl;
+    }
+}
+
+void StateInfer::dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path)
+{
+    std::ofstream f{path.c_str(), std::ios::app};
+    f.precision(std::numeric_limits<double>::digits10);
+    f << std::scientific << std::make_pair(predicts, log_w) << std::endl;
 }
 
 }  // namespace cpprob
