@@ -1,8 +1,6 @@
 add_subdirectory(cpprob)
 add_subdirectory(models)
 
-find_package(Threads)
-
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE cpprob models ${Boost_LIBRARIES})
 
