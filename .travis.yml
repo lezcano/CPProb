@@ -7,7 +7,7 @@ sudo: false
 
 cache:
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.64.0 # Keep this in sync with BOOST_VERSION
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.66.0 # Keep this in sync with BOOST_VERSION
     - ${TRAVIS_BUILD_DIR}/dependencies
 
 matrix:
@@ -41,7 +41,7 @@ install:
   - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
 
   # Install a recent CMake
-  - CMAKE_VERSION=3.9.0
+  - CMAKE_VERSION=3.10.0
   - CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.[0-9]}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz"
   - (mkdir cmake && travis_retry wget --no-check-certificate -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake)
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
@@ -71,7 +71,7 @@ install:
     fi
 
   # Install Boost headers
-  - BOOST_VERSION=1.64.0 # Keep this in sync with the cached directory
+  - BOOST_VERSION=1.66.0 # Keep this in sync with the cached directory
   - BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
   - |
     if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
