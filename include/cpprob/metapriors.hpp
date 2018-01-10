@@ -1,6 +1,7 @@
 #ifndef CPPROB_METAPRIORS_HPP_
 #define CPPROB_METAPRIORS_HPP_
 
+#include "cpprob/state.hpp"
 #include "cpprob/utils.hpp"
 #include "cpprob/traits.hpp"
 
@@ -8,6 +9,7 @@ namespace cpprob {
 
 template<class Derived>
 struct MetaDistribution {
+
     template<class RNG>
     auto operator()(RNG &rng) { return Derived::distr(rng); }
 };
@@ -29,6 +31,19 @@ struct MetaPoisson : MetaDistribution<MetaPoisson<ResultType, Mean>> {
 template<class ResultType, int Mean>
 std::poisson_distribution<ResultType> MetaPoisson<ResultType, Mean>::distr{mean};
 
+template<class ResultType=int, int Mean = 10>
+struct MetaPositivePoisson {
+    static constexpr ResultType mean = static_cast<ResultType>(Mean);
+    static std::poisson_distribution<ResultType> distr;
+
+    template<class RNG>
+    auto operator()(RNG &rng) {
+        return MetaPositivePoisson::distr(rng) + 1;
+    }
+};
+template<class ResultType, int Mean>
+std::poisson_distribution<ResultType> MetaPositivePoisson<ResultType, Mean>::distr{mean - 1};
+
 template<class T, class MetaDistr>
 class Prior {
 public:
@@ -38,7 +53,7 @@ public:
 
     operator T() const { return t_; }
 
-    MetaDistr meta_distr{};
+    MetaDistr meta_distr;
     T t_;
 };
 

@@ -19,7 +19,7 @@ ExternalProject_Add(googletest
 
 # Stick to version 1.7.1 since version 1.8.0 breaks the g++7 build
 ExternalProject_Add(flatbuffers
-  URL            https://github.com/google/flatbuffers/archive/v1.7.1.zip
+  URL            https://github.com/google/flatbuffers/archive/v1.8.0.zip
   INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"
   CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
   TEST_COMMAND   ""    # Disable test step

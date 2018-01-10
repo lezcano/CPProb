@@ -129,8 +129,9 @@ table Sample {
 }
 
 table Trace {
-    observe: NDArray;
+    observation: NDArray;
     samples: [Sample];
+    hyperparameters: [double];
 }
 
 

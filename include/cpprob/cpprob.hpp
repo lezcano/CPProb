@@ -17,7 +17,6 @@
 
 #include "cpprob/call_function.hpp"                     // for call_f_defaul...
 #include "cpprob/distributions/utils_distributions.hpp" // for logpdf
-#include "cpprob/metapriors.hpp"                        // for discard_build
 #include "cpprob/sample.hpp"                            // for Sample
 #include "cpprob/socket.hpp"                            // for SocketInfer
 #include "cpprob/state.hpp"                             // for StateInfer
@@ -92,6 +91,14 @@ void predict(const T & x, const std::string & addr)
         else {
             StateInfer::add_predict(x, addr);
         }
+    }
+}
+
+template<class T>
+void metaobserve(const T & x)
+{
+    if (State::compile()) {
+        StateCompile::add_observe(x);
     }
 }
 

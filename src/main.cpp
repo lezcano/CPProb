@@ -10,6 +10,7 @@
 
 #include "cpprob/call_function.hpp"                         // for call_f_de...
 #include "cpprob/cpprob.hpp"                                // for compile
+#include "cpprob/metapriors.hpp"                            // for tuple_observes
 #include "cpprob/postprocess/stats_printer.hpp"             // for Printer
 #include "cpprob/serialization.hpp"                         // for parse_file
 #include "cpprob/state.hpp"                                 // for StateType
@@ -65,7 +66,8 @@ void execute(const F & model,
             std::exit(EXIT_FAILURE);
         }
 
-        cpprob::parameter_types_t<F, std::tuple> observes;
+        // tuple_observes_t discards cpprob::Builder
+        cpprob::tuple_observes_t<F> observes;
         bool ok;
         if (!observes_file.empty()) {
             const auto observes_path = model_folder / observes_file;
@@ -117,6 +119,7 @@ int main(int argc, const char* const* argv) {
             std::make_pair(std::string("linear_gaussian"), &models::linear_gaussian_1d<50>),
             std::make_pair(std::string("hmm"), &models::hmm<4>),
             std::make_pair(std::string("linear_regression"), &models::poly_adjustment<1, 6>),
+            std::make_pair(std::string("dyn_linear_reg"), &models::linear_regression<>),
             std::make_pair(std::string("unk_mean_2d"), &models::gaussian_2d_unk_mean<>));
 
     // This could be generated via template meta programming...
@@ -125,7 +128,8 @@ int main(int argc, const char* const* argv) {
                                   std::get<2>(models).first + '/' +
                                   std::get<3>(models).first + '/' +
                                   std::get<4>(models).first + '/' +
-                                  std::get<5>(models).first;
+                                  std::get<5>(models).first + '/' +
+                                  std::get<6>(models).first;
 
     #ifdef BUILD_SHERPA
     model_names_str += "/sherpa/sherpa_mini";
@@ -155,7 +159,7 @@ int main(int argc, const char* const* argv) {
       ("n_samples,n", po::value<std::size_t>(&n_samples)->default_value(10000), "(CSIS | SIS) Number of particles to be sampled from the posterior.")
       ("observes,o", po::value<std::string>(&observes_str), "(CSIS | SIS) Values to observe.")
       ("observes_file,f", po::value<std::string>(&observes_file), "(CSIS | SIS) File with the observed values.")
-      ("generated_file", po::value<std::string>(&generated_file)->default_value(""), "(CSIS | SIS | Estimate) File for the samples from the posterior.")
+      ("generated_file", po::value<std::string>(&generated_file)->default_value("post"), "(CSIS | SIS | Estimate) File for the samples from the posterior.")
       ;
     #ifdef BUILD_SHERPA
     std::cout << "SHERPA model built." << std::endl;
@@ -208,6 +212,9 @@ int main(int argc, const char* const* argv) {
     }
     else if (model_name == std::get<5>(models).first) {
         execute_params(std::get<5>(models).second);
+    }
+    else if (model_name == std::get<6>(models).first) {
+        execute_params(std::get<6>(models).second);
     }
     #ifdef BUILD_SHERPA
     else if (model_name  == "sherpa") {

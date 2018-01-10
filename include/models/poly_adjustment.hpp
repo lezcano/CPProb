@@ -40,7 +40,7 @@ void poly_adjustment_prior(const std::vector<std::pair<RealType, RealType>> &poi
                                     cpprob::Prior<RealType, cpprob::MetaNormal<double, 0, 10>>,
                                     RealType
                                 >
-                            >, cpprob::MetaPoisson<int, 10>
+                            >, cpprob::MetaPositivePoisson<int, 10>
                         >
                     >) {
     auto poly = generate_polynomial<RealType>(D);
@@ -54,16 +54,18 @@ void poly_adjustment_prior(const std::vector<std::pair<RealType, RealType>> &poi
     }
 }
 
-template<class RealType = double, std::size_t N>
-void linear_regression(const std::array<std::pair<RealType, RealType>, N> &points,
-                    cpprob::Builder<
-                        std::array<
-                            std::pair<
-                                cpprob::Prior<RealType, cpprob::MetaNormal<double, 3, 1>>,
-                                RealType
-                            >, N
-                        >
-                    >) {
+template<class RealType = double>
+void linear_regression(const std::vector<std::pair<RealType, RealType>> &points,
+                       cpprob::Builder<
+                               cpprob::Prior<
+                                       std::vector<
+                                               std::pair<
+                                                       cpprob::Prior<RealType, cpprob::MetaNormal<double, 3, 1>>,
+                                                       RealType
+                                               >
+                                       >, cpprob::MetaPositivePoisson<std::size_t, 6>
+                               >
+                       >) {
     using boost::random::normal_distribution;
     normal_distribution<RealType> prior{0,10};
     auto a = cpprob::sample(prior, true);
@@ -71,6 +73,7 @@ void linear_regression(const std::array<std::pair<RealType, RealType>, N> &point
 
     for (const auto &point : points) {
         normal_distribution<RealType> likelihood{a*point.first + b, 1};
+        cpprob::metaobserve(point.first);
         cpprob::observe(likelihood, point.second);
     }
     cpprob::predict(a, "a");

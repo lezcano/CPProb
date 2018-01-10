@@ -103,6 +103,8 @@ private:
     friend typename Distribution::result_type sample(Distribution & distr, const bool control);
     template<class Distribution>
     friend void observe(Distribution & distr, const typename Distribution::result_type & x);
+    template<class T>
+    friend void metaobserve(const T & x);
 
     friend class State;
 };
@@ -191,10 +193,7 @@ public:
     static void send_start_inference(const std::tuple<Args...> & observes)
     {
         NDArray<double> obs_nd = StateInfer::obs_to_ndarray(observes,
-                                                            std::integral_constant<bool,
-                                                                    std::tuple_size<decltype(
-                                                                    discard_build(std::declval<std::tuple<Args...>>())
-                                                                    )>::value == 1>{});
+                                                            std::integral_constant<bool, sizeof...(Args) == 1>{});
 
         auto observe_init = protocol::CreateRequestStartInference(
                 buff_,
@@ -309,7 +308,7 @@ private:
     template<class... Args>
     static NDArray<double> obs_to_ndarray(const std::tuple<Args...> & observes, std::false_type)
     {
-        return NDArray<double>(detail::to_vec<double>(discard_build(observes)));
+        return NDArray<double>(detail::to_vec<double>(observes));
     }
 
 

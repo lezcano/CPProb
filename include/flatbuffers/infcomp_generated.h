@@ -1572,22 +1572,28 @@ inline flatbuffers::Offset<Sample> CreateSampleDirect(
 
 struct Trace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
-    VT_OBSERVE = 4,
-    VT_SAMPLES = 6
+    VT_OBSERVATION = 4,
+    VT_SAMPLES = 6,
+    VT_HYPERPARAMETERS = 8
   };
-  const NDArray *observe() const {
-    return GetPointer<const NDArray *>(VT_OBSERVE);
+  const NDArray *observation() const {
+    return GetPointer<const NDArray *>(VT_OBSERVATION);
   }
   const flatbuffers::Vector<flatbuffers::Offset<Sample>> *samples() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Sample>> *>(VT_SAMPLES);
   }
+  const flatbuffers::Vector<double> *hyperparameters() const {
+    return GetPointer<const flatbuffers::Vector<double> *>(VT_HYPERPARAMETERS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_OBSERVE) &&
-           verifier.VerifyTable(observe()) &&
+           VerifyOffset(verifier, VT_OBSERVATION) &&
+           verifier.VerifyTable(observation()) &&
            VerifyOffset(verifier, VT_SAMPLES) &&
            verifier.Verify(samples()) &&
            verifier.VerifyVectorOfTables(samples()) &&
+           VerifyOffset(verifier, VT_HYPERPARAMETERS) &&
+           verifier.Verify(hyperparameters()) &&
            verifier.EndTable();
   }
 };
@@ -1595,11 +1601,14 @@ struct Trace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct TraceBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_observe(flatbuffers::Offset<NDArray> observe) {
-    fbb_.AddOffset(Trace::VT_OBSERVE, observe);
+  void add_observation(flatbuffers::Offset<NDArray> observation) {
+    fbb_.AddOffset(Trace::VT_OBSERVATION, observation);
   }
   void add_samples(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Sample>>> samples) {
     fbb_.AddOffset(Trace::VT_SAMPLES, samples);
+  }
+  void add_hyperparameters(flatbuffers::Offset<flatbuffers::Vector<double>> hyperparameters) {
+    fbb_.AddOffset(Trace::VT_HYPERPARAMETERS, hyperparameters);
   }
   TraceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1607,7 +1616,7 @@ struct TraceBuilder {
   }
   TraceBuilder &operator=(const TraceBuilder &);
   flatbuffers::Offset<Trace> Finish() {
-    const auto end = fbb_.EndTable(start_, 2);
+    const auto end = fbb_.EndTable(start_, 3);
     auto o = flatbuffers::Offset<Trace>(end);
     return o;
   }
@@ -1615,22 +1624,26 @@ struct TraceBuilder {
 
 inline flatbuffers::Offset<Trace> CreateTrace(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<NDArray> observe = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Sample>>> samples = 0) {
+    flatbuffers::Offset<NDArray> observation = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Sample>>> samples = 0,
+    flatbuffers::Offset<flatbuffers::Vector<double>> hyperparameters = 0) {
   TraceBuilder builder_(_fbb);
+  builder_.add_hyperparameters(hyperparameters);
   builder_.add_samples(samples);
-  builder_.add_observe(observe);
+  builder_.add_observation(observation);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<Trace> CreateTraceDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<NDArray> observe = 0,
-    const std::vector<flatbuffers::Offset<Sample>> *samples = nullptr) {
+    flatbuffers::Offset<NDArray> observation = 0,
+    const std::vector<flatbuffers::Offset<Sample>> *samples = nullptr,
+    const std::vector<double> *hyperparameters = nullptr) {
   return protocol::CreateTrace(
       _fbb,
-      observe,
-      samples ? _fbb.CreateVector<flatbuffers::Offset<Sample>>(*samples) : 0);
+      observation,
+      samples ? _fbb.CreateVector<flatbuffers::Offset<Sample>>(*samples) : 0,
+      hyperparameters ? _fbb.CreateVector<double>(*hyperparameters) : 0);
 }
 
 struct RequestTraces FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
