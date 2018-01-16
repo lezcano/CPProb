@@ -4,19 +4,20 @@ if(BUILD_SHERPA)
 
     find_library(SHERPA_LIBRARY SherpaMain HINTS /usr/local/lib/SHERPA-MC /usr/share/SHERPA-MC)
     MESSAGE(STATUS "Linking to SHERPA")
-    add_library(sherpa SHARED sherpa.cpp)
-    target_link_libraries(sherpa PUBLIC cpprob ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
+    add_library(sherpa SHARED sherpa.cpp calorimeter.cpp)
+
+    target_link_libraries(sherpa PRIVATE cpprob ${Boost_LIBRARIES} ${SHERPA_LIBRARY})
     target_include_directories(sherpa PRIVATE /usr/local/include/SHERPA-MC)
     target_compile_options(sherpa PRIVATE -rdynamic -Wl,--no-as-needed)
 
     add_executable(sherpa_gen sherpa_gen.cpp)
-    target_link_libraries(sherpa_gen PUBLIC cpprob sherpa)
+    target_link_libraries(sherpa_gen PRIVATE cpprob sherpa)
 
     add_library(sherpa_mini SHARED sherpa_mini.cpp)
-    target_link_libraries(sherpa_mini PUBLIC cpprob ${Boost_LIBRARIES})
+    target_link_libraries(sherpa_mini PRIVATE cpprob ${Boost_LIBRARIES})
 
     add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
-    target_link_libraries(sherpa_mini_gen PUBLIC sherpa_mini cpprob ${Boost_LIBRARIES})
+    target_link_libraries(sherpa_mini_gen PRIVATE sherpa_mini cpprob ${Boost_LIBRARIES})
 else()
     add_library(models SHARED models.cpp)
     target_link_libraries(models PUBLIC cpprob ${Boost_LIBRARIES})

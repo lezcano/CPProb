@@ -83,8 +83,6 @@ print_iter(std::basic_ostream<CharT, Traits> &os, Iter beg,  Iter end, char init
     return os << os.widen(end_del);
 }
 
-
-
 template<class CharT, class Traits, class T, std::size_t N>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits> &os, const std::array<T, N>& arr)
