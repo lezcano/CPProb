@@ -40,6 +40,7 @@ public:
 
     friend std::ostream & operator<<(std::ostream & out, const StatsPrinter & sp)
     {
+        out << "Estimators for " << sp.file_name_ << std::endl;
         for (const auto & kv : sp.real_distr_) {
             std::size_t i = 0;
             for (const auto & emp_distr : kv.second) {
@@ -80,6 +81,7 @@ private:
     std::map<int, std::vector<EmpiricalDistribution<int>>> int_distr_;
     std::map<int, std::vector<EmpiricalDistribution<NDArray<double>>>> real_distr_;
     std::vector<std::string> ids_;
+    std::string file_name_;
 
     template<class T>
     void load_distr(const std::string & file_name, std::map<int, std::vector<EmpiricalDistribution<T>>> & distributions)

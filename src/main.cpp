@@ -50,6 +50,9 @@ void execute(const F & model,
         std::cout << "Compile" << std::endl;
         if (offline_training) {
             auto dump_path = model_folder / bf::path("traces");
+            if (!bf::exists(dump_path)) {
+                bf::create_directory(dump_path);
+            }
             std::cout << "Offline Training" << std::endl
                       << "Traces from Folder" << dump_path << std::endl;
             cpprob::compile(model, "", dump_path.string(), batch_size, n_batches);
@@ -117,7 +120,7 @@ int main(int argc, const char* const* argv) {
             std::make_pair(std::string("unk_mean"), &models::gaussian_unknown_mean<>),
             std::make_pair(std::string("unk_mean_rejection"), &models::normal_rejection_sampling<>),
             std::make_pair(std::string("linear_gaussian"), &models::linear_gaussian_1d<50>),
-            std::make_pair(std::string("hmm"), &models::hmm<4>),
+            std::make_pair(std::string("hmm"), &models::hmm<10>),
             std::make_pair(std::string("linear_regression"), &models::poly_adjustment<1, 6>),
             std::make_pair(std::string("dyn_linear_reg"), &models::linear_regression<>),
             std::make_pair(std::string("unk_mean_2d"), &models::gaussian_2d_unk_mean<>));
@@ -147,7 +150,7 @@ int main(int argc, const char* const* argv) {
       ("model", po::value<std::string>(&model_name)->required()->value_name(model_names_str),
           "(Compile | CSIS | SIS | Dryrun) Select the model to be executed")
       ("model_folder", po::value<std::string>(&model_folder),
-       "(Compile + --dump_to_folder | CSIS | SIS | Estimate) Model folder for the generated files.\n"
+       "(Compile + --offline_training | CSIS | SIS | Estimate) Model folder for the generated files.\n"
        "  Default value: Model name")
 
       ("tcp_addr_compile", po::value<std::string>(&tcp_addr_compile)->default_value("tcp://0.0.0.0:5555"), "(Compile) Address and port to host the trace generator server.")
