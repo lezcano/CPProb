@@ -109,6 +109,10 @@ struct rejection_sampling {
     ~rejection_sampling();
 };
 
+void start_rejection_sampling();
+
+void finish_rejection_sampling();
+
 template<class Func>
 void compile(const Func & f,
              const std::string & tcp_addr,
