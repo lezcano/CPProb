@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
   std::cout << "the variance: mode: " << mode << std::endl;
 
   if(mode==1){
-    to_file("example_event.dat");
+    to_file(argv[2]);
   }
 
   auto voxel_value_lists = std::vector<std::vector<std::vector<std::vector<double>>>>(35,
