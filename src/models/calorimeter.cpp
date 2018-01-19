@@ -137,6 +137,8 @@ double particle_calorimeter_response(
 
 std::vector<std::vector<std::vector<double > > > calo_simulation(const std::vector<std::vector<double> >& particle_data){
 
+    std::cout << "simulating calo response of " << particle_data.size() << " particles" << std::endl;
+
     int NBINX = 35;
     int NBINY = 35;
     int NBINZ = 20;
@@ -163,7 +165,10 @@ std::vector<std::vector<std::vector<double > > > calo_simulation(const std::vect
         // std::cout << "pdg id: " << pdg_id << std::endl;
 
         if(pdg_id == -99999) continue;
-        if(!calo_visible) continue;
+        if(!calo_visible){
+          std::cout << "invisible particle" << std::endl;
+          continue;
+        }
 
         // std::cout << "shower: " << energy << std::endl;
         double particle_edep = particle_calorimeter_response(pdg_id, energy, theta, phi, histo_edges,histo,Z_BEGIN);

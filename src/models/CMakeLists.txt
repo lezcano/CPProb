@@ -21,4 +21,7 @@ if(BUILD_SHERPA)
 
     add_executable(sherpa_mini_gen sherpa_mini_gen.cpp)
     target_link_libraries(sherpa_mini_gen PRIVATE sherpa_mini cpprob ${Boost_LIBRARIES})
+
+    add_executable(calo_variance calo_variance.cpp)
+    target_link_libraries(calo_variance PRIVATE sherpa cpprob ${Boost_LIBRARIES})
 endif()
