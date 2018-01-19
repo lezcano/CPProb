@@ -75,7 +75,15 @@ int main(int argc, char* argv[]){
     std::cout << "the variance: mode: " << mode << std::endl;
 
     if (mode == 1) {
-        to_file("example_event.dat");
+        auto file_name = [&]{
+            if (argc < 3) {
+                return "example_event.dat";
+            }
+            else {
+                return argv[2];
+            }
+        }();
+        to_file(file_name);
     }
 
     auto voxel_value_lists =
