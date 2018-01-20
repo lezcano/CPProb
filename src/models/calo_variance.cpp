@@ -20,7 +20,7 @@ std::vector<std::vector<std::vector<double>>> generate_response_from_file(const 
     f >> mother_momentum;
     f >> final_state_particles;
 
-    auto calo_histo = calo_simulation(final_state_particles);
+    auto calo_histo = models::calo_simulation(final_state_particles);
     return calo_histo;
 }
 
@@ -69,19 +69,19 @@ double variance(const std::vector<double> & vec, double avg){
     return sum_devsq / vec.size();
 }
 
-int mode_one(int argc, char* argv[]){
+int mode_one(char* argv[]){
     int seed = atoi(argv[3]);
     to_file(argv[2], seed);
     return 0;
 }
 
-int mode_two(int argc, char* argv[]){
+int mode_two(char* argv[]){
     auto voxel_value_lists =
-        std::vector<std::vector<std::vector<std::vector<double>>>>(35,
-            std::vector<std::vector<std::vector<double>>>(35,
-              std::vector<std::vector<double>>(20,std::vector<double>())
-            )
-        );
+            std::vector<std::vector<std::vector<std::vector<double>>>>(35,
+                                                                       std::vector<std::vector<std::vector<double>>>(35,
+                                                                                                                     std::vector<std::vector<double>>(20,std::vector<double>())
+                                                                       )
+            );
     std::size_t n_iterations = atoi(argv[5]);
 
     for(std::size_t iter = 0; iter<n_iterations;++iter){
@@ -102,17 +102,17 @@ int mode_two(int argc, char* argv[]){
 
 
     auto avg =
-        std::vector<std::vector<std::vector<double>>>(35,
-            std::vector<std::vector<double>>(35,
-                std::vector<double>(20)
-             )
-        );
+            std::vector<std::vector<std::vector<double>>>(35,
+                                                          std::vector<std::vector<double>>(35,
+                                                                                           std::vector<double>(20)
+                                                          )
+            );
     auto var =
-        std::vector<std::vector<std::vector<double>>>(35,
-            std::vector<std::vector<double>>(35,
-                std::vector<double>(20)
-            )
-        );
+            std::vector<std::vector<std::vector<double>>>(35,
+                                                          std::vector<std::vector<double>>(35,
+                                                                                           std::vector<double>(20)
+                                                          )
+            );
 
 
     for (std::size_t ix = 0; ix < voxel_value_lists.size(); ++ix){
@@ -136,25 +136,25 @@ int mode_two(int argc, char* argv[]){
 }
 
 void dump_to_stream(const char* source_file, std::ostream& stream, std::size_t n_iterations){
-  for(std::size_t iter = 0; iter<n_iterations;++iter){
-      if (iter % 100 == 0) { std::cerr << "iter: " << iter << std::endl; }
-      auto calo_histo = generate_response_from_file(source_file);
-      stream << calo_histo << std::endl;
-  }
+    for(std::size_t iter = 0; iter<n_iterations;++iter){
+        if (iter % 100 == 0) { std::cerr << "iter: " << iter << std::endl; }
+        auto calo_histo = generate_response_from_file(source_file);
+        stream << calo_histo << std::endl;
+    }
 }
 
-int mode_three(int argc, char* argv[]){
-  std::cerr << "generating a bunch of data" << std::endl;
-  std::size_t n_iterations = atoi(argv[4]);
-  auto source = argv[2];
-  if(strcmp(argv[3],"-")==0){
-    dump_to_stream(source, std::cout , n_iterations);
-  }
-  else{
-    std::ofstream f(argv[3]);
-    dump_to_stream(source, f , n_iterations);
-  }
-  return 0;
+int mode_three(char* argv[]){
+    std::cerr << "generating a bunch of data" << std::endl;
+    std::size_t n_iterations = atoi(argv[4]);
+    auto source = argv[2];
+    if (strcmp(argv[3], "-") == 0) {
+        dump_to_stream(source, std::cout , n_iterations);
+    }
+    else {
+        std::ofstream f(argv[3]);
+        dump_to_stream(source, f , n_iterations);
+    }
+    return 0;
 }
 
 int main(int argc, char* argv[]){
@@ -168,9 +168,9 @@ int main(int argc, char* argv[]){
     std::cerr << "the variance: mode: " << mode << std::endl;
 
     switch (mode) {
-      case 1: return mode_one(argc, argv);
-      case 2: return mode_two(argc, argv);
-      case 3: return mode_three(argc, argv);
+        case 1: return mode_one(argv);
+        case 2: return mode_two(argv);
+        case 3: return mode_three(argv);
     }
 
     return 0;
