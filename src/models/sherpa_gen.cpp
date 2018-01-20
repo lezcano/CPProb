@@ -5,6 +5,7 @@
 #include "cpprob/state.hpp"
 #include "cpprob/serialization.hpp"
 #include "models/sherpa.hpp"
+#include "models/calorimeter.hpp"
 
 int main(int argc,char* argv[])
 {
@@ -28,6 +29,6 @@ int main(int argc,char* argv[])
         auto tup = s.sherpa();
         file_chan << std::get<0>(tup) << std::endl;
         file_mom <<  std::get<1>(tup) << std::endl;
-        file_obs <<  std::get<2>(tup) << std::endl;
+        file_obs <<  models::calo_simulation(std::get<2>(tup)) << std::endl;
     }
 }

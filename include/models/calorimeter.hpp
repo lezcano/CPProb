@@ -10,6 +10,10 @@
 #include <cpprob/cpprob.hpp>
 #include <cpprob/distributions/multivariate_normal.hpp>
 
-std::vector<std::vector<std::vector<double > > > calo_simulation(const std::vector<std::vector<double> >& particle_data);
+namespace models {
+
+std::vector<std::vector<std::vector<double> > > calo_simulation(const std::vector<std::vector<double> > &particle_data);
+
+} // namespace models
 
 #endif //CPPROB_CALORIMETER_HPP
