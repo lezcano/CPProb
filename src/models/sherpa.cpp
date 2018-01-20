@@ -46,7 +46,7 @@ SherpaWrapper::~SherpaWrapper()
 
 void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes) const
 {
-    const double OBS_WIDTH = 0.01;
+    const double OBS_WIDTH = 1e-4;
     int channel_index;
     std::vector<double> mother_momentum;
     std::vector<std::vector<double>> final_state_particles;
