@@ -54,7 +54,7 @@ void execute(const F & model,
                 bf::create_directory(dump_path);
             }
             std::cout << "Offline Training" << std::endl
-                      << "Traces from Folder" << dump_path << std::endl;
+                      << "Traces dumped into " << dump_path << std::endl;
             cpprob::compile(model, "", dump_path.string(), batch_size, n_batches);
         }
         else {
