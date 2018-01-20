@@ -131,7 +131,7 @@ table Sample {
 table Trace {
     observation: NDArray;
     samples: [Sample];
-    hyperparameters: [double];
+    hyperparameters: [double]; // Not needed. Delete
 }
 
 

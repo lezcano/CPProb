@@ -46,7 +46,7 @@ SherpaWrapper::~SherpaWrapper()
 
 void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>>> &observes) const
 {
-    const double OBS_WIDTH = 1e-4;
+    constexpr double variance = 1e-2; // The covariance matrix is 1e-4 Id
     int channel_index;
     std::vector<double> mother_momentum;
     std::vector<std::vector<double>> final_state_particles;
@@ -54,7 +54,7 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     std::tie(channel_index, mother_momentum, final_state_particles) = sherpa();
     auto calo_histo = calo_simulation(final_state_particles);
 
-    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), OBS_WIDTH);
+    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), variance);
     cpprob::observe(likelihood, observes);
     cpprob::predict(channel_index);
     cpprob::predict(mother_momentum);
