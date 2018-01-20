@@ -56,8 +56,10 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 
     cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), variance);
     cpprob::observe(likelihood, observes);
-    cpprob::predict(channel_index);
-    cpprob::predict(mother_momentum);
+    cpprob::predict(channel_index, "Decay Channel");
+    cpprob::predict(mother_momentum[0], "Momentum X");
+    cpprob::predict(mother_momentum[1], "Momentum Y");
+    cpprob::predict(mother_momentum[2], "Momentum Z");
 }
 
 std::tuple<int,
