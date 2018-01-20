@@ -63,13 +63,13 @@ std::vector<double> orient(const std::vector<double>& v, double theta, double ph
 
 std::pair<double,std::vector<double> > shower_parameters(int pdg_id){
     if(Rivet::PID::isElectron(pdg_id) or Rivet::PID::isPhoton(pdg_id)){
-        std::cout << "EM-type shower parameters" << std::endl;
+        // std::cout << "EM-type shower parameters" << std::endl;
         double sampling_fraction = 0.5;
         std::vector<double> shapepars{0.2,0.2,0.50};
         return std::make_pair(sampling_fraction, shapepars);
     }
     if(Rivet::PID::isHadron(pdg_id)){
-        std::cout << "HAD-type shower parameters" << std::endl;
+        // std::cout << "HAD-type shower parameters" << std::endl;
         double sampling_fraction = 0.25;
         std::vector<double> shapepars{0.2,0.2,1.00};
         return std::make_pair(sampling_fraction, shapepars);
@@ -123,8 +123,8 @@ double particle_calorimeter_response(
         // std::cout << "SHERPAPROBPROG SPACEPOINT" << s[0] << "," << s[1] << "," << s[2] << std::endl;
         auto idx = get_indices(s,calo_segmentation);
         if(idx[0] < 0 || idx[1] < 0 || idx[2] < 0){
-            std::cout << "skip spacepoint: " << s << std::endl;
-            std::cout << "indices: " << idx << std::endl;
+            // std::cout << "skip spacepoint: " << s << std::endl;
+            // std::cout << "indices: " << idx << std::endl;
             continue;
         }
         float edep = min_energy_deposit();
@@ -137,7 +137,7 @@ double particle_calorimeter_response(
 
 std::vector<std::vector<std::vector<double > > > calo_simulation(const std::vector<std::vector<double> >& particle_data){
 
-    std::cout << "simulating calo response of " << particle_data.size() << " particles" << std::endl;
+    // std::cout << "simulating calo response of " << particle_data.size() << " particles" << std::endl;
 
     int NBINX = 35;
     int NBINY = 35;
@@ -166,7 +166,7 @@ std::vector<std::vector<std::vector<double > > > calo_simulation(const std::vect
 
         if(pdg_id == -99999) continue;
         if(!calo_visible){
-          std::cout << "invisible particle" << std::endl;
+          // std::cout << "invisible particle" << std::endl;
           continue;
         }
 

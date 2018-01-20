@@ -69,83 +69,109 @@ double variance(const std::vector<double> & vec, double avg){
     return sum_devsq / vec.size();
 }
 
-int main(int argc, char* argv[]){
+int mode_one(int argc, char* argv[]){
+    int seed = atoi(argv[3]);
+    to_file(argv[2], seed);
+    return 0;
+}
 
-    if (argc < 2) {
-        std::cout << "need mode" << std::endl;
-        return 1;
-    }
-
-    int mode = atoi(argv[1]);
-
-    std::cout << "the variance: mode: " << mode << std::endl;
-
-    if (mode == 1) {
-        int seed = atoi(argv[3]);
-        to_file(argv[2], seed);
-    }
-
+int mode_two(int argc, char* argv[]){
     auto voxel_value_lists =
         std::vector<std::vector<std::vector<std::vector<double>>>>(35,
             std::vector<std::vector<std::vector<double>>>(35,
               std::vector<std::vector<double>>(20,std::vector<double>())
             )
         );
+    std::size_t n_iterations = atoi(argv[5]);
 
-    if (mode == 2) {
-        std::size_t n_iterations = atoi(argv[5]);
+    for(std::size_t iter = 0; iter<n_iterations;++iter){
+        if (iter % 100 == 0) { std::cout << "iter: " << iter << std::endl; }
+        auto calo_histo = generate_response_from_file(argv[2]);
+        for (std::size_t ix = 0; ix < calo_histo.size(); ++ix) {
+            for (std::size_t iy = 0; iy < calo_histo[ix].size(); ++iy) {
+                for (std::size_t iz = 0; iz < calo_histo[ix][iy].size(); ++iz) {
 
-        for(std::size_t iter = 0; iter<n_iterations;++iter){
-            if (iter % 100 == 0) { std::cout << "iter: " << iter << std::endl; }
-            auto calo_histo = generate_response_from_file(argv[2]);
-            for (std::size_t ix = 0; ix < calo_histo.size(); ++ix) {
-                for (std::size_t iy = 0; iy < calo_histo[ix].size(); ++iy) {
-                    for (std::size_t iz = 0; iz < calo_histo[ix][iy].size(); ++iz) {
-
-                        // std::cout << "val: " << calo_histo[ix][iy][iz] << std::endl;
-                        voxel_value_lists[ix][iy][iz].push_back(calo_histo[ix][iy][iz]);
-                        // std::cout << "voxl: " << voxel_value_lists[ix][iy][iz] << std::endl;
-                    }
+                    // std::cout << "val: " << calo_histo[ix][iy][iz] << std::endl;
+                    voxel_value_lists[ix][iy][iz].push_back(calo_histo[ix][iy][iz]);
+                    // std::cout << "voxl: " << voxel_value_lists[ix][iy][iz] << std::endl;
                 }
             }
         }
-
-
-
-        auto avg =
-            std::vector<std::vector<std::vector<double>>>(35,
-                std::vector<std::vector<double>>(35,
-                    std::vector<double>(20)
-                 )
-            );
-        auto var =
-            std::vector<std::vector<std::vector<double>>>(35,
-                std::vector<std::vector<double>>(35,
-                    std::vector<double>(20)
-                )
-            );
-
-
-        for (std::size_t ix = 0; ix < voxel_value_lists.size(); ++ix){
-            for (std::size_t iy = 0; iy < voxel_value_lists[ix].size(); ++iy){
-                for (std::size_t iz = 0; iz < voxel_value_lists[ix][iy].size(); ++iz){
-                    double avg_val = average(voxel_value_lists[ix][iy][iz]);
-                    double var_val  = variance(voxel_value_lists[ix][iy][iz], avg_val);
-                    // std::cout << "vox: " << voxel_value_lists[ix][iy][iz] << " var: " << var_val << " avg: " << avg_val << std::endl;
-                    avg[ix][iy][iz] = avg_val;
-                    var[ix][iy][iz] = var_val;
-                }
-            }
-        }
-
-        std::ofstream avg_f(argv[3]);
-        avg_f << avg;
-
-        std::ofstream var_f(argv[4]);
-        var_f << var;
-
     }
 
+
+
+    auto avg =
+        std::vector<std::vector<std::vector<double>>>(35,
+            std::vector<std::vector<double>>(35,
+                std::vector<double>(20)
+             )
+        );
+    auto var =
+        std::vector<std::vector<std::vector<double>>>(35,
+            std::vector<std::vector<double>>(35,
+                std::vector<double>(20)
+            )
+        );
+
+
+    for (std::size_t ix = 0; ix < voxel_value_lists.size(); ++ix){
+        for (std::size_t iy = 0; iy < voxel_value_lists[ix].size(); ++iy){
+            for (std::size_t iz = 0; iz < voxel_value_lists[ix][iy].size(); ++iz){
+                double avg_val = average(voxel_value_lists[ix][iy][iz]);
+                double var_val  = variance(voxel_value_lists[ix][iy][iz], avg_val);
+                // std::cout << "vox: " << voxel_value_lists[ix][iy][iz] << " var: " << var_val << " avg: " << avg_val << std::endl;
+                avg[ix][iy][iz] = avg_val;
+                var[ix][iy][iz] = var_val;
+            }
+        }
+    }
+
+    std::ofstream avg_f(argv[3]);
+    avg_f << avg;
+
+    std::ofstream var_f(argv[4]);
+    var_f << var;
+    return 0;
+}
+
+void dump_to_stream(const char* source_file, std::ostream& stream, std::size_t n_iterations){
+  for(std::size_t iter = 0; iter<n_iterations;++iter){
+      if (iter % 100 == 0) { std::cerr << "iter: " << iter << std::endl; }
+      auto calo_histo = generate_response_from_file(source_file);
+      stream << calo_histo << std::endl;
+  }
+}
+
+int mode_three(int argc, char* argv[]){
+  std::cerr << "generating a bunch of data" << std::endl;
+  std::size_t n_iterations = atoi(argv[4]);
+  auto source = argv[2];
+  if(strcmp(argv[3],"-")==0){
+    dump_to_stream(source, std::cout , n_iterations);
+  }
+  else{
+    std::ofstream f(argv[3]);
+    dump_to_stream(source, f , n_iterations);
+  }
+  return 0;
+}
+
+int main(int argc, char* argv[]){
+    if (argc < 2) {
+        std::cerr << "need mode" << std::endl;
+        return 1;
+    }
+
+    int mode = atoi(argv[1]);
+
+    std::cerr << "the variance: mode: " << mode << std::endl;
+
+    switch (mode) {
+      case 1: return mode_one(argc, argv);
+      case 2: return mode_two(argc, argv);
+      case 3: return mode_three(argc, argv);
+    }
 
     return 0;
 }
