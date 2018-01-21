@@ -55,9 +55,9 @@ struct Gauss {
         const RealType mu = cpprob::sample(prior, true);
         const RealType var = std::sqrt(2);
 
-        normal_distribution<RealType> obs_distr {mu, var};
-        cpprob::observe(obs_distr, y1);
-        cpprob::observe(obs_distr, y2);
+        normal_distribution<RealType> likelihood {mu, var};
+        cpprob::observe(likelihood, y1);
+        cpprob::observe(likelihood, y2);
         cpprob::predict(mu, "Mu");
     }
 };

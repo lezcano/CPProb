@@ -27,29 +27,30 @@ namespace cpprob {
 
 // Declared at the top of state.hpp with control=false
 template<class Distribution>
-typename Distribution::result_type sample(Distribution & distr, const bool control)
+auto sample(Distribution && distr, const bool control)
 {
+    using distribution_t = std::decay_t<Distribution>;
 
     if (!control ||
         State::dryrun() || State::sis()) {
         return distr(get_rng());
     }
 
-    typename Distribution::result_type x{};
+    typename distribution_t::result_type x{};
     std::string addr {get_addr()};
 
     if (State::compile()) {
         x = distr(get_rng());
-        StateCompile::add_sample(addr, distr, x);
+        StateCompile::add_sample(addr, std::forward<Distribution>(distr), x);
     }
     else if (State::csis()) {
         StateInfer::new_sample(addr, distr);
         double radon_nikodym = 1;
 
         try {
-            auto proposal = StateInfer::get_proposal<proposal_t<Distribution>>();
+            auto proposal = StateInfer::get_proposal<proposal_t<distribution_t>>();
             x = proposal(get_rng());
-            radon_nikodym = logpdf<Distribution>()(distr, x) - logpdf<proposal_t<Distribution>>()(proposal, x);
+            radon_nikodym = logpdf<distribution_t>()(distr, x) - logpdf<proposal_t<distribution_t>>()(proposal, x);
         }
         // No proposal -> Default to prior as proposal
         catch (const std::runtime_error &) {
@@ -69,14 +70,15 @@ typename Distribution::result_type sample(Distribution & distr, const bool contr
 
 
 template<class Distribution>
-void observe(Distribution & distr, const typename Distribution::result_type & x)
+void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x)
 {
+    using distribution_t = std::decay_t<Distribution>;
     if (State::compile()) {
         StateCompile::add_observe(distr(get_rng()));
     }
 
     else if (State::csis() || State::sis()) {
-        StateInfer::increment_log_prob(logpdf<Distribution>()(distr, x), "");
+        StateInfer::increment_log_prob(logpdf<distribution_t>()(distr, x), "");
     }
 }
 

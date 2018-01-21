@@ -22,7 +22,7 @@
 namespace cpprob {
 
 template<class Distribution>
-typename Distribution::result_type sample(Distribution & distr, const bool control = false);
+typename Distribution::result_type sample(Distribution && distr, const bool control = false);
 template<class T>
 void predict(const T & x, const std::string & addr="");
 
@@ -80,10 +80,10 @@ private:
     // Functions so that observe / sample / predict can manipulate the state
     template<class Distr>
     static void add_sample( const std::string & addr,
-                            const Distr & distr,
-                            const boost::any & val)
+                            Distr && distr,
+                            const typename std::decay_t<Distr>::result_type & val)
     {
-        auto sample = Sample(addr, distr, val);
+        auto sample = Sample(addr, std::forward<Distr>(distr), val);
 
         if (State::rejection_sampling()) {
             StateCompile::trace_.samples_rejection_.emplace_back(std::move(sample));
@@ -100,9 +100,9 @@ private:
 
     // Friends
     template<class Distribution>
-    friend typename Distribution::result_type sample(Distribution & distr, const bool control);
+    friend auto sample(Distribution && distr, const bool control);
     template<class Distribution>
-    friend void observe(Distribution & distr, const typename Distribution::result_type & x);
+    friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
     template<class T>
     friend void metaobserve(const T & x);
 
@@ -347,9 +347,9 @@ private:
 
     // Friends
     template<class Distribution>
-    friend typename Distribution::result_type sample(Distribution & distr, const bool control);
+    friend auto sample(Distribution && distr, const bool control);
     template<class Distribution>
-    friend void observe(Distribution & distr, const typename Distribution::result_type & x);
+    friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
 
     template<class T>
     friend void predict(const T & x, const std::string & addr);
