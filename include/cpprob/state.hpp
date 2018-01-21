@@ -22,7 +22,7 @@
 namespace cpprob {
 
 template<class Distribution>
-typename Distribution::result_type sample(Distribution && distr, const bool control = false);
+auto sample(Distribution && distr, const bool control = false);
 template<class T>
 void predict(const T & x, const std::string & addr="");
 
