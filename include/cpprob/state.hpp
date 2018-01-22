@@ -92,6 +92,7 @@ private:
     }
 
     static void add_observe(const NDArray<double> & x);
+    static void add_observe(NDArray<double> && x);
 
     // Functions to handle accept / reject
     static void finish_rejection_sampling();
@@ -102,7 +103,7 @@ private:
     template<class Distribution>
     friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
     template<class T>
-    friend void metaobserve(const T & x);
+    friend void metaobserve(T && x);
 
     friend class State;
 };

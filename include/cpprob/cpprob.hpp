@@ -99,10 +99,10 @@ void predict(T && x)
 }
 
 template<class T>
-void metaobserve(const T & x)
+void metaobserve(T && x)
 {
     if (State::compile()) {
-        StateCompile::add_observe(x);
+        StateCompile::add_observe(std::forward<T>(x));
     }
 }
 

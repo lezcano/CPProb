@@ -115,6 +115,11 @@ void StateCompile::add_observe(const NDArray<double>& x)
     StateCompile::trace_.observes_.emplace_back(x);
 }
 
+void StateCompile::add_observe(NDArray<double>&& x)
+{
+    StateCompile::trace_.observes_.emplace_back(std::move(x));
+}
+
 // Accept / Reject sampling
 void StateCompile::finish_rejection_sampling()
 {
