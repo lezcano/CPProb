@@ -34,7 +34,13 @@ private:
 class TraceInfer {
 public:
 
-    static int register_addr_predict(const std::string& addr);
+    template<class String>
+    static int register_addr_predict(String && addr)
+    {
+        return ids_predict_.emplace(std::forward<String>(addr), static_cast<int>(ids_predict_.size())).first->second;
+    }
+
+
 
 private:
     // Friends

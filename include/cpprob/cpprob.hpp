@@ -82,17 +82,19 @@ void observe(Distribution && distr, const typename std::decay_t<Distribution>::r
     }
 }
 
-// Declared at the top of state.hpp with addr = ""
-template<class T>
-void predict(const T & x, const std::string & addr)
+template<class T,  class String>
+void predict(T && x, String && addr)
 {
     if (State::csis() || State::sis()) {
-        if (addr.empty()) {
-            StateInfer::add_predict(x, get_addr());
-        }
-        else {
-            StateInfer::add_predict(x, addr);
-        }
+        StateInfer::add_predict(std::forward<T>(x), std::forward<String>(addr));
+    }
+}
+
+template<class T>
+void predict(T && x)
+{
+    if (State::csis() || State::sis()) {
+        StateInfer::add_predict(std::forward<T>(x), get_addr());
     }
 }
 

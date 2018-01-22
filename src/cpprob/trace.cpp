@@ -53,10 +53,4 @@ flatbuffers::Offset<protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferB
 ////////////////////////////////////////////////////////////////////////////////
 std::unordered_map<std::string, int> TraceInfer::ids_predict_;
 
-int TraceInfer::register_addr_predict(const std::string& addr)
-{
-    return ids_predict_.emplace(addr, static_cast<int>(ids_predict_.size())).first->second;
-}
-
-
 } // end namespace cpprob

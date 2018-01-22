@@ -23,8 +23,6 @@ namespace cpprob {
 
 template<class Distribution>
 auto sample(Distribution && distr, const bool control = false);
-template<class T>
-void predict(const T & x, const std::string & addr="");
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////          State             //////////////////////////
@@ -313,32 +311,43 @@ private:
 
 
     // TODO(Lezcano) C++17: if constexpr would be nice...
-    template<class T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    static void add_predict(const T & x, const std::string & addr)
+    template<class T, class String,
+            std::enable_if_t<std::is_integral<T>::value, int> = 0>
+    static void add_predict(T x, String && addr)
     {
-        const auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(std::forward<String>(addr));
         trace_.predict_int_.emplace_back(id, x);
     }
 
-    template<class T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    static void add_predict(const T & x, const std::string & addr)
+    template<class T, class String,
+            std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+    static void add_predict(T x, String && addr)
     {
-        const auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(std::forward<String>(addr));
         trace_.predict_real_.emplace_back(id, x);
     }
 
-    template<class T>
-    static void add_predict(const NDArray<T> & x, const std::string & addr)
+    template<class T, class String>
+    static void add_predict(const NDArray<T> & x, String && addr)
     {
-        const auto id = TraceInfer::register_addr_predict(addr);
+        const auto id = TraceInfer::register_addr_predict(std::forward<String>(addr));
         trace_.predict_real_.emplace_back(id, x);
     }
 
-    template<class T, std::enable_if_t<!std::is_integral<T>::value && !std::is_floating_point<T>::value, int> = 0>
-    static void add_predict(const T & x, const std::string & addr)
+    template<class T, class String>
+    static void add_predict(NDArray<T> && x, String && addr)
     {
-        const auto id = TraceInfer::register_addr_predict(addr);
-        trace_.predict_any_.emplace_back(id, x);
+        const auto id = TraceInfer::register_addr_predict(std::forward<String>(addr));
+        trace_.predict_real_.emplace_back(std::move(id), std::move(x));
+    }
+
+    template<class T, class String,
+            std::enable_if_t<!std::is_integral<std::decay_t<T>>::value &&
+                             !std::is_floating_point<std::decay_t<T>>::value, int> = 0>
+    static void add_predict(T && x, String && addr)
+    {
+        const auto id = TraceInfer::register_addr_predict(std::forward<String>(addr));
+        trace_.predict_any_.emplace_back(std::move(id), std::forward<T>(x));
     }
 
     static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path);
@@ -351,8 +360,13 @@ private:
     template<class Distribution>
     friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
 
+
+    template<class T,  class String>
+    friend void predict(T && x, String && addr);
+
     template<class T>
-    friend void predict(const T & x, const std::string & addr);
+    friend void predict(T && x);
+
 
     friend class State;
 };
