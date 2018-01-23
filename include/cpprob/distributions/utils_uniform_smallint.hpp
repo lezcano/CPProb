@@ -44,7 +44,10 @@ struct to_flatbuffers<boost::random::uniform_smallint<IntType>> {
                                          const distr_t & distr,
                                          const typename distr_t::result_type value)
     {
-        return protocol::CreateUniformDiscrete(buff, distr.a(), distr.b(), value).Union();
+        return protocol::CreateUniformDiscrete(buff,
+                                               static_cast<int>(distr.a()),
+                                               static_cast<int>(distr.b()),
+                                               static_cast<int>(value)).Union();
     }
 };
 

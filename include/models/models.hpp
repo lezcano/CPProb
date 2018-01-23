@@ -131,7 +131,7 @@ void hmm(const std::array<double, N> & observed_states)
     ++obs_it;
 
     for (; obs_it != observed_states.end(); ++obs_it) {
-        discrete_distribution<> transition_distr {T[state].begin(), T[state].end()};
+        discrete_distribution<std::size_t> transition_distr {T[state].begin(), T[state].end()};
         state = cpprob::sample(transition_distr, true);
         cpprob::predict(state, "State");
         likelihood = normal_distribution<>{state_mean[state], 1};

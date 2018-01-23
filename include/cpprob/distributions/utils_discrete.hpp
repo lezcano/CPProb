@@ -48,7 +48,11 @@ struct to_flatbuffers<boost::random::discrete_distribution<IntType, WeightType>>
                                                     const distr_t & distr,
                                                     const typename distr_t::result_type value)
     {
-        return protocol::CreateDiscrete(buff, distr.min(), distr.max(), buff.CreateVector<double>(distr.probabilities()), value).Union();
+        return protocol::CreateDiscrete(buff,
+                                        static_cast<int>(distr.min()),
+                                        static_cast<int>(distr.max()),
+                                        buff.CreateVector<double>(distr.probabilities()),
+                                        static_cast<int>(value)).Union();
     }
 };
 

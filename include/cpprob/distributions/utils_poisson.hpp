@@ -25,7 +25,7 @@ struct logpdf<boost::random::poisson_distribution<IntType, RealType>> {
         }
 
         auto l = distr.mean();
-        if (l == 0) {
+        if (l == 0.0) {
             return -std::numeric_limits<RealType>::infinity();
         }
         RealType ret = x * std::log(l) - l;

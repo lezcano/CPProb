@@ -425,8 +425,10 @@ private:
                                           !is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
     std::vector<T> flatten(Iter begin, Iter end, std::size_t depth)
     {
+        auto begin_it = shape_.begin();
+        std::advance(begin_it, depth);
         const auto size_tensor_i = static_cast<std::size_t>(
-                std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<std::size_t>()));
+                std::accumulate(begin_it, shape_.end(), 1, std::multiplies<std::size_t>()));
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
@@ -440,8 +442,10 @@ private:
     template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
     std::vector<T> flatten(Iter begin, Iter end, std::size_t depth)
     {
+        auto begin_it = shape_.begin();
+        std::advance(begin_it, depth);
         const auto size_tensor_i = static_cast<std::size_t>(
-                std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<std::size_t>()));
+                std::accumulate(begin_it, shape_.end(), 1, std::multiplies<std::size_t>()));
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
