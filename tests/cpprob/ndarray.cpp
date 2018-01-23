@@ -106,7 +106,7 @@ TEST(ndarray, constructor_from_matrix_same_type_padding)
     std::vector<std::vector<double>> mat_double{{2, 3, 8, -2}, {5, 1}};
     NDArray<double> test_double{mat_double.begin(), mat_double.end()};
     EXPECT_EQ(test_double.values(), std::vector<double>({2, 3, 8, -2,
-                                                         5, 1, 3,  6}));
+                                                         5, 1, 0,  0}));
     EXPECT_EQ(test_double.shape(), std::vector<std::size_t>({2, 4}));
 
     std::vector<std::vector<int>> mat_int{{2, 3, 8},
