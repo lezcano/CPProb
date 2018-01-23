@@ -195,7 +195,7 @@ public:
                 buff_,
                 protocol::CreateNDArray(buff_,
                                         buff_.CreateVector<double>(obs_nd.values()),
-                                        buff_.CreateVector<int32_t>(obs_nd.shape())));
+                                        buff_.CreateVector<int32_t>(obs_nd.shape_int())));
 
         auto msg = protocol::CreateMessage(
                 buff_,
@@ -348,8 +348,8 @@ private:
         trace_.predict_any_.emplace_back(std::move(id), std::forward<T>(x));
     }
 
-    static void dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path);
-    static void dump_ids(const std::unordered_map<std::string, int> & ids_predict, const boost::filesystem::path & path);
+    static void dump_predicts(const std::vector<std::pair<std::size_t, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path);
+    static void dump_ids(const std::unordered_map<std::string, std::size_t> & ids_predict, const boost::filesystem::path & path);
     static boost::filesystem::path get_file_name(const std::string & value);
 
     // Friends

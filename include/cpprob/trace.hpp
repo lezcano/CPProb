@@ -35,9 +35,9 @@ class TraceInfer {
 public:
 
     template<class String>
-    static int register_addr_predict(String && addr)
+    static std::size_t register_addr_predict(String && addr)
     {
-        return ids_predict_.emplace(std::forward<String>(addr), static_cast<int>(ids_predict_.size())).first->second;
+        return ids_predict_.emplace(std::forward<String>(addr), ids_predict_.size()).first->second;
     }
 
 
@@ -47,15 +47,15 @@ private:
     friend class StateInfer;
 
     // Static Members
-    static std::unordered_map<std::string, int> ids_predict_;
+    static std::unordered_map<std::string, std::size_t> ids_predict_;
 
 
     // Attributes
     // We have to separate them so we can dump them in different files.
     // We still use cpprob::any so we do not lose precision
-    std::vector<std::pair<int, cpprob::any>> predict_int_;
-    std::vector<std::pair<int, cpprob::any>> predict_real_;
-    std::vector<std::pair<int, cpprob::any>> predict_any_;
+    std::vector<std::pair<std::size_t, cpprob::any>> predict_int_;
+    std::vector<std::pair<std::size_t, cpprob::any>> predict_real_;
+    std::vector<std::pair<std::size_t, cpprob::any>> predict_any_;
     double log_w_ = 0;
 
     Sample prev_sample_;

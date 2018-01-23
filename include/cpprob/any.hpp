@@ -51,7 +51,7 @@ namespace cpprob {
           : from(src.name()), to(dest.name())
         {}
 
-        virtual const char* what() const throw() { return "bad any cast"; }
+        const char* what() const noexcept override { return "bad any cast"; }
 
         const char* from;
         const char* to;
@@ -224,7 +224,7 @@ namespace cpprob {
         // constructors
         template <typename T>
         basic_hold_any(T const& x, const std::enable_if_t<cpprob::detail::get_table<T>::is_small::value> * = nullptr)
-          : table(cpprob::detail::get_table<T>::template get<Char>()), object(0)
+          : table(cpprob::detail::get_table<T>::template get<Char>()), object(nullptr)
         {
             new (&object) T(x);
         }
@@ -237,13 +237,13 @@ namespace cpprob {
 
         basic_hold_any()
           : table(cpprob::detail::get_table<cpprob::detail::empty>::template get<Char>()),
-            object(0)
+            object(nullptr)
         {
         }
 
         basic_hold_any(basic_hold_any const& x)
           : table(cpprob::detail::get_table<cpprob::detail::empty>::template get<Char>()),
-            object(0)
+            object(nullptr)
         {
             assign(x);
         }
@@ -367,7 +367,7 @@ namespace cpprob {
             {
                 table->static_delete(&object);
                 table = cpprob::detail::get_table<cpprob::detail::empty>::template get<Char>();
-                object = 0;
+                object = nullptr;
             }
         }
 

@@ -35,8 +35,8 @@ struct logpdf<mixture<Distribution, RealType>> {
                         const typename mixture<Distribution, RealType>::result_type & x) const
     {
         return std::log(detail::map(distr,
-                           [&x](const Distribution & distr) {
-                               return std::exp(logpdf<Distribution>()(distr, x));
+                           [&x](const Distribution & distribution) {
+                               return std::exp(logpdf<Distribution>()(distribution, x));
                            }));
     }
 };

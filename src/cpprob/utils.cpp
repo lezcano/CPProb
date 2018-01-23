@@ -19,31 +19,29 @@ std::mt19937& get_rng()
     return rng;
 }
 
-std::string get_name_mangled (const char* s)
-{
+namespace {
+std::string get_name_mangled(const char *s) {
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
     auto last = str.find_last_of(')');
 
-    return str.substr(first, last-first);
+    return str.substr(first, last - first);
 }
 
-std::string get_name_demangled (const char* s)
-{
+std::string get_name_demangled(const char *s) {
     auto str = std::string(s);
     auto first = str.find_last_of('(') + 1;
     auto last = str.find_last_of(')');
     auto mas = str.find_last_of('+');
 
     int status;
-    char* result = abi::__cxa_demangle(str.substr(first, mas-first).c_str(), nullptr, nullptr, &status);
+    char *result = abi::__cxa_demangle(str.substr(first, mas - first).c_str(), nullptr, nullptr, &status);
     if (status == 0) {
         auto demangled = std::string(result);
         std::free(result);
         // Demangled function name + offset w.r.t the function return address
         return demangled + str.substr(mas, last - mas);
-    }
-    else {
+    } else {
         return get_name_mangled(s);
     }
 }
@@ -67,6 +65,7 @@ bool in_namespace_cpprob(const std::string & fun)
     static std::smatch match;
     // abi::__cxa_demangle does not add the return type when the function is not a template!!
     return std::regex_search(fun, match, r) || fun.find("cpprob::") == 0;
+}
 }
 
 std::string get_addr() {

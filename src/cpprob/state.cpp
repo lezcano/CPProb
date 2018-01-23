@@ -253,7 +253,7 @@ boost::filesystem::path StateInfer::get_file_name(const std::string & value)
     return dump_file_.string() + mode + '.' + value;
 }
 
-void StateInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predict, const boost::filesystem::path & path)
+void StateInfer::dump_ids(const std::unordered_map<std::string, std::size_t> & ids_predict, const boost::filesystem::path & path)
 {
     std::ofstream f{path.c_str()};
     std::vector<std::string> addresses(ids_predict.size());
@@ -265,7 +265,7 @@ void StateInfer::dump_ids(const std::unordered_map<std::string, int> & ids_predi
     }
 }
 
-void StateInfer::dump_predicts(const std::vector<std::pair<int, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path)
+void StateInfer::dump_predicts(const std::vector<std::pair<std::size_t, cpprob::any>> & predicts, const double log_w, const boost::filesystem::path & path)
 {
     std::ofstream f{path.c_str(), std::ios::app};
     f.precision(std::numeric_limits<double>::digits10);

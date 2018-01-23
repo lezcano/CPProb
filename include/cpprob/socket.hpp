@@ -11,7 +11,6 @@
 
 #include <zmq.hpp>                                      // for message_t
 
-#include "cpprob/any.hpp"                               // for any
 #include "cpprob/ndarray.hpp"                           // for NDArray
 #include "cpprob/sample.hpp"                            // for Sample
 #include "flatbuffers/infcomp_generated.h"

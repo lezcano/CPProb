@@ -78,13 +78,13 @@ public:
 
 private:
     // Attributes
-    std::map<int, std::vector<EmpiricalDistribution<int>>> int_distr_;
-    std::map<int, std::vector<EmpiricalDistribution<NDArray<double>>>> real_distr_;
+    std::map<std::size_t, std::vector<EmpiricalDistribution<int>>> int_distr_;
+    std::map<std::size_t, std::vector<EmpiricalDistribution<NDArray<double>>>> real_distr_;
     std::vector<std::string> ids_;
     std::string file_name_;
 
     template<class T>
-    void load_distr(const std::string & file_name, std::map<int, std::vector<EmpiricalDistribution<T>>> & distributions)
+    void load_distr(const std::string & file_name, std::map<std::size_t, std::vector<EmpiricalDistribution<T>>> & distributions)
     {
         std::ifstream file(file_name.c_str());
 
@@ -93,8 +93,8 @@ private:
         }
 
         for (std::string line; std::getline(file, line);) {
-            std::map<int, int> predict_instance;
-            std::pair<std::vector<std::pair<int, T>>, double> predicts;
+            std::map<std::size_t, std::size_t> predict_instance;
+            std::pair<std::vector<std::pair<std::size_t, T>>, double> predicts;
             std::istringstream iss(line);
             if (!(iss >> predicts)) {
                 std::cerr << "Bad format in line:\n" << line << std::endl;
@@ -103,9 +103,9 @@ private:
 
             for (const auto & elem : predicts.first) {
                 auto& vec_distr = distributions[elem.first];
-                int& num_times_hit_predict = predict_instance[elem.first];
+                auto& num_times_hit_predict = predict_instance[elem.first];
                 // Create new distribution for that predict statement if the vector of distributions is not long enough
-                if (num_times_hit_predict == static_cast<int>(vec_distr.size())) {
+                if (num_times_hit_predict == vec_distr.size()) {
                     vec_distr.emplace_back();
                     vec_distr.back().add_point(elem.second, predicts.second);
                 }

@@ -122,7 +122,7 @@ void hmm(const std::array<double, N> & observed_states)
     static const std::array<std::array<double, k>, k> T {{{{ 0.1,  0.5,  0.4 }},
                                                           {{ 0.2,  0.2,  0.6 }},
                                                           {{ 0.15, 0.15, 0.7 }}}};
-    uniform_smallint<> prior {0, 2};
+    uniform_smallint<std::size_t> prior {0, 2};
     auto state = cpprob::sample(prior, true);
     cpprob::predict(state, "State");
     auto obs_it = observed_states.begin();

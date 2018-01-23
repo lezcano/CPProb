@@ -36,14 +36,14 @@ public:
     template<class U, std::enable_if_t<std::is_constructible<T, U>::value, int> = 0>
     NDArray(U a) : NDArray(T(a)) {}
 
-    NDArray(std::vector<T> values, std::vector<int> shape) : values_(std::move(values)), shape_(std::move(shape))
+    NDArray(std::vector<T> values, std::vector<std::size_t> shape) : values_(std::move(values)), shape_(std::move(shape))
     {
         #ifndef NDEBUG
         // Check that dimensions agree if values is not empty.
         // If values is empty it might be a default initialisation
         if (!values_.empty()) {
-            auto a = std::accumulate(shape_.cbegin(), shape_.cend(), 1, std::multiplies<int>());
-            if (a != static_cast<int>(values_.size()))
+            auto a = std::accumulate(shape_.cbegin(), shape_.cend(), 1, std::multiplies<std::size_t>());
+            if (a != values_.size())
                 throw std::runtime_error("Product of the elements of the shape vector " + std::to_string(a) +
                                          " is not equal to the size of the values vector " +
                                          std::to_string(values_.size()) + ".");
@@ -306,7 +306,7 @@ public:
                 return is;
             }
             v.values_ = std::vector<T>{scalar};
-            v.shape_ = std::vector<int>{1};
+            v.shape_ = std::vector<std::size_t>{1};
             return is;
         }
 
@@ -319,7 +319,7 @@ public:
         if(!(is >> std::ws >> ch)) {
             is.clear();
             is.putback(ch);
-            v.shape_ = std::vector<int>{static_cast<int>(v.values_.size())};
+            v.shape_ = std::vector<std::size_t>{v.values_.size()};
             return is;
         }
 
@@ -348,23 +348,28 @@ public:
         return values_;
     }
 
-    std::vector<int> shape() const
+    std::vector<std::size_t> shape() const
     {
         return shape_;
+    }
+
+    std::vector<int> shape_int() const
+    {
+        return std::vector<int>(shape_.begin(), shape_.end());
     }
 
 private:
     // Base type
     template<class Iter, std::enable_if_t<std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    void compute_shape(Iter begin, Iter end, int depth)
+    void compute_shape(Iter begin, Iter end, std::size_t depth)
     {
-        const auto size = std::distance(begin, end);
+        const auto size = static_cast<std::size_t>(std::distance(begin, end));
         // If it's the first time that we enter the function, we extend the size
         // If not, we update it
-        if (static_cast<int>(shape_.size()) <= depth) {
+        if (shape_.size() <= depth) {
             shape_.emplace_back(size);
         }
-        else if (shape_[depth] < static_cast<int>(size)) {
+        else if (shape_[depth] < size) {
             shape_[depth] = size;
         }
     }
@@ -372,23 +377,23 @@ private:
     // TODO(Lezcano) Duplicated code
     template<class Iter, std::enable_if_t<is_tuple_like<typename std::iterator_traits<Iter>::value_type>::value &&
                                          !is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    void compute_shape(Iter begin, Iter end, int depth)
+    void compute_shape(Iter begin, Iter end, std::size_t depth)
     {
-        auto size = std::distance(begin, end);
+        auto size = static_cast<std::size_t>(std::distance(begin, end));
         // If it's the first time that we enter the function, we extend the size
         // If not, we update it
-        if (static_cast<int>(shape_.size()) <= depth) {
+        if (shape_.size() <= depth) {
             shape_.emplace_back(size);
         }
-        else if (shape_[depth] < static_cast<int>(size)) {
+        else if (shape_[depth] < size) {
             shape_[depth] = size;
         }
         depth++;
         size = std::tuple_size<typename std::iterator_traits<Iter>::value_type>::value;
-        if (static_cast<int>(shape_.size()) <= depth) {
+        if (shape_.size() <= depth) {
             shape_.emplace_back(size);
         }
-        else if (shape_[depth] < static_cast<int>(size)) {
+        else if (shape_[depth] < size) {
             shape_[depth] = size;
         }
     }
@@ -396,19 +401,19 @@ private:
     // Iterable type
     // Check if the Iter type corresponds to an iterator that points to an iterable object
     template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    void compute_shape(Iter begin, Iter end, int depth)
+    void compute_shape(Iter begin, Iter end, std::size_t depth)
     {
-        auto size = std::distance(begin, end);
-        if (static_cast<int>(shape_.size()) <= depth)
+        const auto size = static_cast<std::size_t>(std::distance(begin, end));
+        if (shape_.size() <= depth)
             shape_.emplace_back(size);
-        else if (static_cast<int>(size) > shape_[depth])
+        else if (shape_[depth] < size)
             shape_[depth] = size;
         for (; begin != end; ++begin)
             compute_shape(std::begin(*begin), std::end(*begin), depth+1);
     }
 
     template<class Iter, std::enable_if_t< std::is_constructible<T, typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    std::vector<T> flatten(Iter begin, Iter end, int)
+    std::vector<T> flatten(Iter begin, Iter end, std::size_t)
     {
         std::vector<T> ret (begin, end);
         ret.resize(shape_.back());
@@ -418,9 +423,10 @@ private:
     // TODO(Lezcano) Duplicate code!!
     template<class Iter, std::enable_if_t<is_tuple_like<typename std::iterator_traits<Iter>::value_type>::value &&
                                           !is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    std::vector<T> flatten(Iter begin, Iter end, int depth)
+    std::vector<T> flatten(Iter begin, Iter end, std::size_t depth)
     {
-        const auto size_tensor_i = std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<int>());
+        const auto size_tensor_i = static_cast<std::size_t>(
+                std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<std::size_t>()));
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
@@ -432,9 +438,10 @@ private:
     }
 
     template<class Iter, std::enable_if_t< is_iterable<typename std::iterator_traits<Iter>::value_type>::value, int> = 0>
-    std::vector<T> flatten(Iter begin, Iter end, int depth)
+    std::vector<T> flatten(Iter begin, Iter end, std::size_t depth)
     {
-        const auto size_tensor_i = std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<int>());
+        const auto size_tensor_i = static_cast<std::size_t>(
+                std::accumulate(shape_.begin()+depth, shape_.end(), 1, std::multiplies<std::size_t>()));
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
@@ -458,7 +465,7 @@ private:
     }
 
     std::vector<T> values_;
-    std::vector<int> shape_;
+    std::vector<std::size_t> shape_;
 };
 
 } // end namespace cpprob

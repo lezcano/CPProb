@@ -58,11 +58,11 @@ struct to_flatbuffers<multivariate_normal_distribution<RealType>> {
         return protocol::CreateMultivariateNormal(buff,
                 protocol::CreateNDArray(buff,
                     buff.CreateVector<double>(mean.values()),
-                    buff.CreateVector<int32_t>(mean.shape())),
+                    buff.CreateVector<int32_t>(mean.shape_int())),
                 buff.CreateVector<double>(distr.covariance()),
                 protocol::CreateNDArray(buff,
                     buff.CreateVector<double>(value.values()),
-                    buff.CreateVector<int32_t>(value.shape()))
+                    buff.CreateVector<int32_t>(value.shape_int()))
         ).Union();
     }
 };
@@ -78,7 +78,7 @@ struct from_flatbuffers<multivariate_normal_distribution<RealType>> {
     distr_t operator()(const buffer_t<distr_t> * distr) {
         auto mean = NDArray<double>(
                 std::vector<double>(distr->mean()->data()->begin(), distr->mean()->data()->end()),
-                std::vector<int>(distr->mean()->shape()->begin(), distr->mean()->shape()->end()));
+                std::vector<std::size_t>(distr->mean()->shape()->begin(), distr->mean()->shape()->end()));
 
         return distr_t(std::move(mean), distr->covariance()->begin(), distr->covariance()->end());
     }

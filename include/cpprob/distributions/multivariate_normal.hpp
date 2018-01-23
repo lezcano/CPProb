@@ -32,7 +32,7 @@ public:
         using distribution_type = multivariate_normal_distribution;
 
         // construct/copy/destruct
-        param_type() : distr_{boost::random::normal_distribution<RealType>(0, 1)}, shape_{1} {};
+        param_type() : distr_{boost::random::normal_distribution<RealType>(0, 1)}, shape_{1} {}
 
         template<class Iter>
         param_type(Iter mean_first, Iter mean_last, RealType covariance)
@@ -104,7 +104,7 @@ public:
             return covariance;
         }
 
-        std::vector<int> shape() const
+        std::vector<std::size_t> shape() const
         {
             return shape_;
         }
@@ -177,10 +177,10 @@ public:
             }
         }
 
-        void init_shape(std::vector<int> shape = std::vector<int>())
+        void init_shape(std::vector<std::size_t> shape = std::vector<std::size_t>())
         {
             if (shape.empty())
-                shape_ = std::vector<int>{static_cast<int>(distr_.size())};
+                shape_ = std::vector<std::size_t>{distr_.size()};
             else
                 shape_ = shape;
         }
@@ -188,7 +188,7 @@ public:
         friend class multivariate_normal_distribution;
 
         std::vector<boost::random::normal_distribution<RealType>> distr_;
-        std::vector<int> shape_;
+        std::vector<std::size_t> shape_;
     };
 
     // construct/copy/destruct
@@ -238,7 +238,7 @@ public:
         return param_.distr_;
     }
 
-    std::vector<int> shape() const
+    std::vector<std::size_t> shape() const
     {
         return param_.shape();
     }

@@ -24,11 +24,13 @@ flatbuffers::Offset<protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferB
 
     // TODO(Lezcano) Currently we only support one multidimensional observe or many one-dimensional observes
     if (observes_.size() == 1) {
+        const auto observe = observes_.front();
+
         return protocol::CreateTraceDirect(
                 buff,
                 protocol::CreateNDArray(buff,
-                    buff.CreateVector<double>(observes_.front().values()),
-                    buff.CreateVector<int32_t>(observes_.front().shape())),
+                    buff.CreateVector<double>(observe.values()),
+                    buff.CreateVector<int32_t>(observe.shape_int())),
                 &vec_sample);
     }
     else {
@@ -51,6 +53,6 @@ flatbuffers::Offset<protocol::Trace> TraceCompile::pack(flatbuffers::FlatBufferB
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////         Inference             ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-std::unordered_map<std::string, int> TraceInfer::ids_predict_;
+std::unordered_map<std::string, std::size_t> TraceInfer::ids_predict_;
 
 } // end namespace cpprob
