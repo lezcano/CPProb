@@ -25,26 +25,23 @@
 
 namespace cpprob {
 
-// Declared at the top of state.hpp with control=false
-template<class Distribution>
-auto sample(Distribution && distr, const bool control)
+template<class Distribution, class String>
+auto sample(Distribution && distr, const bool control, String && address)
 {
     using distribution_t = std::decay_t<Distribution>;
 
-    if (!control ||
-        State::dryrun() || State::sis()) {
+    if (!control || State::dryrun() || State::sis()) {
         return distr(get_rng());
     }
 
     typename distribution_t::result_type x{};
-    std::string addr {get_addr()};
 
     if (State::compile()) {
         x = distr(get_rng());
-        StateCompile::add_sample(addr, std::forward<Distribution>(distr), x);
+        StateCompile::add_sample(std::forward<String>(address), std::forward<Distribution>(distr), x);
     }
     else if (State::csis()) {
-        StateInfer::new_sample(addr, distr);
+        StateInfer::new_sample(address, distr);
         double radon_nikodym = 1;
 
         try {
@@ -57,7 +54,7 @@ auto sample(Distribution && distr, const bool control)
             x = distr(get_rng());
             radon_nikodym = 1;
         }
-        StateInfer::increment_log_prob(radon_nikodym, addr);
+        StateInfer::increment_log_prob(radon_nikodym, address);
 
         StateInfer::add_value_to_sample(x);
     }
@@ -66,6 +63,16 @@ auto sample(Distribution && distr, const bool control)
     }
 
     return x;
+}
+
+template<class Distribution>
+auto sample(Distribution && distr, const bool control=false)
+{
+    // Repeated code for efficiency
+    if (!control || State::dryrun() || State::sis()) {
+        return distr(get_rng());
+    }
+    return sample(distr, control, get_addr());
 }
 
 

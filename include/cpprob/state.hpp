@@ -21,9 +21,6 @@
 
 namespace cpprob {
 
-template<class Distribution>
-auto sample(Distribution && distr, const bool control = false);
-
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////          State             //////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,8 +95,8 @@ private:
     static void finish_rejection_sampling();
 
     // Friends
-    template<class Distribution>
-    friend auto sample(Distribution && distr, const bool control);
+    template<class Distribution, class String>
+    friend auto sample(Distribution && distr, const bool control, String && address);
     template<class Distribution>
     friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
     template<class T>
@@ -356,15 +353,12 @@ private:
     static boost::filesystem::path get_file_name(const std::string & value);
 
     // Friends
-    template<class Distribution>
-    friend auto sample(Distribution && distr, const bool control);
+    template<class Distribution, class String>
+    friend auto sample(Distribution && distr, const bool control, String && address);
     template<class Distribution>
     friend void observe(Distribution && distr, const typename std::decay_t<Distribution>::result_type & x);
-
-
     template<class T,  class String>
     friend void predict(T && x, String && addr);
-
     template<class T>
     friend void predict(T && x);
 
