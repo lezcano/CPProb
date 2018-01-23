@@ -80,7 +80,7 @@ TEST(ndarray, constructor_from_matrix_same_type)
                                           {1, 2, 5,  1, 2}};
     NDArray<int> arr_int{mat_int.begin(), mat_int.end()};
     EXPECT_EQ(arr_int.values(), std::vector<int>({2, 3, 8, -2, 0,
-                                                 1, 2, 5, 1,  2}));
+                                                  1, 2, 5,  1, 2}));
     EXPECT_EQ(arr_int.shape(), std::vector<std::size_t>({2, 5}));
 }
 
@@ -97,7 +97,7 @@ TEST(ndarray, constructor_from_matrix_compatible_type)
                                               {1.0f, 2.0f, 5.0f, 1.0f,  2.0f}};
     NDArray<double> arr_int{mat_float.begin(), mat_float.end()};
     EXPECT_EQ(arr_int.values(), std::vector<double>({2, 3, 8, -2, 0,
-                                                    1, 2, 5, 1,  2}));
+                                                     1, 2, 5,  1, 2}));
     EXPECT_EQ(arr_int.shape(), std::vector<std::size_t>({2, 5}));
 }
 

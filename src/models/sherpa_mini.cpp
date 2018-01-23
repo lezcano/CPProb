@@ -87,7 +87,7 @@ std::vector<double> sherpa_mini() {
 void sherpa_mini_wrapper(const std::vector<double> &test_image) {
 	std::vector<double> sherpa_img = sherpa_mini();
 	double OBS_WIDTH = 0.01;
-	const std::vector<int> dim{100, 100};
+	const std::vector<std::size_t> dim{100, 100};
 	cpprob::multivariate_normal_distribution<double> obs_distr(cpprob::NDArray<double>(sherpa_img, dim), OBS_WIDTH);
 	cpprob::observe(obs_distr, cpprob::NDArray<double>(test_image, dim));
 }
