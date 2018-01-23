@@ -115,6 +115,11 @@ std::string get_addr() {
         ret += get_name_demangled(strings[end]);
         --end;
     }
+    #ifdef BUILD_SHERPA
+    // HACK Discard SherpaWrapper::operator() so we don't have to recompile if we make changes in it
+    end--;
+    #endif
+
     for (auto i = end; i >= begin; i--){
         ret += ' ' + get_name_demangled(strings[i]);
     }
