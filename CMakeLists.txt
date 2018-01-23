@@ -19,10 +19,12 @@ if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # No -pedantic for g++ since it breaks the build on travis (!!)
     add_compile_options(-pedantic)
 endif()
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_compile_options(-Weverything)
-    add_compile_options(-Wno-c++98-compat)
-endif()
+
+# Too pedantic with the generated code by flatbuffers and cpprob::any
+# if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+#     add_compile_options(-Weverything)
+#     add_compile_options(-Wno-c++98-compat)
+# endif()
 
 ##############################################################################
 # Dependencies
