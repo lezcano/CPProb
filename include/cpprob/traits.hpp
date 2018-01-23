@@ -35,6 +35,22 @@ using last_elem = std::tuple_element_t<
         T>;
 
 namespace detail {
+// http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+// Lazy implementation, quite far from being correct in general
+template<typename T>
+auto is_distribution_impl(int)
+-> decltype(std::declval<typename T::param_type>(),
+            void(), // Handle evil operator ,
+            std::true_type{});
+
+template<typename T>
+std::false_type is_distribution_impl(...);
+} // end namespace detail
+
+template<typename T>
+using is_distribution = decltype(detail::is_distribution_impl<T>(0));
+
+namespace detail {
 template<class F>
 constexpr std::size_t num_args_impl(std::false_type)
 {

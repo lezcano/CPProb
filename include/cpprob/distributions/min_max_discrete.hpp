@@ -2,13 +2,13 @@
 #define INCLUDE_MIN_MAX_DISCRETE_HPP
 
 
+#include <initializer_list>
 #include <istream>
+#include <iterator>
 #include <ostream>
 #include <tuple>
-#include <vector>
 #include <utility>
-#include <iterator>
-#include <initializer_list>
+#include <vector>
 
 #include <boost/random/discrete_distribution.hpp>
 
