@@ -14,7 +14,7 @@
 
 namespace models {
 
-double min_energy_deposit() {
+constexpr double min_energy_deposit() {
     return 0.005; // in GeV
 }
 
@@ -64,7 +64,7 @@ std::vector<double> orient(const std::vector<double> &v, double theta, double ph
     return {vp[0], vp[1], vp[2]};
 }
 
-std::pair<double, std::vector<double> > shower_parameters(int pdg_id) {
+std::pair<double, std::vector<double>> shower_parameters(int pdg_id) {
     if (Rivet::PID::isElectron(pdg_id) or Rivet::PID::isPhoton(pdg_id)) {
         // std::cout << "EM-type shower parameters" << std::endl;
         double sampling_fraction = 0.5;
@@ -81,8 +81,7 @@ std::pair<double, std::vector<double> > shower_parameters(int pdg_id) {
 }
 
 
-std::vector<std::vector<double> > sample_particle(int pdg_id, double energy, double theta, double phi, double z_begin) {
-
+std::vector<std::vector<double>> sample_particle(int pdg_id, double energy, double theta, double phi, double z_begin) {
     double E_DEPOSIT = min_energy_deposit();
 
     auto sampling_and_shape = shower_parameters(pdg_id);
@@ -119,34 +118,26 @@ double particle_calorimeter_response(
     using namespace cpprob;
 
     double total_edep = 0.0;
-    // std::cout << "got a visible particle: " << p.theta() << "," << p.phi(Rivet::PhiMapping::MINUSPI_PLUSPI) << " | " << p << std::endl;
 
     auto samples = sample_particle(pdg_id, energy, theta, phi, Z_BEGIN);
-    for (auto s : samples) {
-        // std::cout << "SHERPAPROBPROG SPACEPOINT" << s[0] << "," << s[1] << "," << s[2] << std::endl;
+    for (const auto & s : samples) {
         auto idx = get_indices(s, calo_segmentation);
         if (idx[0] < 0 || idx[1] < 0 || idx[2] < 0) {
-            // std::cout << "skip spacepoint: " << s << std::endl;
-            // std::cout << "indices: " << idx << std::endl;
             continue;
         }
         float edep = min_energy_deposit();
         calorimeter_histo[idx[0]][idx[1]][idx[2]] += edep;
         total_edep += edep;
     }
-    // std::cout << "particle deposited a " << total_edep / p.E() *100 << " percent of its energy into the calorimeter" << std::endl;
     return total_edep;
 }
 
 std::vector<std::vector<std::vector<double> > >
-calo_simulation(const std::vector<std::vector<double> > &particle_data) {
-
-    // std::cout << "simulating calo response of " << particle_data.size() << " particles" << std::endl;
-
-    int NBINX = 35;
-    int NBINY = 35;
-    int NBINZ = 20;
-    double Z_BEGIN = 4;
+calo_simulation(const std::vector<std::vector<double> > &particle_data_vec) {
+    constexpr int NBINX = 35;
+    constexpr int NBINY = 35;
+    constexpr int NBINZ = 20;
+    constexpr double Z_BEGIN = 4;
 
     std::vector<std::vector<double> > histo_edges{bin_edges(-3, 3, NBINX), bin_edges(-3, 3, NBINY),
                                                   bin_edges(Z_BEGIN, 15, NBINZ)};
@@ -158,29 +149,21 @@ calo_simulation(const std::vector<std::vector<double> > &particle_data) {
 
     double total_edep = 0;
 
-    for (auto particle_data : particle_data) {
-        // std::cout << "SHERPAPROBPROG BEGIN PARTICLE " << p << std::endl;
-
+    for (const auto & particle_data : particle_data_vec) {
         bool calo_visible = particle_data[7];
         int pdg_id = particle_data[6];
         double energy = particle_data[3];
         double theta = particle_data[4];
         double phi = particle_data[5];
 
-        // std::cout << "pdg id: " << pdg_id << std::endl;
-
         if (pdg_id == -99999) continue;
         if (!calo_visible) {
-            // std::cout << "invisible particle" << std::endl;
             continue;
         }
 
-        // std::cout << "shower: " << energy << std::endl;
         double particle_edep = particle_calorimeter_response(pdg_id, energy, theta, phi, histo_edges, histo, Z_BEGIN);
         total_edep += particle_edep;
-        // std::cout << "SHERPAPROBPROG END PARTICLE " << p << std::endl;
     }
-    // std::cout << "deposited total of " << total_edep << std::endl;
 
     return histo;
 }

@@ -17,8 +17,10 @@
 #include "ATOOLS/Org/AnalysisJailbreak.H"
 #include "models/calorimeter.hpp"
 
-#include "cpprob/distributions/multivariate_normal.hpp"
 #include "cpprob/cpprob.hpp"
+#include "cpprob/distributions/abc.hpp"
+#include "cpprob/distributions/dirac_delta.hpp"
+#include "cpprob/distributions/multivariate_normal.hpp"
 #include "cpprob/serialization.hpp"
 #include "cpprob/ndarray.hpp"
 
@@ -52,10 +54,11 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     std::vector<std::vector<double>> final_state_particles;
 
     std::tie(channel_index, mother_momentum, final_state_particles) = sherpa();
-    auto calo_histo = calo_simulation(final_state_particles);
+    cpprob::NDArray<double> calo_histo = calo_simulation(final_state_particles);
 
-    cpprob::multivariate_normal_distribution<double> likelihood(cpprob::NDArray<double>(calo_histo), variance);
-    cpprob::observe(likelihood, observes);
+    auto dirac = cpprob::make_delta(calo_histo);
+    cpprob::multivariate_normal_distribution<double> approximate_dirac(calo_histo, variance);
+    cpprob::observe(cpprob::make_abc(dirac, approximate_dirac), observes);
     cpprob::predict(channel_index, "Decay Channel");
     cpprob::predict(mother_momentum[0], "Momentum X");
     cpprob::predict(mother_momentum[1], "Momentum Y");
@@ -63,9 +66,8 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
 }
 
 std::tuple<int,
-        std::vector<double>,
-        std::vector<std::vector<double>>
-        >
+           std::vector<double>,
+           std::vector<std::vector<double>>>
 SherpaWrapper::sherpa() const
 {
     try {
