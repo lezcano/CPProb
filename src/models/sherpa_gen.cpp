@@ -14,21 +14,38 @@ int main(int argc,char* argv[])
 
     models::SherpaWrapper s;
 
-    if (argc != 3) {
-        std::cerr << "Please specify the output file and the number of particles\n";
-        std::cerr << "sherpa_gen [output_file] [number_particles]\n";
-        std::exit (EXIT_FAILURE);
+    if (argc < 2) {
+        std::cerr << "Please specify the output file and optionally the channel to be sampled.\n";
+        std::cerr << "You may optionally specify the number of retries before declaring the sampling unsuccessful. By default this number is 10,000\n";
+        std::cerr << "sherpa_gen [output_file] (channel) (retires = 10,000)\n";
     }
     std::string outputfilename = argv[1];
-    int n = std::stoi(argv[2]);
+    int channel = -1;
+    if (argc < 4) {
+        channel = std::stoi(argv[2]);
+    }
+    int n = 10'000;
+    int init_tries = n;
+    if (argc < 5) {
+        channel = std::stoi(argv[3]);
+    }
 
     std::ofstream file_chan(outputfilename + "_chan.txt");
     std::ofstream file_mom(outputfilename + "_mom.txt");
     std::ofstream file_obs(outputfilename + "_obs.txt");
-    for (int i = 0; i < n; ++i) {
-        auto tup = s.sherpa();
-        file_chan << std::get<0>(tup) << std::endl;
-        file_mom <<  std::get<1>(tup) << std::endl;
-        file_obs <<  models::calo_simulation(std::get<2>(tup)) << std::endl;
+    decltype(s.sherpa()) tup;
+    do {
+        n--;
+        if (n == -1) break;
+        tup = s.sherpa();
+    } while (channel != -1 && std::get<0>(tup) != channel);
+    if (n == -1) {
+        std::cerr << "Could not sample the particle in " << init_tries << "retries.\n"
+                  << "Try with a higher number of retries.\n";
+        std::exit (EXIT_FAILURE);
     }
+
+    file_chan << std::get<0>(tup) << std::endl;
+    file_mom <<  std::get<1>(tup) << std::endl;
+    file_obs <<  models::calo_simulation(std::get<2>(tup)) << std::endl;
 }
