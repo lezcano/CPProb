@@ -10,3 +10,10 @@ target_include_directories(cpprob PUBLIC ${ZeroMQ_INCLUDE_DIR} ${Boost_INCLUDE_D
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     target_compile_options(cpprob PRIVATE -rdynamic)
 endif()
+
+# SHERPA addresses hack
+if (BUILD_SHERPA)
+    target_compile_definitions(cpprob PRIVATE BUILD_SHERPA)
+endif()
+
+
