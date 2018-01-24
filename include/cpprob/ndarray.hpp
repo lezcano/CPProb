@@ -42,7 +42,7 @@ public:
         // Check that dimensions agree if values is not empty.
         // If values is empty it might be a default initialisation
         if (!values_.empty()) {
-            auto a = std::accumulate(shape_.cbegin(), shape_.cend(), 1, std::multiplies<std::size_t>());
+            auto a = std::accumulate(shape_.cbegin(), shape_.cend(), 1u, std::multiplies<std::size_t>());
             if (a != values_.size())
                 throw std::runtime_error("Product of the elements of the shape vector " + std::to_string(a) +
                                          " is not equal to the size of the values vector " +
@@ -427,8 +427,7 @@ private:
     {
         auto begin_it = shape_.begin();
         std::advance(begin_it, depth);
-        const auto size_tensor_i = static_cast<std::size_t>(
-                std::accumulate(begin_it, shape_.end(), 1, std::multiplies<std::size_t>()));
+        const auto size_tensor_i = std::accumulate(begin_it, shape_.end(), 1u, std::multiplies<std::size_t>());
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
@@ -444,8 +443,7 @@ private:
     {
         auto begin_it = shape_.begin();
         std::advance(begin_it, depth);
-        const auto size_tensor_i = static_cast<std::size_t>(
-                std::accumulate(begin_it, shape_.end(), 1, std::multiplies<std::size_t>()));
+        const auto size_tensor_i = std::accumulate(begin_it, shape_.end(), 1u, std::multiplies<std::size_t>());
 
         std::vector<T> ret;
         for (; begin != end; ++begin) {
