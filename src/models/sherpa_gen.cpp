@@ -21,18 +21,15 @@ int main(int argc,char* argv[])
     }
     std::string outputfilename = argv[1];
     int channel = -1;
-    if (argc < 4) {
+    if (argc > 2) {
         channel = std::stoi(argv[2]);
     }
     int n = 10'000;
-    int init_tries = n;
-    if (argc < 5) {
-        channel = std::stoi(argv[3]);
+    if (argc > 3) {
+        n = std::stoi(argv[3]);
     }
+    int init_tries = n;
 
-    std::ofstream file_chan(outputfilename + "_chan.txt");
-    std::ofstream file_mom(outputfilename + "_mom.txt");
-    std::ofstream file_obs(outputfilename + "_obs.txt");
     decltype(s.sherpa()) tup;
     do {
         n--;
@@ -45,6 +42,9 @@ int main(int argc,char* argv[])
         std::exit (EXIT_FAILURE);
     }
 
+    std::ofstream file_chan(outputfilename + "_chan.txt");
+    std::ofstream file_mom(outputfilename + "_mom.txt");
+    std::ofstream file_obs(outputfilename + "_obs.txt");
     file_chan << std::get<0>(tup) << std::endl;
     file_mom <<  std::get<1>(tup) << std::endl;
     file_obs <<  models::calo_simulation(std::get<2>(tup)) << std::endl;
