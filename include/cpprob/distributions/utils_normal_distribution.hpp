@@ -86,9 +86,9 @@ struct from_flatbuffers<boost::random::normal_distribution<RealType>> {
 
 template<class RealType>
 struct normalise<boost::random::normal_distribution<RealType>> {
-    using distr_t = boost::random::normal_distribution<RealType>;
-
-    RealType operator()(const distr_t & distr, const RealType & min, const RealType & max) {
+    RealType operator()(const boost::random::normal_distribution<RealType> & distr,
+                        const RealType & min, const RealType & max)
+    {
         boost::math::normal_distribution <RealType> normal(distr.mean(), distr.sigma());
         return boost::math::cdf(normal, max) - boost::math::cdf(normal, min);
     }

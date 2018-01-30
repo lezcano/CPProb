@@ -212,7 +212,6 @@ void StateInfer::clear_empty_flags()
 void StateInfer::increment_log_prob(const double log_p, const std::string & addr)
 {
     // If the address is empty it's because it's an observe. Probs a variant here would be better...
-
     if (State::csis() &&
         State::rejection_sampling() &&
         !addr.empty()) {

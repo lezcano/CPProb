@@ -18,6 +18,7 @@
 
 
 namespace models {
+
 template<class RealType = double>
 void gaussian_unknown_mean(const RealType y1, const RealType y2)
 {

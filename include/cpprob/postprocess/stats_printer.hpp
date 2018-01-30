@@ -3,7 +3,7 @@
 
 #include <cstdlib>
 #include <map>
-#include <ostream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -22,11 +22,12 @@ namespace cpprob {
 class StatsPrinter {
 public:
 
-    StatsPrinter(const std::string & file_path)
+    StatsPrinter(const std::string & file_path) : file_name_{file_path}
     {
         namespace bf = boost::filesystem;
         auto file_ids = file_path + ".ids";
         if (!bf::exists(bf::path(file_ids))) {
+            std::cerr << file_ids << " not found." << std::endl;
             return;
         }
         std::ifstream ids_file(file_ids.c_str());
@@ -40,8 +41,8 @@ public:
 
     friend std::ostream & operator<<(std::ostream & out, const StatsPrinter & sp)
     {
-        out << "Estimators for " << sp.file_name_ << std::endl;
         for (const auto & kv : sp.real_distr_) {
+            out << "Estimators for " << sp.file_name_ << ".real" << std::endl;
             std::size_t i = 0;
             for (const auto & emp_distr : kv.second) {
                 out << sp.ids_[kv.first];
@@ -56,6 +57,7 @@ public:
             }
         }
         for (const auto & kv : sp.int_distr_) {
+            out << "Estimators for " << sp.file_name_ << ".int" << std::endl;
             std::size_t i = 0;
             for (const auto & emp_distr : kv.second) {
                 out << sp.ids_[kv.first];

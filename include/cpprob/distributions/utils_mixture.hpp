@@ -34,6 +34,7 @@ struct logpdf<mixture<Distribution, RealType>> {
     RealType operator()(const mixture<Distribution, RealType>& distr,
                         const typename mixture<Distribution, RealType>::result_type & x) const
     {
+        // logsumexp for log(coef) + logpdf(distributions). Maybe use the more stable version of the algorithm
         return std::log(detail::map(distr,
                            [&x](const Distribution & distribution) {
                                return std::exp(logpdf<Distribution>()(distribution, x));
@@ -68,9 +69,11 @@ struct from_flatbuffers<mixture<Distribution, RealType>> {
 
 template<class Distribution, class RealType>
 struct normalise<mixture<Distribution, RealType>> {
-    using distr_t = mixture<Distribution, RealType>;
 
-    RealType operator()(const distr_t & distr, RealType min, RealType max) {
+    RealType operator()(const mixture<Distribution, RealType> & distr,
+                        typename Distribution::result_type min,
+                        typename Distribution::result_type max)
+    {
         return detail::map(distr,
                            [min, max](const Distribution & d){
                                return normalise<Distribution>()(d, min, max);
