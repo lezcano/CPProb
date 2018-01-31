@@ -57,7 +57,8 @@ void SherpaWrapper::operator()(const std::vector<std::vector<std::vector<double>
     cpprob::NDArray<double> calo_histo = calo_simulation(final_state_particles);
 
     auto dirac = cpprob::make_dirac_delta(calo_histo);
-    cpprob::multivariate_normal_distribution<double> approximate_dirac(calo_histo, variance);
+    // Use \sqrt(calo_histo) as the standard deviation for th emultivariate normal
+    cpprob::multivariate_normal_distribution<double> approximate_dirac(calo_histo, calo_histo);
     cpprob::observe(cpprob::make_abc(dirac, approximate_dirac), observes);
     cpprob::predict(channel_index, "Decay Channel");
     cpprob::predict(mother_momentum[0], "Momentum X");

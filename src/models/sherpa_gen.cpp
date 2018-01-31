@@ -17,7 +17,7 @@ int main(int argc,char* argv[])
     if (argc < 2) {
         std::cerr << "Please specify the output file and optionally the channel to be sampled.\n";
         std::cerr << "You may optionally specify the number of retries before declaring the sampling unsuccessful. By default this number is 10,000\n";
-        std::cerr << "sherpa_gen [output_file] (channel) (retires = 10,000)\n";
+        std::cerr << "sherpa_gen [output_file] (channel) (retries = 10,000)\n";
     }
     std::string outputfilename = argv[1];
     int channel = -1;

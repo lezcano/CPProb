@@ -25,6 +25,12 @@ struct logpdf<boost::random::normal_distribution<RealType>> {
         RealType mean = distr.mean();
         RealType std = distr.sigma();
 
+        if (sigma == 0) {
+            // Treat the normal distribution as a Dirac delta
+            return x == mean ? 0 : -std::numeric_limits<RealType>::infinity();
+
+        }
+
         if(std::numeric_limits<RealType>::has_infinity && std::abs(x) == std::numeric_limits<RealType>::infinity()) {
             return -std::numeric_limits<RealType>::infinity();
         }

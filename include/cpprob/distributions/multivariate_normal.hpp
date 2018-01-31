@@ -81,6 +81,14 @@ public:
             init_shape(mean.shape());
         }
 
+        param_type(const NDArray<RealType> & mean,  const NDArray<RealType> & covariance)
+        {
+            auto mean_v = mean.values();
+            auto cov_v = covariance.values();
+            init(mean_v.begin(), mean_v.end(), cov_v.begin(), cov_v.end());
+            init_shape(mean.shape());
+        }
+
         template<class IterSigma>
         param_type(const NDArray<RealType> & mean, IterSigma covariance_first, IterSigma covariance_last)
         {
@@ -218,6 +226,8 @@ public:
     explicit multivariate_normal_distribution(const RangeMean & mean,  const RangeSigma & covariance) : param_(mean, covariance) {}
 
     multivariate_normal_distribution(const NDArray<RealType> & mean,  RealType covariance) : param_(mean, covariance) {}
+
+    multivariate_normal_distribution(const NDArray<RealType> & mean,  const NDArray<RealType> & covariance) : param_(mean, covariance) {}
 
     template<class IterSigma>
     multivariate_normal_distribution(const NDArray<RealType> & mean, IterSigma covariance_first, IterSigma covariance_last) : param_(mean, covariance_first, covariance_last) {}
