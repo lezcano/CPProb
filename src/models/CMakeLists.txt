@@ -1,7 +1,7 @@
 add_library(models SHARED models.cpp)
 target_link_libraries(models PUBLIC cpprob ${Boost_LIBRARIES})
-add_library(mod_prueba SHARED mod_prueba.cpp)
-target_link_libraries(mod_prueba PUBLIC cpprob ${Boost_LIBRARIES})
+#add_library(mod_prueba SHARED mod_prueba.cpp)
+#target_link_libraries(mod_prueba PUBLIC cpprob ${Boost_LIBRARIES})
 
 if(BUILD_SHERPA)
     MESSAGE(STATUS "Linking to SHERPA")
