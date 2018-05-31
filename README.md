@@ -69,6 +69,8 @@ __CPProb__ depends on the following libraries:
   * [Boost]
   * [FlatBuffers]
   * [ZeroMQ]
+Optionally, in order to perform Inference Compilation, we will also need
+  * [Docker]
 
 The [Flatbuffers] and [ZeroMQ] dependencies are handled automatically and can
 be installed locally. To do so just run
@@ -103,6 +105,7 @@ Let's explain how to set-up a simple SIS inference engine on the model that we p
 #include "models/model.hpp"
 #include "cpprob/cpprob.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
+
 int main () {
     const auto observes = std::make_tuple(3., 4.);
     const auto samples = 10'000;
@@ -114,7 +117,7 @@ int main () {
 
 After execution, this script outputs on the console an estimation of the mean and the variance of the posterior distribution for Mu. In this example the true posterior has mean `2.32353` and variance `1.05882`. The post-processing module helps us parsing and computing the estimators, but we also have access to the generated particles ourselves which, in this case, have be been saved in the file `posterior_sis`. This file has the format `([(address, value)] log_weight)`. The file `posterior_sis.ids` contains the different ids of the different addresses. In this case we just have one address (address 0) with id "Mu".
 
-## Performing Inference Compilation manually
+## Performing Inference Compilation (CSIS)
 This inference algorithm aims to provide escalable inference in large-scale models, like those where the prior distribution is given by a large simulator. Compilation is slow, given that it has to train a neural network, but after that we have a compiled neural network that can be used to perform fast inference on these models.
 
 Inference Compilation is composed of two steps, as the name says, Inference and Compilation, although not in that order.
@@ -133,6 +136,7 @@ Now, with a similar script as the first one, we are ready to train the neural ne
 #include "models/model.hpp"
 #include "cpprob/cpprob.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
+
 int main (int argc, char* argv[]) {
     if (argc != 2) { std::cout << "No arguments provided.\n"; return 1; }
     if (argv[1] == "compile") {
@@ -156,10 +160,10 @@ docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mo
 docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode infer
 ```
 
-A few side-notes on this last part. The first one is that during inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state. A second sidenote is that the neural network can be executed in a GPU (or several) using `nvidia-docker`. Finally, since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is of course possible to specify the number of training examples to use, as an optional argument passed to `cpprob::compile`.
+A few side-notes on this last part. The first one is that during inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state. Another thing to note is that the neural network can be executed in a GPU (or several) using `nvidia-docker`. Finally, since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is of course possible to specify the number of training examples to use, as an optional argument passed to `cpprob::compile`.
 
 ## References
-An in-depth explanation of __CPProb__'s design can be found in:
+An in-depth explanation of __CPProb__'s design can be found [in here](./doc/icompiled_inference.pdf):
 ```
 @mastersthesis{lezcano2017cpprob,
     author    = "Mario Lezcano Casado",
