@@ -44,7 +44,11 @@ void execute(const F & model,
         bf::create_directory(model_folder);
     }
 
-    const auto post_file = model_folder / generated_file;
+    auto post_file_sis = model_folder / generated_file;
+    auto post_file_csis = post_file_sis;
+    // No operator+ for boost::path...
+    post_file_sis += "_sis";
+    post_file_csis += "_csis";
 
     if (compile) {
         std::cout << "Compile" << std::endl;
@@ -89,17 +93,17 @@ void execute(const F & model,
 
         if (csis) {
             std::cout << "Compiled Sequential Importance Sampling (CSIS)" << std::endl;
-            cpprob::generate_posterior(model, observes, tcp_addr_csis, post_file, n_samples, cpprob::StateType::csis);
+            cpprob::inference(cpprob::StateType::csis, model, observes, n_samples, post_file_csis, tcp_addr_csis);
         }
         if (sis) {
             std::cout << "Sequential Importance Sampling (SIS)" << std::endl;
-            cpprob::generate_posterior(model, observes, "", post_file, n_samples, cpprob::StateType::sis);
+            cpprob::inference(cpprob::StateType::sis, model, observes, n_samples, post_file_sis);
         }
     }
     if (estimate) {
         std::cout << "Posterior Distribution Estimators" << std::endl;
-        std::cout << cpprob::StatsPrinter{post_file.string() + "_csis"};
-        std::cout << cpprob::StatsPrinter{post_file.string() + "_sis"};
+        std::cout << cpprob::StatsPrinter{post_file_csis.string()};
+        std::cout << cpprob::StatsPrinter{post_file_sis.string()};
     }
     if (dryrun) {
         std::cout << "Dry Run" << std::endl;

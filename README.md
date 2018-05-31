@@ -4,7 +4,7 @@
 
 ## Overview
 
-__CPProb__ is a CPProb library specially designed to perform fast black-box Bayesian inference
+__CPProb__ is a probabilistic programming library specially designed to perform fast black-box Bayesian inference
 on probabilistic models written in arbitrary C++14.
 
 __CPProb__ provides with an easy way to perform Bayesian inference on pre-existing C++ codebases,
@@ -15,9 +15,9 @@ In both cases, one has to rewrite their model in the DSL of choice, or in Python
 satisfactory solution when the model that one has in hand is longer than a few thousand lines of code.
 
 The main goals of __CPProb__ are
-  * Efficiency:   You don't pay for what you don't use
-  * Scalability:  It should be easy to use in existing C++ models
-  * Flexibility:  The user should be able to extend it according to her needs.
+  * __Efficiency__:   You don't pay for what you don't use
+  * __Scalability__:  It should be easy to use in existing C++ models
+  * __Flexibility__:  The user should be able to extend it according to her needs.
 
 A model in __CPProb__ is nothing but a C++ function that takes the observations as arguments and
 simulates the model via the use of `sample` and `observe` statements. __CPProb__ provides a third
@@ -25,9 +25,12 @@ basic statement called `predict, which is used to determine the latent variables
 compute their posterior marginal distribution.
 
 As a "hello world" in Bayesian inference, we provide here a conjugate-Gaussian model given by the equations
-[Conjugate Gaussian model](https://i.imgur.com/TnMv4dC.png)
+
+![Conjugate Gaussian model](https://i.imgur.com/TnMv4dC.png)
+
 and we are interested in computing the posterior distribution
-[Posterior distribution](https://imgur.com/LcJSqtQl.png)
+
+![Posterior distribution](https://imgur.com/LcJSqtQl.png)
 
 These ideas are translated into the following model:
 ```c++
@@ -39,9 +42,9 @@ void gaussian_unknown_mean(const double x1, const double x2)
 {
     constexpr double mu0 = 1, sigma0 = 1.5, sigma = 2;      // Hyperparameters
 
-    boost::normal_distribution<RealType> prior {mu0, sigma0};
-    const RealType mu = cpprob::sample(prior, true);
-    boost::normal_distribution<RealType> likelihood {mu, sigma};
+    boost::normal_distribution<> prior {mu0, sigma0};
+    const double mu = cpprob::sample(prior, true);
+    boost::normal_distribution<> likelihood {mu, sigma};
 
     cpprob::observe(likelihood, x1);
     cpprob::observe(likelihood, x2);
@@ -52,7 +55,7 @@ void gaussian_unknown_mean(const double x1, const double x2)
 
 As an example of the ease of integration of __CPProb__, here we are using the custom distributions
 present in the Boost libraries as the sampling and observation distributions. Extending the library in order to
-use user-defined distributions is a matter of a few lines of code.
+use user-defined distributions doesn't take more than a few lines of code.
 
 ## Building CPProb
 In order to build __CPProb__ you will need [CMake] and a C++14 compiler. It is being tested with the following compilers:
@@ -62,7 +65,7 @@ In order to build __CPProb__ you will need [CMake] and a C++14 compiler. It is b
 | GCC         | >= 6     |
 | Clang       | >= 3.8   |
 
-__CPProb__ has the following dependencies:
+__CPProb__ depends on the following libraries:
   * [Boost]
   * [FlatBuffers]
   * [ZeroMQ]
@@ -86,78 +89,77 @@ takes the observations as parameters and uses the statements `sample`, `observe`
 The only requirement for the model is that the model (or at least the entry-point in the case that
 there it is composed by several functions) it has to be in the namespace `models`.
 
-Examples of models can be found in the file [`include/models/models.hpp`](include/models/models.hpp) with
+Examples of models can be found in the file [include/models/models.hpp](include/models/models.hpp) with
 some all-time classics like a Hidden Markov Models (HMM) or Gaussian Linear Models.
 
 ## Performing Sequential Importance Sampling (SIS)
 The most simple inference algorithm to set up is importance sampling. This algorithm is most suitable for small models that could be approximated with a few million particles. If the model is not very computationally expensive, Importance Sampling can be used to generate lots of particles and get very quick approximate results.
 
-We can set-up inference using __CPProb__, if we assume that the model that we want to perform inference on is in the file `model.hpp`, the entry point function is called `mymodel`, the function takes two `double`s as argments, as it was the case in the introduction for `gaussian_unkown_mean`, and we wanted to peform inference with values `x1=3, x2=4`, we can write
+Let's explain how to set-up a simple SIS inference engine on the model that we presented in the introduction. Suppose that we want to do inference on this model with the values `x1 = 3, x2 = 4` with '10.000' particles.
 ```c++
 #include <iostream>
 #include <string>
 #include <tuple>
-#include "model.hpp"
+#include "models/model.hpp"
+#include "cpprob/cpprob.hpp"
+#include "cpprob/postprocess/stats_printer.hpp"
 int main () {
-    const std::tuple<double, double> observes{3, 4};
-    const std::string outfile = "posterior_is.txt"
-    const std::size_t n_samples = 10'000;
-
-    cpprob::generate_posterior(&models::mymodel, observes, "", outfile, n_samples, cpprob::StateType::sis);
-
+    const auto observes = std::make_tuple(3., 4.);
+    const auto samples = 10'000;
+    const std::string outfile = "posterior_sis";
+    cpprob::inference(cpprob::StateType::sis, &models::gaussian_unknown_mean, observes, samples, outfile);
     std::cout << cpprob::StatsPrinter{outfile} << std::endl;
 }
 ```
 
-This script generates a file named `posterior_is.txt` and postprocesses showing a few statistics associated
-with the distribution of the variable(s) selected with the `predict` statement. The posterior distribution
-is approximated here with 10.000 samples.
+After execution, this script outputs on the console an estimation of the mean and the variance of the posterior distribution for Mu. In this example the true posterior has mean `2.32353` and variance `1.05882`. The post-processing module helps us parsing and computing the estimators, but we also have access to the generated particles ourselves which, in this case, have be been saved in the file `posterior_sis`. This file has the format `([(address, value)] log_weight)`. The file `posterior_sis.ids` contains the different ids of the different addresses. In this case we just have one address (address 0) with id "Mu".
 
+## Performing Inference Compilation manually
+This inference algorithm aims to provide escalable inference in large-scale models, like those where the prior distribution is given by a large simulator. Compilation is slow, given that it has to train a neural network, but after that we have a compiled neural network that can be used to perform fast inference on these models.
 
-## Compiling a Neural Network
-In the compilation step, the neural network will ask the library for traces. Hence, CPProb
-will run as a server and the neural network will run as a client.
+Inference Compilation is composed of two steps, as the name says, Inference and Compilation, although not in that order.
 
-If we are going to run the neural network and the main program in the same computer
-we can run
+The first one, Compilation, consists on training a neural network, in order to perform fast inference afterwards.
 
+To set-up everything up we need to make use of the neural network provided in the folder [infcomp](./infcomp). This neural network, writen in pytorch, depends on [ZeroMQ] and [Flatbuffers] to communicate with __CPProb__. We will build it with [Docker] using the provided [Dockerfile](./Dockerfile). To build it we just have to execute
 ```shell
-./cpprob --mode compile
-python -m infcomp.compile
+docker build -t neuralnet .
 ```
-
-If we are going to run the neural network and the main program in different computers, we have in
-both programs the option `--tcp_addr` to set up the tcp address and port in which host the server.
-
-## Performing Inference with a Trained Neural Network
-In the inference step, the library will ask the neural network for proposals.
-In this case, CPProb will run as a client and the neural network will run as a server.
-
-In this case we have to specify a file with the observed values on which we want to perform
-inference with the `--observes_file` flag or we can input them with the `--observes` flag.
-We always have to provide one of the two flags.
-
-The file will have one value per line, while the if we use the `--observes` flag, the values will
-be separated with spaces.
-
-In any aggregate type, the elements will be separated with spaces.
-
-A vector or array will be enclosed in brackets. A pair or tuple will be enclosed in parenthesis.
-
-When using the `--observes` flag, the list of parameters has to be enclosed between quotes.
-
-If we are to perform inference on a function with signature
-```C++
-void model(const std::array<std::pair<int, double>, 6> &, int a, double b);
+Now, with a similar script as the first one, we are ready to train the neural network on our Gaussian model
+```c++
+#include <iostream>
+#include <string>
+#include <tuple>
+#include "models/model.hpp"
+#include "cpprob/cpprob.hpp"
+#include "cpprob/postprocess/stats_printer.hpp"
+int main (int argc, char* argv[]) {
+    if (argc != 2) { std::cout << "No arguments provided.\n"; return 1; }
+    if (argv[1] == "compile") {
+        const std::string tcp_addr = "tcp://0.0.0.0:5555";
+        const int batch_size = 128;
+        cpprob::compile(&models::gaussian_unknown_mean, tcp_addr, "", batch_size);
+    }
+    else if (argv[1] == "infer") {
+        const auto observes = std::make_tuple(3., 4.);
+        const auto samples = 100;
+        const std::string outfile = "posterior_csis";
+        const std::string tcp_addr = "tcp://127.0.0.1:6666";
+        cpprob::inference(cpprob::StateType::csis, &models::gaussian_unknown_mean, observes, samples, outfile, tcp_addr);
+        std::cout << cpprob::StatsPrinter{outfile} << std::endl;
+    }
+}
 ```
-we can execute the inference engine as
+We are just missing a folder, to save the trained neural network, suppose that it's called `workspace`, then we can start execute the neural net for compilation and inference respectively with
 ```shell
-./cpprob --mode infer --observes "[(1 2.1) (2 3.9) (3 5.3) (4 7.7) (5 10.2) (6 12.9)] 2 3.78"
-python -m infcomp.infer
+docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode compile
+docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode infer
 ```
+
+A few side-notes on this last part. The first one is that during inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state. A second sidenote is that the neural network can be executed in a GPU (or several) using `nvidia-docker`. Finally, since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is of course possible to specify the number of training examples to use, as an optional argument passed to `cpprob::compile`.
 
 ## References
-An in-depth explanation of CPProb's design can be found in:
+An in-depth explanation of __CPProb__'s design can be found in:
 ```
 @mastersthesis{lezcano2017cpprob,
     author    = "Mario Lezcano Casado",
@@ -167,7 +169,7 @@ An in-depth explanation of CPProb's design can be found in:
 }
 ```
 
-A large-scale application of __CPProb__ can be found in the [lezcano2017][NIPS workshop paper]:
+A large-scale application of __CPProb__:
 ```
 @article{lezcano2017improvements,
   title={Improvements to Inference Compilation for Probabilistic Programming in Large-Scale Scientific Simulators},
@@ -185,4 +187,5 @@ Please see [LICENSE](LICENSE).
 [Boost]: http://www.boost.org/
 [FlatBuffers]: https://google.github.io/flatbuffers/
 [ZeroMQ]: http://zeromq.org/
-[lezcano2017]: https://arxiv.org/pdf/1712.07901.pdf
+[Docker]: https://www.docker.com/
+"[lezcano2017]: https://arxiv.org/pdf/1712.07901.pdf

@@ -129,7 +129,7 @@ void compile(const Func & f,
              const std::string & tcp_addr,
              const std::string & dump_folder,
              int batch_size,
-             int n_batches)
+             int n_batches=0)
 {
     const bool online_training = dump_folder.empty();
     State::set(StateType::compile);
@@ -171,17 +171,17 @@ void compile(const Func & f,
 }
 
 template<class Func, class... Args>
-void generate_posterior(
+void inference(
+        const StateType algorithm,
         const Func & f,
         const std::tuple<Args...> & observes,
-        const std::string & tcp_addr,
-        const boost::filesystem::path & file_name,
-        std::size_t n,
-        const StateType state)
+        std::size_t n = 50'000,
+        const boost::filesystem::path & file_name = "posterior",
+        const std::string & tcp_addr = "")
 {
     static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
 
-    State::set(state);
+    State::set(algorithm);
     StateInfer::start_infer();
 
     if (State::csis()) {
@@ -192,7 +192,9 @@ void generate_posterior(
     StateInfer::config_file(file_name);
 
     for (std::size_t i = 0; i < n; ++i) {
-        std::cout << "Generating trace " << i << std::endl;
+        if (i % 100 == 0) {
+            std::cout << "Generating trace " << i << std::endl;
+        }
         StateInfer::start_trace();
         call_f_tuple(f, observes);
         StateInfer::finish_trace();

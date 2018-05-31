@@ -244,12 +244,7 @@ void StateInfer::config_file(const boost::filesystem::path & dump_file)
 
 boost::filesystem::path StateInfer::get_file_name(const std::string & value)
 {
-    std::string mode = []{
-        if      (State::csis()) { return "_csis"; }
-        else if (State::sis())  { return "_sis"; }
-        else { throw std::runtime_error("Unsupported mode."); }
-    }();
-    return dump_file_.string() + mode + '.' + value;
+    return dump_file_.string() + '.' + value;
 }
 
 void StateInfer::dump_ids(const std::unordered_map<std::string, std::size_t> & ids_predict, const boost::filesystem::path & path)
