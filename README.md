@@ -37,7 +37,7 @@ These ideas are translated into the following model:
 namespace models {
 void gaussian_unknown_mean(const double x1, const double x2)
 {
-    double mu0 = 1, sigma0 = 1.5, sigma = 2;
+    constexpr double mu0 = 1, sigma0 = 1.5, sigma = 2;      // Hyperparameters
 
     boost::normal_distribution<RealType> prior {mu0, sigma0};
     const RealType mu = cpprob::sample(prior, true);
@@ -89,7 +89,7 @@ there it is composed by several functions) it has to be in the namespace `models
 Examples of models can be found in the file [`include/models/models.hpp`](include/models/models.hpp) with
 some all-time classics like a Hidden Markov Models (HMM) or Gaussian Linear Models.
 
-## Performing Importance Sampling
+## Performing Sequential Importance Sampling (SIS)
 The most simple inference algorithm to set up is importance sampling. This algorithm is most suitable for small models that could be approximated with a few million particles. If the model is not very computationally expensive, Importance Sampling can be used to generate lots of particles and get very quick approximate results.
 
 We can set-up inference using __CPProb__, if we assume that the model that we want to perform inference on is in the file `model.hpp`, the entry point function is called `mymodel`, the function takes two `double`s as argments, as it was the case in the introduction for `gaussian_unkown_mean`, and we wanted to peform inference with values `x1=3, x2=4`, we can write
@@ -99,11 +99,10 @@ We can set-up inference using __CPProb__, if we assume that the model that we wa
 #include <tuple>
 #include "model.hpp"
 int main () {
-    std::tuple<double, double> observes{3, 4};
-    std::string outfile = "posterior_is.txt"
-    std::size_t n_samples = 10'000;
+    const std::tuple<double, double> observes{3, 4};
+    const std::string outfile = "posterior_is.txt"
+    const std::size_t n_samples = 10'000;
 
-    cpprob::compile(&models::mymodel, observes, "", outfile.
     cpprob::generate_posterior(&models::mymodel, observes, "", outfile, n_samples, cpprob::StateType::sis);
 
     std::cout << cpprob::StatsPrinter{outfile} << std::endl;
