@@ -4,3 +4,6 @@
 /cmake-build-debug/
 /cmake-build-release/
 /.idea/
+include/models/mod_prueba.hpp
+src/models/mod_prueba.cpp
+src/prueba.cpp
