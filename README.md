@@ -69,6 +69,7 @@ __CPProb__ depends on the following libraries:
   * [Boost]
   * [FlatBuffers]
   * [ZeroMQ]
+
 Optionally, in order to perform Inference Compilation, we will also need
   * [Docker]
 
@@ -163,7 +164,7 @@ docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mo
 A few side-notes on this last part. The first one is that during inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state. Another thing to note is that the neural network can be executed in a GPU (or several) using `nvidia-docker`. Finally, since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is of course possible to specify the number of training examples to use, as an optional argument passed to `cpprob::compile`.
 
 ## References
-An in-depth explanation of __CPProb__'s design can be found [in here](./doc/icompiled_inference.pdf):
+An in-depth explanation of __CPProb__'s design can be found [in here](./doc/compiled_inference.pdf):
 ```
 @mastersthesis{lezcano2017cpprob,
     author    = "Mario Lezcano Casado",
@@ -177,7 +178,7 @@ A large-scale application of __CPProb__:
 ```
 @article{lezcano2017improvements,
   title={Improvements to Inference Compilation for Probabilistic Programming in Large-Scale Scientific Simulators},
-  author={Lezcano Casado, Mario and Baydin, Atilim Gunes and Rubio, David Mart{\'\i}nez and Le, Tuan Anh and Wood, Frank and Heinrich, Lukas and Louppe, Gilles and Cranmer, Kyle and Ng, Karen and Bhimji, Wahid and others},
+  author={Lezcano Casado, Mario and Baydin, Atilim Gunes and Mart{\'\i}nez Rubio, David and Le, Tuan Anh and Wood, Frank and Heinrich, Lukas and Louppe, Gilles and Cranmer, Kyle and Ng, Karen and Bhimji, Wahid and Prabhat},
   journal={arXiv preprint arXiv:1712.07901},
   year={2017}
 }
@@ -192,4 +193,4 @@ Please see [LICENSE](LICENSE).
 [FlatBuffers]: https://google.github.io/flatbuffers/
 [ZeroMQ]: http://zeromq.org/
 [Docker]: https://www.docker.com/
-"[lezcano2017]: https://arxiv.org/pdf/1712.07901.pdf
+[lezcano2017]: https://arxiv.org/pdf/1712.07901.pdf
