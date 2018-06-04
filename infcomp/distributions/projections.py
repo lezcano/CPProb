@@ -152,11 +152,11 @@ class RealPositiveProjection(ProjectionType, DefaultProjection):
     def __init__(self, name, input_dim):
         ProjectionType.__init__(self, name, scalar=True)
         DefaultProjection.__init__(self, dim=1, input_dim=input_dim)
-        self._softplus = nn.Softplus()
+        self._relu = nn.ReLU()
 
     def forward(self, x):
         x = super(RealPositiveProjection, self).forward(x)
-        return self._softplus(x)
+        return self._relu(x)
 
 
 class RealInIntervalProjection(ProjectionType, DefaultProjection):

@@ -126,10 +126,10 @@ void finish_rejection_sampling();
 
 template<class Func>
 void compile(const Func & f,
-             const std::string & tcp_addr,
-             const std::string & dump_folder,
-             int batch_size,
-             int n_batches=0)
+             const std::string & tcp_addr="tcp://0.0.0.0:5555",     // Online training by default
+             int n_batches=0,
+             const std::string & dump_folder="",
+             int batch_size=128)
 {
     const bool online_training = dump_folder.empty();
     State::set(StateType::compile);
@@ -177,7 +177,7 @@ void inference(
         const std::tuple<Args...> & observes,
         std::size_t n = 50'000,
         const boost::filesystem::path & file_name = "posterior",
-        const std::string & tcp_addr = "")
+        const std::string & tcp_addr = "tcp://127.0.0.1:6666")
 {
     static_assert(sizeof...(Args) != 0, "The function has to receive the observed values as parameters.");
 

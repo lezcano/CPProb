@@ -123,7 +123,7 @@ def logsumexp(value, dim=None, keepdim=False):
 
 def weights_init(m):
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv3d):
-        nn.init.kaiming_normal(m.weight.data)
-        nn.init.constant(m.bias.data, 0)
+        nn.init.kaiming_normal_(m.weight.data, nonlinearity="relu")
+        nn.init.constant_(m.bias.data, 0)
     if isinstance(m, nn.Embedding):
-        nn.init.kaiming_normal(m.weight.data)
+        nn.init.kaiming_normal_(m.weight.data, nonlinearity="relu")
