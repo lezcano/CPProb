@@ -32,7 +32,7 @@ def regularize(loss, rho=None, tol=1e-10):
     # ML: Note that this implementation does NOT give a correct gradient
     z = loss.data.numpy()
     projection = project_onto_chi_square_ball(z, rho, tol)
-    return torch.dot(loss, Variable(settings.Tensor(projection)))
+    return torch.dot(loss, settings.tensor(projection))
 
 
 def project_onto_chi_square_ball(z, rho, tol=1e-10):

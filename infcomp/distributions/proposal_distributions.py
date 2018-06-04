@@ -38,6 +38,9 @@ class ProposalDistribution(nn.Module):
         assert proposal_input.size(1) == self._input_dim
         return [param(proposal_input) for param in self._params]
 
+    def loss(self, params, values):
+        return -self.log_pdf(values, *params).squeeze()
+
     def serialize(self, builder, parameters):
         mod = getattr(infcomp.protocol, self._name)
         # The vectorial parameters have to be packed before starting to pack the distribution

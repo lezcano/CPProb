@@ -2,10 +2,7 @@ import os
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-from torch.nn.parameter import Parameter
 
-from infcomp.nn.address import Address
 from infcomp.nn.observation import Observation, ObserveEmbeddingFC, ObserveEmbeddingLSTM, ObserveEmbeddingCNN3D4C
 from infcomp.data_structures import Trace, Batch
 from infcomp.settings import settings
@@ -33,24 +30,18 @@ class NN(nn.Module):
         self._prev_value_embed = None
 
         self._embedding_dim = settings.embedding_dim
-        no = Observation.num_elems_embedding()
         self._out_lstm_dim = self._embedding_dim
 
-        # Size of the embedding of the value + the params (if any)
-        n_params = Address.num_elems_embedding()
-        lstm_input_dim = (n_params + no + 1)*self._embedding_dim
+        # Size of the embedding value + obs
+        lstm_input_dim = 2*self._embedding_dim
         lstm_depth = 2
         self._lstm = nn.LSTM(lstm_input_dim, self._out_lstm_dim, lstm_depth)
-        if settings.cuda_enabled:
-            self._lstm.cuda(settings.cuda_device)
+        self._lstm.to(settings.device)
 
         self._optimizer = torch.optim.Adam(self.parameters())
 
         self._dir = directory
         self.file_name = file_name
-
-        self.on_cuda = None
-        self.cuda_device_id = None
 
         self.logger = None
         self.apply(util.weights_init)
@@ -81,27 +72,24 @@ class NN(nn.Module):
                 traces = batch.sort_traces_observation()
                 obs_list = [trace.observe.value for trace in traces]
                 obs_len = [len(obs) for obs in obs_list]
-                obs_seq = util.pad_sequence(obs_list, batch_first=True, variables=False)
+                obs_seq = util.pad_sequence(obs_list, batch_first=True)
                 # Batch x Length x Dim (= 1)
                 obs_seq = obs_seq.unsqueeze(2)
-                obs_variable = nn.utils.rnn.pack_padded_sequence(obs_seq, obs_len, batch_first=True)
+                obs_tensor = nn.utils.rnn.pack_padded_sequence(obs_seq, obs_len, batch_first=True)
             else:
                 obs_list = [trace.observe.value for trace in batch.traces]
-                obs_variable = Variable(torch.stack(obs_list))
-            return obs_layer(obs_variable)
+                obs_tensor = torch.stack(obs_list)
+            return obs_layer(obs_tensor)
         else:
             return self._observation_embedding
 
-    def forward_prev_value(self, previous_sample, len_subbatch):
-        if previous_sample is None:
-            return Variable(self._default_value_embed(len_subbatch))
-        else:
-            try:
-                prev_layer = self._get_layer(previous_sample)
-                # unsqueeze(1) so that we can torch.cat it to the observation
-                return prev_layer.forward_value([previous_sample.distr_fbb]).unsqueeze(1)
-            except ValueError:
-                return self._prev_value_embed
+    def forward_prev_value(self, previous_sample):
+        try:
+            prev_address = self._get_address(previous_sample)
+            # unsqueeze(1) so that we can torch.cat it to the observation
+            return prev_address([previous_sample.distr_fbb]).unsqueeze(1)
+        except ValueError:
+            return self._prev_value_embed
 
     def forward_subbatches(self, batch, obs_embed, previous_sample):
         embed_list = []
@@ -115,30 +103,26 @@ class NN(nn.Module):
             obs_embed_subbatch = obs_embed[indices_subbatch].unsqueeze(1)
 
             # Previous value
-            prev_value_embed = self.forward_prev_value(previous_sample, len(subbatch))
+            if previous_sample is None:
+                prev_value_embed = obs_embed.new_full((len(subbatch), 1, self._embedding_dim), fill_value=0)
+            else:
+                prev_value_embed = self.forward_prev_value(previous_sample)
 
             # Parse Distributions
-            n_samples_unpack = n_samples if settings.extended_embed else n_samples - 1
+            n_samples_unpack = n_samples - 1  # No need to unpack the last sampled value
             distributions_fbb = [[trace.samples[step].distr_fbb for trace in subbatch.traces] for step in range(n_samples_unpack)]
             # Get Layers
             try:
-                layers = [self._get_layer(sample) for sample in example_trace.samples[:n_samples_unpack]]
+                addresses = [self._get_address(sample) for sample in example_trace.samples[:n_samples_unpack]]
             except ValueError:
                 self._prev_value_embed = prev_value_embed
                 raise
 
             # Embed Values (& maybe params as well)
             values_embeds = [prev_value_embed]
-            values_embeds.extend(layer.forward_value(distr_fbb).unsqueeze(1)
-                                 for layer, distr_fbb in zip(layers[:n_samples - 1],
-                                                             distributions_fbb[:n_samples - 1]))
-            if settings.extended_embed:
-                params_embeds = [layer.forward_param(distr_fbb, n_subbatch)
-                                 for layer, distr_fbb in zip(layers, distributions_fbb)]
-                embeds_subbatch = [torch.cat([param, value, obs_embed_subbatch], dim=1)
-                                   for param, value in zip(params_embeds, values_embeds)]
-            else:
-                embeds_subbatch = [torch.cat([value, obs_embed_subbatch], dim=1) for value in values_embeds]
+            values_embeds.extend(address(address.unpack(distr_fbb)).unsqueeze(1)
+                                 for address, distr_fbb in zip(addresses, distributions_fbb))
+            embeds_subbatch = [torch.cat([value, obs_embed_subbatch], dim=1) for value in values_embeds]
 
             # List of elements of size n_samples x n_subbatch x embedding_size
             embed_list.append(torch.stack(embeds_subbatch, dim=0).view(n_samples, n_subbatch, -1))
@@ -168,16 +152,15 @@ class NN(nn.Module):
         """Computes the loss of the current batch"""
         lstm_output, indices_subbatch = self(batch=batch, previous_sample=None, previous_hidden=None)
         n = 0
-        losses = Variable(lstm_output[0].data.new(len(batch)).zero_())
+        losses = lstm_output.new_full((len(batch),), fill_value=0)
         for indices in indices_subbatch:
             example_trace = batch.traces[indices[0]]
             for step, example_sample in enumerate(example_trace.samples):
-                layer = self._get_layer(example_sample)
-                proposals_params = layer.proposal(lstm_output[step, n:n+len(indices)])
-                # TODO(Lezcano) Implement checking proposal params for NaN
-                values_tensor = layer.prior.value.unpack([trace.samples[step].distr_fbb
-                                                          for trace in (batch.traces[i] for i in indices)])
-                losses[indices] += layer.loss(proposals_params, Variable(values_tensor))
+                address = self._get_address(example_sample)
+                proposals_params = address.proposal(lstm_output[step, n:n+len(indices)])
+                values_tensor = address.unpack([trace.samples[step].distr_fbb
+                                                for trace in (batch.traces[i] for i in indices)])
+                losses[indices] += address.proposal.loss(proposals_params, values_tensor)
             n += len(indices)
         loss = losses.mean()
 
@@ -186,15 +169,6 @@ class NN(nn.Module):
             loss.backward()
             optimizer.step()
         return float(loss)
-
-    def move_to_cuda(self, device_id=None):
-        self.on_cuda = True
-        self.cuda_device_id = device_id
-        self.cuda(device_id)
-
-    def move_to_cpu(self):
-        self.on_cuda = False
-        self.cpu()
 
     def optimize(self, minibatch):
         return self.loss(minibatch, self._optimizer)
@@ -208,7 +182,7 @@ class NN(nn.Module):
         # If we are dealing with sequences, we flatten the value
         if self._obs_sequences:
             value = value.view(-1)
-        obs_variable = Variable(value.unsqueeze(0))
+        obs_variable = value.unsqueeze(0)
         if self._obs_sequences:
             obs_variable = nn.utils.rnn.pack_padded_sequence(obs_variable, [len(value)], batch_first=True)
         self._observation_embedding = self._observation_layer(obs_variable)
@@ -227,20 +201,20 @@ class NN(nn.Module):
         except ValueError:
             return None, None
 
-        address_layer = self._get_layer(current_sample)
+        address_layer = self._get_address(current_sample)
         proposal_params = address_layer.proposal(lstm_output[0])
         return address_layer.proposal, proposal_params
 
-    def _get_layer(self, sample):
+    def _get_address(self, sample):
         try:
-            return getattr(self, self._get_layer_name(sample.address))
+            return getattr(self, self._get_address_name(sample.address))
         except AttributeError:
             if self.training:
                 return self._add_layer(sample)
             else:
                 raise ValueError("New layer found: {}".format(sample.address))
 
-    def _get_layer_name(self, address):
+    def _get_address_name(self, address):
         return "_address_{}".format(address)
 
     def _add_layer(self, sample):
@@ -251,18 +225,12 @@ class NN(nn.Module):
             Logger.logger.log_error(error)
             raise ValueError(error)
 
-        prior = prior_type(sample.distr_fbb, self._embedding_dim)
-        if settings.extended_embed:
-            type_embedding = self._distribution_embedding.setdefault(prior,
-                                                                     Parameter(settings.Tensor(self._embedding_dim).zero_()))
-            prior.set_type_embedding(type_embedding)
-        layer = Address(prior, sample.distr_fbb, self._out_lstm_dim)
-        self.add_module(self._get_layer_name(sample.address), layer)
+        prior = prior_type(distribution_fbb=sample.distr_fbb, embedding_dim=self._embedding_dim, projection_dim=self._out_lstm_dim)
+        prior.to(settings.device)
+        self.add_module(self._get_address_name(sample.address), prior)
         Logger.logger.log_info('New layers for address : {}'.format(sample.address))
-        if settings.cuda_enabled:
-            layer.cuda(settings.cuda_device)
         self._optimizer = torch.optim.Adam(self.parameters())
-        return layer
+        return prior
 
     # Train helper functions
     def _get_observation_layer(self, observation):
@@ -281,11 +249,6 @@ class NN(nn.Module):
                 raise ValueError(error)
 
             self.add_module("_observation_layer", layer)
-            if settings.cuda_enabled:
-                self._observation_layer.cuda(settings.cuda_device)
+            self._observation_layer.to(settings.device)
             self._optimizer = torch.optim.Adam(self.parameters())
         return self._observation_layer
-
-    def _default_value_embed(self, size_subbatch):
-        # Value
-        return settings.Tensor(size_subbatch, 1, self._embedding_dim).zero_()

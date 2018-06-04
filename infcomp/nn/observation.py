@@ -1,16 +1,11 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from infcomp.util import weights_init
 
 
 class Observation(nn.Module):
     def __init__(self):
        super().__init__()
-
-    @staticmethod
-    def num_elems_embedding():
-        return 1
 
     def forward(self, x):
         raise NotImplementedError
@@ -21,13 +16,13 @@ class ObserveEmbeddingFC(Observation):
         super().__init__()
         self._input_dim = input_dim
         self._module = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
+            nn.Linear(input_dim, output_dim//8),
             nn.ReLU(),
-            nn.Linear(output_dim, output_dim),
+            nn.Linear(output_dim//8, output_dim//4),
             nn.ReLU(),
-            nn.Linear(output_dim, output_dim),
+            nn.Linear(output_dim//4, output_dim//2),
             nn.ReLU(),
-            nn.Linear(output_dim, output_dim),
+            nn.Linear(output_dim//2, output_dim),
             nn.ReLU()
         )
         self.apply(weights_init)
@@ -46,13 +41,13 @@ class ObserveEmbeddingLSTM(Observation):
         self.apply(weights_init)
 
     def forward(self, x):
-        lstm_output, hidden = self._lstm(x, None)
+        lstm_output, _ = self._lstm(x, None)
         unpacked, unpacked_len = nn.utils.rnn.pad_packed_sequence(lstm_output)
 
         # Return just the last output of the LSTM
-        out = Variable(unpacked.data.new(*unpacked.size()[1:]), requires_grad=True)
+        out = unpacked.new_empty(unpacked.size()[1:])
         for i, l in enumerate(unpacked_len):
-            out[i] = unpacked[l - 1, i]
+            out[i] = unpacked[l.item() - 1, i]
         return out
 
 
@@ -63,33 +58,25 @@ class ObserveEmbeddingCNN3D4C(Observation):
             raise RuntimeError("Input size for 3D4C convolution is {} instead of 3.".format(len(input_size)))
         self._cnn = nn.Sequential(
             nn.Conv3d(1, 4, 3),
-            #nn.BatchNorm3d(32),
             nn.ReLU(),
             nn.Conv3d(4, 8, 3),
-            #nn.BatchNorm3d(64),
             nn.ReLU(),
             nn.MaxPool3d((2, 2, 2)),
             nn.Conv3d(8, 16, 3),
-            #nn.BatchNorm3d(64),
             nn.ReLU(),
             nn.Conv3d(16, 16, 3),
-            #nn.BatchNorm3d(64),
             nn.ReLU(),
             nn.MaxPool3d((2, 2, 2))
         )
 
         # Compute CNN output dim:
-        cnn_output = self._cnn(Variable(torch.rand(1, 1, *input_size)))
-        print(cnn_output.size())
+        cnn_output = self._cnn(torch.rand(1, 1, *input_size))
         self.cnn_output_dim = cnn_output.numel()
-        print(self.cnn_output_dim)
 
         self._projection = nn.Sequential(
             nn.Linear(self.cnn_output_dim, output_dim * 2),
-            #nn.BatchNorm1d(output_dim*2),
             nn.ReLU(),
             nn.Linear(output_dim * 2, output_dim),
-            #nn.BatchNorm1d(output_dim),
             nn.ReLU()
         )
         self.apply(weights_init)

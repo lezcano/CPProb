@@ -1,5 +1,6 @@
 import flatbuffers
 import numpy as np
+import torch
 
 from infcomp.settings import settings
 
@@ -37,7 +38,7 @@ def distributionfbb_prior(distribution_fbb):
 
 def parse_observation(observation_fbb):
     if observation_fbb is None:
-        return Observe(settings.Tensor())
+        return Observe(settings.tensor())
     # TODO(Lezcano) This method will be deprecated in the next flatbuffers release (1.8.0)
     # data = observation_fbb.dataAsNumpy()
     # shape = observation_fbb.shapeAsNumpy()
@@ -54,7 +55,8 @@ def parse_observation(observation_fbb):
     shape_np = np.frombuffer(b, offset=offset, dtype=np.dtype('int32'), count=length)
 
     data = data_np.reshape(shape_np)
-    return Observe(settings.Tensor(data))
+    tensor_data = torch.from_numpy(data)
+    return Observe(settings.tensor(tensor_data))
 
 
 def parse_sample(sample_fbb):

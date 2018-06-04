@@ -12,47 +12,38 @@ import torch
 class Settings:
 
     def __init__(self):
-        self._cuda_enabled = False
-        self._cuda_device = None
         self._embedding_dim = 128
-        self._dropout = 0
-        self.Tensor = torch.FloatTensor
-        self._extended_embed = False
+        self._cuda_enabled = False
+        self._device = torch.device('cpu')
 
     @property
     def cuda_enabled(self):
         return self._cuda_enabled
 
     @property
-    def cuda_device(self):
-        return self._cuda_device
-
-    @property
-    def extended_embed(self):
-        return self._extended_embed
+    def device(self):
+        return self._device
 
     @property
     def embedding_dim(self):
         return self._embedding_dim
 
-    @property
-    def dropout(self):
-        return self._dropout
+    def tensor(self, data=[], dtype=torch.float, device=None, requires_grad=False):
+        return torch.tensor(data, dtype=dtype, device=self.device, requires_grad=requires_grad)
 
-    def set_cuda(self, logger, cuda=True, device=0):
+    def set_cuda(self, logger, cuda=True, device_index=0):
         if cuda:
             if torch.cuda.is_available():
                 self._cuda_enabled = True
-                self._cuda_device = device
-                torch.cuda.set_device(device)
+                self._device = torch.device(type='cuda', index=device_index)
                 torch.backends.cudnn.enabled = True
                 #torch.backends.cudnn.fastest = True
-                self.Tensor = torch.cuda.FloatTensor
+                return
             else:
                 logger.log_warning("Cuda is not available, running on CPU.")
-        else:
-            self._cuda_enabled = False
-            self.Tensor = torch.FloatTensor
+        self._cuda_enabled = False
+        self._device = torch.device('cpu')
+        torch.backends.cudnn.enabled = False
 
 
 settings = Settings()

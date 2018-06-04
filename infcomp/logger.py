@@ -15,11 +15,10 @@ def global_config():
     ret.append("CPU count       : {}".format(cpu_info["count"] if "count" in cpu_info else "unknown"))
     ret.append("CUDA            : {}".format("available" if torch.cuda.is_available() else "not available"))
     if torch.cuda.is_available():
-        ret.append("CUDA devices    : {0}".format(torch.cuda.device_count()))
+        ret.append("CUDA devices    : {}".format(torch.cuda.device_count()))
         if settings.cuda_enabled:
-            device_selected = settings.cuda_device != -1
-            ret.append("CUDA selected   : {}".format(settings.cuda_device if device_selected else "all"))
-    ret.append("Running on      : {}".format("CUDA" if settings.cuda_enabled else "CPU"))
+            ret.append("CUDA selected   : {}".format(settings.device.index))
+    ret.append("Running on      : {}".format(settings.device.type))
     return "\n".join(ret)
 
 

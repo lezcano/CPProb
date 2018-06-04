@@ -16,8 +16,6 @@ def train(directory, save_file_name, load_file_name, address, obs_embedding,
         nn = load_nn(load_file_name)
         Logger.set(nn.logger)
         Logger.logger.log_info("Resuming previous artifact: {}/{}".format(directory, load_file_name))
-    if settings.cuda_enabled:
-        nn.move_to_cuda(settings.cuda_device)
     nn.train()
     save_after_n_traces.sort(reverse=True)
 
@@ -36,9 +34,8 @@ def train(directory, save_file_name, load_file_name, address, obs_embedding,
 
             Logger.logger.log_training_begin(*params)
             while not save_if_its_time(nn, save_after_n_traces, n_processed_traces):
+                # TODO minibatch to CUDA
                 minibatch = requester.minibatch(minibatch_size)
-                if settings.cuda_enabled:
-                    minibatch.cuda(settings.cuda_device)
 
                 train_loss = nn.optimize(minibatch)
                 Logger.logger.log_training(len(minibatch), train_loss, nn)

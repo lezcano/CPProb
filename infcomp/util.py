@@ -20,20 +20,11 @@ def file_starting_with(pattern, n):
 
 def load_nn(file_name):
     try:
-        if settings.cuda_enabled:
-            nn = torch.load(file_name)
-            if settings.cuda_device == -1:
-                settings.cuda_device = torch.cuda.current_device()
-
-            nn.move_to_cuda(settings.cuda_device)
-        else:
-            nn = torch.load(file_name, map_location=lambda storage, loc: storage)
-            if nn.on_cuda:
-                Logger.logger.log_warning('Loading CUDA artifact to CPU')
-                nn.move_to_cpu()
+        nn = torch.load(file_name)
+        nn.to(settings.device)
         return nn
     except Exception:
-        Logger.logger.log_error('Cannot load file')
+        Logger.logger.log_error('Cannot load file {}'.format(file_name))
         raise
 
 
@@ -48,10 +39,8 @@ def save_if_its_time(nn, save_after_n_traces, n_processed_traces):
     return False
 
 
-def pad_sequence(sequences, batch_first=False, variables=True, subbatches=False):
-    # Modified from pytorch 0.4.0 to act on tensors as well
-    # If variable = True, sequences will be a seq of variables
-    #    variable = False, sequences will be a seq of tensors
+def pad_sequence(sequences, batch_first=False, subbatches=False):
+    # Modified from pytorch 0.4.0 to act on subbatches
 
     max_size = sequences[0].size()
     max_len, trailing_dims = max_size[0], max_size[1:]
@@ -66,11 +55,7 @@ def pad_sequence(sequences, batch_first=False, variables=True, subbatches=False)
     else:
         out_dims = (max_len, batch_size) + trailing_dims
 
-    if variables:
-        out_variable = Variable(sequences[0].data.new(*out_dims).zero_())
-    else:
-        out_variable = Variable(sequences[0].new(*out_dims).zero_())
-
+    out_variable = sequences[0].new_full(out_dims, fill_value=0)
     n = 0
     for i, variable in enumerate(sequences):
         length = variable.size(0)

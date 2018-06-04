@@ -30,16 +30,16 @@ class DefaultProjection(nn.Module):
     def __init__(self, dim, input_dim):
         super().__init__()
         self._model = nn.Sequential(
-            nn.Linear(input_dim, input_dim),
+            nn.Linear(input_dim, input_dim//2),
             #nn.BatchNorm1d(input_dim//2),
             nn.ReLU(),
-            nn.Linear(input_dim, input_dim),
+            nn.Linear(input_dim//2, input_dim//4),
             #nn.BatchNorm1d(input_dim//4),
             nn.ReLU(),
-            nn.Linear(input_dim, input_dim),
+            nn.Linear(input_dim//4, input_dim//8),
             #nn.BatchNorm1d(input_dim//8),
             nn.ReLU(),
-            nn.Linear(input_dim, dim)
+            nn.Linear(input_dim//8, dim)
         )
 
     def forward(self, x):
@@ -169,7 +169,5 @@ class RealInIntervalProjection(ProjectionType, DefaultProjection):
         self._sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        # TODO(Lezcano) No softmax boost for now
-        # TODO(Lezcano) In the original code, softmax_boost = 20
         x = super(RealInIntervalProjection, self)(x)
         return self._sigmoid(x)*(self._b - self._a) + self._a

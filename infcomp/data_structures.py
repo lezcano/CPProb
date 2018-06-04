@@ -28,14 +28,6 @@ class SubBatch:
     def __len__(self):
         return len(self.traces)
 
-    def cuda(self, device_id=None):
-        for trace in self.traces:
-            trace.cuda(device_id)
-
-    def cpu(self):
-        for trace in self.traces:
-            trace.cpu()
-
 
 class Batch(SubBatch):
     def __init__(self, traces):
@@ -63,12 +55,6 @@ class Trace:
     def __len__(self):
         return len(self.samples)
 
-    def cuda(self, device_id=None):
-        self.observe.cuda(device_id)
-
-    def cpu(self):
-        self.observe.cpu()
-
 
 class Sample:
     def __init__(self, address, distr_fbb):
@@ -88,9 +74,3 @@ class Observe:
         if self.is_sequence:
             return self.value.size()[0]
         raise RuntimeError("Tensor has no length.")
-
-    def cuda(self, device_id=None):
-        self.value.cuda(device_id)
-
-    def cpu(self):
-        self.value.cpu()
