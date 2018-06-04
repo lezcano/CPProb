@@ -130,6 +130,7 @@ docker build -t neuralnet .
 ```
 Now, with a similar script as the first one, we are ready to train the neural network on our Gaussian model
 ```c++
+// File: main_csis.cpp
 #include <iostream>
 #include <string>
 #include <tuple>
@@ -153,8 +154,14 @@ int main (int argc, char* argv[]) {
 ```
 We are just missing a folder, to save the trained neural network, suppose that it's called `workspace`, then we can start execute the neural net for compilation and inference respectively with
 ```shell
-docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode compile --dir /workspace
-docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode infer --dir /workspace
+mkdir workspace
+// Compilation. run first CPProb
+./main_csis compile
+docker run --rm -it -v $PWD/workspace:/workspace --net=host neuralnet python3 -m main --mode compile --dir /workspace
+
+// Inference. Run first the Neural Network
+docker run --rm -it -v $PWD/workspace:/workspace --net=host neuralnet python3 -m main --mode infer --dir /workspace
+./main_csis infer
 ```
 
 > Note: During inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state.
