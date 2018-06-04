@@ -20,9 +20,7 @@ def file_starting_with(pattern, n):
 
 def load_nn(file_name):
     try:
-        nn = torch.load(file_name)
-        nn.to(settings.device)
-        return nn
+        return torch.load(file_name).to(settings.device)
     except Exception:
         Logger.logger.log_error('Cannot load file {}'.format(file_name))
         raise
@@ -55,7 +53,7 @@ def pad_sequence(sequences, batch_first=False, subbatches=False):
     else:
         out_dims = (max_len, batch_size) + trailing_dims
 
-    out_variable = sequences[0].new_full(out_dims, fill_value=0)
+    out_variable = sequences[0].new_zeros(out_dims)
     n = 0
     for i, variable in enumerate(sequences):
         length = variable.size(0)

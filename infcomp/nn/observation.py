@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+
+from infcomp.settings import settings
 from infcomp.util import weights_init
 
 
@@ -70,7 +72,7 @@ class ObserveEmbeddingCNN3D4C(Observation):
         )
 
         # Compute CNN output dim:
-        cnn_output = self._cnn(torch.rand(1, 1, *input_size))
+        cnn_output = self._cnn(torch.randn(1, 1, *input_size, device=settings.device))
         self.cnn_output_dim = cnn_output.numel()
 
         self._projection = nn.Sequential(

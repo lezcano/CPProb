@@ -35,8 +35,7 @@ class NN(nn.Module):
         # Size of the embedding value + obs
         lstm_input_dim = 2*self._embedding_dim
         lstm_depth = 2
-        self._lstm = nn.LSTM(lstm_input_dim, self._out_lstm_dim, lstm_depth)
-        self._lstm.to(settings.device)
+        self._lstm = nn.LSTM(lstm_input_dim, self._out_lstm_dim, lstm_depth).to(settings.device)
 
         self._optimizer = torch.optim.Adam(self.parameters())
 
@@ -104,7 +103,7 @@ class NN(nn.Module):
 
             # Previous value
             if previous_sample is None:
-                prev_value_embed = obs_embed.new_full((len(subbatch), 1, self._embedding_dim), fill_value=0)
+                prev_value_embed = obs_embed.new_zeros((len(subbatch), 1, self._embedding_dim))
             else:
                 prev_value_embed = self.forward_prev_value(previous_sample)
 
@@ -152,7 +151,7 @@ class NN(nn.Module):
         """Computes the loss of the current batch"""
         lstm_output, indices_subbatch = self(batch=batch, previous_sample=None, previous_hidden=None)
         n = 0
-        losses = lstm_output.new_full((len(batch),), fill_value=0)
+        losses = lstm_output.new_zeros((len(batch),))
         for indices in indices_subbatch:
             example_trace = batch.traces[indices[0]]
             for step, example_sample in enumerate(example_trace.samples):
@@ -226,7 +225,7 @@ class NN(nn.Module):
             raise ValueError(error)
 
         prior = prior_type(distribution_fbb=sample.distr_fbb, embedding_dim=self._embedding_dim, projection_dim=self._out_lstm_dim)
-        prior.to(settings.device)
+        prior = prior.to(settings.device)
         self.add_module(self._get_address_name(sample.address), prior)
         Logger.logger.log_info('New layers for address : {}'.format(sample.address))
         self._optimizer = torch.optim.Adam(self.parameters())
@@ -248,7 +247,7 @@ class NN(nn.Module):
                 Logger.logger.log_error(error)
                 raise ValueError(error)
 
+            layer = layer.to(settings.device)
             self.add_module("_observation_layer", layer)
-            self._observation_layer.to(settings.device)
             self._optimizer = torch.optim.Adam(self.parameters())
         return self._observation_layer
