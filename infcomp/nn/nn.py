@@ -9,7 +9,6 @@ from infcomp.nn.address import Address
 from infcomp.nn.observation import Observation, ObserveEmbeddingFC, ObserveEmbeddingLSTM, ObserveEmbeddingCNN3D4C
 from infcomp.data_structures import Trace, Batch
 from infcomp.settings import settings
-from infcomp.nn.regularize import regularize, regularize_expectation, regularize_expectation_exp
 
 from infcomp.parse_flatbuffers import distributionfbb_prior
 from infcomp.logger import Logger
@@ -18,7 +17,7 @@ import infcomp.util as util
 
 class NN(nn.Module):
     def __init__(self, directory="./models", file_name="infcomp-nn",
-                 regularization=0.5, obs_embedding_type="fc"):
+                 obs_embedding_type="fc"):
 
         super().__init__()
         # PriorDistr -> EmbeddingVector
@@ -46,7 +45,6 @@ class NN(nn.Module):
             self._lstm.cuda(settings.cuda_device)
 
         self._optimizer = torch.optim.Adam(self.parameters())
-        self._regularization = regularization
 
         self._dir = directory
         self.file_name = file_name
@@ -170,7 +168,7 @@ class NN(nn.Module):
         """Computes the loss of the current batch"""
         lstm_output, indices_subbatch = self(batch=batch, previous_sample=None, previous_hidden=None)
         n = 0
-        loss = Variable(lstm_output[0].data.new(len(batch)).zero_())
+        losses = Variable(lstm_output[0].data.new(len(batch)).zero_())
         for indices in indices_subbatch:
             example_trace = batch.traces[indices[0]]
             for step, example_sample in enumerate(example_trace.samples):
@@ -179,18 +177,15 @@ class NN(nn.Module):
                 # TODO(Lezcano) Implement checking proposal params for NaN
                 values_tensor = layer.prior.value.unpack([trace.samples[step].distr_fbb
                                                           for trace in (batch.traces[i] for i in indices)])
-                loss[indices] += layer.loss(proposals_params, Variable(values_tensor))
+                losses[indices] += layer.loss(proposals_params, Variable(values_tensor))
             n += len(indices)
-        #regularized_loss = regularize(loss, self._regularization)
-        #regularized_loss = regularize_expectation(loss)
-        #regularized_loss = regularize(loss)
-        regularized_loss = regularize_expectation_exp(loss)
+        loss = losses.mean()
 
         if self.training:
             optimizer.zero_grad()
-            regularized_loss.backward()
+            loss.backward()
             optimizer.step()
-        return float(regularized_loss)
+        return float(loss)
 
     def move_to_cuda(self, device_id=None):
         self.on_cuda = True

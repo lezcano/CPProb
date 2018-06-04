@@ -32,7 +32,6 @@ def main():
     parser.add_argument('--device', help='Compile / Infer: Selected CUDA device (-1: all, 0: 1st device, 1: 2nd device, etc.)', default=0, type=int)
     parser.add_argument('--save_after_n_traces', help="""Compile: Add a list of numbers and the nn will be saved after
     n traces, for each n in the list. n will be appended to the name of the file.\nExample: --save_after_n_traces 100 1000 10000""", nargs='+', type=int, default=[])
-    parser.add_argument("--regularization", help="Compile: Variance-based Regularization.\n Equiv to rho / n in arxiv:1610.02581", default=0, type=float)
     parser.add_argument("--obs_embedding", help="Compile: Observation embedding", choices=["fc", "lstm"], default="fc", type=str)
     parser.add_argument("-s", "--save_file_name", help="Compile: File name to save the NN", type=str)
     parser.add_argument("-l", "--load_file_name", help="Compile / Infer: File name to load the NN", type=str)
@@ -61,7 +60,6 @@ def main():
               save_file_name=opt.save_file_name,
               load_file_name=opt.load_file_name,
               address=opt.tcp_addr,
-              regularization=opt.regularization,
               obs_embedding=opt.obs_embedding,
               minibatch_size=opt.minibatch_size,
               save_after_n_traces=opt.save_after_n_traces,

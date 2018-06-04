@@ -7,10 +7,10 @@ from infcomp.settings import settings
 from infcomp.util import save_if_its_time
 
 
-def train(directory, save_file_name, load_file_name, address, regularization,
-          obs_embedding, minibatch_size, save_after_n_traces, traces_dir=None):
+def train(directory, save_file_name, load_file_name, address, obs_embedding, 
+        minibatch_size, save_after_n_traces, traces_dir=None):
     if load_file_name is None:
-        nn = NN(directory=directory, file_name=save_file_name, regularization=regularization, obs_embedding_type=obs_embedding)
+        nn = NN(directory=directory, file_name=save_file_name, obs_embedding_type=obs_embedding)
         Logger.logger.log_info("New nn will be saved to: {}/{}".format(directory, save_file_name))
     else:
         nn = load_nn(load_file_name)

@@ -59,11 +59,11 @@ void execute(const F & model,
             }
             std::cout << "Offline Training" << std::endl
                       << "Traces dumped into " << dump_path << std::endl;
-            cpprob::compile(model, "", dump_path.string(), batch_size, n_batches);
+            cpprob::compile(model, "", n_batches, dump_path.string(), batch_size);
         }
         else {
             std::cout << "Online Training" << std::endl;
-            cpprob::compile(model, tcp_addr_compile, "", batch_size, n_batches);
+            cpprob::compile(model, tcp_addr_compile, n_batches, "", batch_size);
         }
     }
     if (csis || sis) {
