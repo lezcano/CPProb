@@ -14,7 +14,7 @@ class ProjectionType:
     def pack_value(self, builder, mod, distr_name, value):
         # Flatbuffer is horrible
         if self._scalar:
-            return value.data.squeeze()[0]
+            return value.data.squeeze().item()
         else:
             # TODO(Lezcano) Chech if there's a better way of doing this
             vec_numpy = value.data.cpu().numpy().squeeze()

@@ -49,12 +49,6 @@ def main():
         if not os.path.exists(opt.dir):
             print("Creating directory {}".format(opt.dir))
             os.mkdir(opt.dir)
-        with open("{}/commit-{}{}".format(opt.dir, prefix, time_stamp), "w") as f:
-            commit_query = "git rev-parse HEAD"
-            commit = Popen(commit_query, shell=True, stdout=PIPE).stdout.read().decode('utf8')
-            branch_query = "git rev-parse --abbrev-ref HEAD"
-            branch = Popen(branch_query, shell=True, stdout=PIPE).stdout.read().decode('utf8')
-            f.write("{}\n{}".format(branch, commit))
         if opt.tcp_addr is None:
             opt.tcp_addr = "tcp://127.0.0.1:5555"
         if opt.save_file_name is None:

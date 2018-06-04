@@ -1,9 +1,6 @@
-FROM gbaydin/pytorch_cuda9
+FROM pytorch/pytorch
 
-RUN conda install -c brian-team py-cpuinfo -n pytorch-py3.6
-RUN conda install -c anaconda pyzmq -n pytorch-py3.6
-RUN conda install -c omnia termcolor -n pytorch-py3.6
-RUN pip install flatbuffers
+RUN pip install flatbuffers py-cpuinfo pyzmq termcolor
 
 RUN mkdir /code
 

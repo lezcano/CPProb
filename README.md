@@ -1,7 +1,5 @@
 # CPProb: Scalable Probabilistic Programming [![Build Status](https://travis-ci.com/Lezcano/CPProb.svg?token=p9LTU5yGsuwiT6ypq45J&branch=master)](https://travis-ci.com/Lezcano/CPProb)
 
-> Library to perform probabilistic inference in C++14.
-
 ## Overview
 
 __CPProb__ is a probabilistic programming library specially designed to perform fast black-box Bayesian inference
@@ -15,9 +13,9 @@ In both cases, one has to rewrite their model in the DSL of choice, or in Python
 satisfactory solution when the model that one has in hand is longer than a few thousand lines of code.
 
 The main goals of __CPProb__ are
-  * __Efficiency__:   You don't pay for what you don't use
-  * __Scalability__:  It should be easy to use in existing C++ models
-  * __Flexibility__:  The user should be able to extend it according to her needs.
+1. __Efficiency__:   You don't pay for what you don't use
+2. __Scalability__:  It should be easy to use in existing C++ models
+3. __Flexibility__:  The user should be able to extend it according to her needs.
 
 A model in __CPProb__ is nothing but a C++ function that takes the observations as arguments and
 simulates the model via the use of `sample` and `observe` statements. __CPProb__ provides a third
@@ -34,6 +32,7 @@ and we are interested in computing the posterior distribution
 
 These ideas are translated into the following model:
 ```c++
+// File: "models/gaussian.cpp"
 #include <boost/random/normal_distribution.hpp>
 #include "cpprob/cpprob.hpp"
 
@@ -103,7 +102,7 @@ Let's explain how to set-up a simple SIS inference engine on the model that we p
 #include <iostream>
 #include <string>
 #include <tuple>
-#include "models/model.hpp"
+#include "models/gaussian.hpp"
 #include "cpprob/cpprob.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
 
@@ -134,37 +133,38 @@ Now, with a similar script as the first one, we are ready to train the neural ne
 #include <iostream>
 #include <string>
 #include <tuple>
-#include "models/model.hpp"
+#include "models/gaussian.hpp"
 #include "cpprob/cpprob.hpp"
 #include "cpprob/postprocess/stats_printer.hpp"
 
 int main (int argc, char* argv[]) {
     if (argc != 2) { std::cout << "No arguments provided.\n"; return 1; }
-    if (argv[1] == "compile") {
-        const std::string tcp_addr = "tcp://0.0.0.0:5555";
-        const int batch_size = 128;
-        cpprob::compile(&models::gaussian_unknown_mean, tcp_addr, "", batch_size);
+    if (argv[1] == std::string("compile")) {
+        cpprob::compile(&models::gaussian_unknown_mean);
     }
-    else if (argv[1] == "infer") {
+    else if (argv[1] == std::string("infer")) {
         const auto observes = std::make_tuple(3., 4.);
-        const auto samples = 100;
-        const std::string outfile = "posterior_csis";
-        const std::string tcp_addr = "tcp://127.0.0.1:6666";
-        cpprob::inference(cpprob::StateType::csis, &models::gaussian_unknown_mean, observes, samples, outfile, tcp_addr);
+        const auto samples  = 100;
+        const auto outfile  = std::string("posterior_csis");
+        cpprob::inference(cpprob::StateType::csis, &models::gaussian_unknown_mean, observes, samples, outfile);
         std::cout << cpprob::StatsPrinter{outfile} << std::endl;
     }
 }
 ```
 We are just missing a folder, to save the trained neural network, suppose that it's called `workspace`, then we can start execute the neural net for compilation and inference respectively with
 ```shell
-docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode compile
-docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode infer
+docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode compile --dir /workspace
+docker run --rm -it -v $PWD:/workspace --net=host neuralnet python3 -m main --mode infer --dir /workspace
 ```
 
-A few side-notes on this last part. The first one is that during inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state. Another thing to note is that the neural network can be executed in a GPU (or several) using `nvidia-docker`. Finally, since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is of course possible to specify the number of training examples to use, as an optional argument passed to `cpprob::compile`.
+> Note: During inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state.
+
+> Note: The neural network can be executed in one or several GPUs using `nvidia-docker`.
+
+> Note: Since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is preferable to kill the neuralnet before the C++ program to avoid getting a nasty error. This error does not interfere with the training or saving of the neuralnet. It is of course possible to specify the number of training examples to use as an optional argument passed to `cpprob::compile`.
 
 ## References
-An in-depth explanation of __CPProb__'s design can be found [in here](./doc/compiled_inference.pdf):
+An in-depth explanation of __CPProb__'s design can be found [here](./doc/compiled_inference.pdf):
 ```
 @mastersthesis{lezcano2017cpprob,
     author    = "Mario Lezcano Casado",
