@@ -72,7 +72,7 @@ class ObserveEmbeddingCNN3D4C(Observation):
         )
 
         # Compute CNN output dim:
-        cnn_output = self._cnn(torch.randn(1, 1, *input_size, device=settings.device))
+        cnn_output = self._cnn(torch.zeros(1, 1, *input_size, device=settings.device))
         self.cnn_output_dim = cnn_output.numel()
 
         self._projection = nn.Sequential(

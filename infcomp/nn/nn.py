@@ -86,7 +86,7 @@ class NN(nn.Module):
         try:
             prev_address = self._get_address(previous_sample)
             # unsqueeze(1) so that we can torch.cat it to the observation
-            return prev_address([previous_sample.distr_fbb]).unsqueeze(1)
+            return prev_address(prev_address.unpack([previous_sample.distr_fbb])).unsqueeze(1)
         except ValueError:
             return self._prev_value_embed
 
@@ -183,6 +183,8 @@ class NN(nn.Module):
             value = value.view(-1)
         obs_variable = value.unsqueeze(0)
         if self._obs_sequences:
+            # Batch x Length x Dim (=1)
+            obs_variable = obs_variable.unsqueeze(2)
             obs_variable = nn.utils.rnn.pack_padded_sequence(obs_variable, [len(value)], batch_first=True)
         self._observation_embedding = self._observation_layer(obs_variable)
 
