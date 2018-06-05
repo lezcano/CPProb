@@ -176,7 +176,7 @@ The only requisites to use it are to include our model in the `main.cpp` file, l
 After this, we will have access to many different configuration options by default. For example, compiling and executing CSIS on the __CPProb__ side (the neural net still needs to be executed manually) is as easy as calling
 ```shell
 ./main --compile --model my_model
- ./main -sis --csis --estimate --model my_model -n 100 -o "3 4"
+./main -sis --csis --estimate --model my_model --n_samples 100 --observes "3 4"
 ```
 where we are executing both SIS and CSIS inference with 100 particles each and observations `x1 = 3` and `x2 = 4`.
 
