@@ -15,7 +15,7 @@ satisfactory solution when the model that one has in hand is longer than a few t
 The main goals of __CPProb__ are
 1. __Efficiency__:   You don't pay for what you don't use
 2. __Scalability__:  It should be easy to use in existing C++ models
-3. __Flexibility__:  The user should be able to extend it according to her needs.
+3. __Flexibility__:  You should be able to extend it according to your needs.
 
 A model in __CPProb__ is nothing but a C++ function that takes the observations as arguments and
 simulates the model via the use of `sample` and `observe` statements. __CPProb__ provides a third
@@ -164,11 +164,22 @@ docker run --rm -it -v $PWD/workspace:/workspace --net=host neuralnet python3 -m
 ./main_csis infer
 ```
 
-> Note: During inference, the neural network has to be executed first, and after that __CPProb__ should be executed. Otherwise both parties end up in a deadlock state.
-
 > Note: The neural network can be executed in one or several GPUs using `nvidia-docker`.
 
-> Note: Since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the neuralnet job. It is preferable to kill the neuralnet before the C++ program to avoid getting a nasty error. This error does not interfere with the training or saving of the neuralnet. It is of course possible to specify the number of training examples to use as an optional argument passed to `cpprob::compile`.
+> Note: Since we have not specified on the __CPProb__ side the number of traces that we want to use for training, the way to finish the training is just by killing the _neuralnet_ job. It is of course possible to specify the number of training examples to use as an optional argument passed to `cpprob::compile`.
+
+## Automatic Model Testing
+Writing our own main file whenever we want to test a model might be instructive the first few times, but it becomes tedious rather quickly. For this reason, re provide a console interface in (./src/main.cpp) that helps automatising the process of using the diferent inference algorithms on different models.
+
+The only requisites to use it are to include our model in the `main.cpp` file, link against our model using the `CMakeLists.txt` file, adding the option with a name and a pointer to our model into the `models` variable in the `main()` function and adding the corresponding `if/else` switch below.
+
+After this, we will have access to many different configuration options by default. For example, compiling and executing CSIS on the __CPProb__ side (the neural net still needs to be executed manually) is as easy as calling
+```shell
+./main --compile --model my_model
+ ./main -sis --csis --estimate --model my_model -n 100 -o "3 4"
+```
+where we are executing both SIS and CSIS inference with 100 particles each and observations `x1 = 3` and `x2 = 4`.
+
 
 ## References
 An in-depth explanation of __CPProb__'s design can be found [here](./doc/compiled_inference.pdf):

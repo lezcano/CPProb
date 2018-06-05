@@ -1,4 +1,5 @@
 import zmq
+from infcomp.logger import Logger
 import infcomp.protocol.Message as Message
 
 
@@ -34,7 +35,10 @@ class Socket:
         self._context.term()
 
     def send(self, request):
-        self._socket.send(request)
+        try:
+            self._socket.send(request)
+        except zmq.error.ZMQError:
+            print("Could not send the Message. Is CPProb listening?")
 
     def receive(self):
         return self._socket.recv()
