@@ -1,4 +1,4 @@
-# CPProb: Scalable Probabilistic Programming [![Build Status](https://travis-ci.com/Lezcano/CPProb.svg?token=p9LTU5yGsuwiT6ypq45J&branch=master)](https://travis-ci.com/Lezcano/CPProb)
+# CPProb: Scalable Probabilistic Programming [![Build Status](https://travis-ci.org/Lezcano/CPProb.svg?branch=master)](https://travis-ci.org/Lezcano/CPProb)
 
 ## Overview
 
