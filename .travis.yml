@@ -13,22 +13,22 @@ cache:
 matrix:
   include:
     - env: COMPILER=g++-6
-      addons: { apt: { packages: ["g++-6", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - env: COMPILER=g++-7
-      addons: { apt: { packages: ["g++-7", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - env: COMPILER=clang++-3.8
-      addons: { apt: { packages: ["clang-3.8", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["clang-3.8"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - env: COMPILER=clang++-3.9
-      addons: { apt: { packages: ["clang-3.9", "libzmq3-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["clang-3.9"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - env: COMPILER=clang++-4.0
-      addons: { apt: { packages: ["clang-4.0", "libzmq3-dev"], sources: ["llvm-toolchain-trusty-4.0"] } }
+      addons: { apt: { packages: ["clang-4.0"], sources: ["llvm-toolchain-trusty-4.0"] } }
 
     - env: COMPILER=clang++-5.0
-      addons: { apt: { packages: ["clang-5.0", "libzmq3-dev"], sources: ["llvm-toolchain-trusty-5.0"] } }
+      addons: { apt: { packages: ["clang-5.0"], sources: ["llvm-toolchain-trusty-5.0"] } }
 
 
 install:
@@ -71,25 +71,25 @@ install:
     fi
 
   # Install Boost headers
-  - BOOST_VERSION=1.66.0 # Keep this in sync with the cached directory
-  - BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
-  - |
-    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
-      BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
-      mkdir -p ${BOOST_DIR}
-      { travis_retry wget -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-    fi
+  #- BOOST_VERSION=1.66.0 # Keep this in sync with the cached directory
+  #- BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+  #- |
+  #  if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+  #    BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
+  #    mkdir -p ${BOOST_DIR}
+  #    { travis_retry wget -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+  #  fi
 
 before_script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - |
-    if [[ "${CXX%%+*}" == "clang" ]]; then
-        (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 toolset=clang cxxflags="-std=c++1y ${CXXFLAGS}" include="${BOOST_DIR}" linkflags="${LDFLAGS}" --with-program_options --with-filesystem)
-    else
-        (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 cxxflags=-std=c++1y --with-program_options --with-filesystem)
-    fi
+    #- |
+    #- if [[ "${CXX%%+*}" == "clang" ]]; then
+    #-     (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 toolset=clang cxxflags="-std=c++1y ${CXXFLAGS}" include="${BOOST_DIR}" linkflags="${LDFLAGS}" --with-program_options --with-filesystem)
+    #- else
+    #-     (cd ${BOOST_DIR} && ./bootstrap.sh --with-libraries=program_options,filesystem && ./b2 cxxflags=-std=c++1y --with-program_options --with-filesystem)
+    #- fi
   - (cd dependencies && ./install.sh)
-  - (mkdir build && cd build && cmake .. -DBOOST_ROOT="${BOOST_DIR}" -DCMAKE_PREFIX_PATH="${TRAVIS_BUILD_DIR}/dependencies/install")
+  - (mkdir build && cd build && cmake .. -DCMAKE_PREFIX_PATH="${TRAVIS_BUILD_DIR}/dependencies/install")
 
 script:
   - cd ${TRAVIS_BUILD_DIR}/build

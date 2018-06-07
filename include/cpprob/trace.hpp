@@ -40,15 +40,12 @@ public:
         return ids_predict_.emplace(std::forward<String>(addr), ids_predict_.size()).first->second;
     }
 
-
-
 private:
     // Friends
     friend class StateInfer;
 
     // Static Members
     static std::unordered_map<std::string, std::size_t> ids_predict_;
-
 
     // Attributes
     // We have to separate them so we can dump them in different files.
