@@ -18,6 +18,9 @@ matrix:
     - env: COMPILER=g++-7
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
+    - env: COMPILER=g++-8
+      addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
+
     - env: COMPILER=clang++-3.8
       addons: { apt: { packages: ["clang-3.8"], sources: ["ubuntu-toolchain-r-test"] } }
 
@@ -29,6 +32,9 @@ matrix:
 
     - env: COMPILER=clang++-5.0
       addons: { apt: { packages: ["clang-5.0"], sources: ["llvm-toolchain-trusty-5.0"] } }
+
+    - env: COMPILER=clang++-6.0
+      addons: { apt: { packages: ["clang-6.0"], sources: ["llvm-toolchain-trusty-6.0"] } }
 
 
 install:
@@ -54,6 +60,7 @@ install:
       elif [[ "${CXX}" == "clang++-3.9" ]]; then LLVM_VERSION="3.9.1";
       elif [[ "${CXX}" == "clang++-4.0" ]]; then LLVM_VERSION="4.0.0";
       elif [[ "${CXX}" == "clang++-5.0" ]]; then LLVM_VERSION="5.0.0";
+      elif [[ "${CXX}" == "clang++-6.0" ]]; then LLVM_VERSION="6.0.0";
       fi
       LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
       LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
