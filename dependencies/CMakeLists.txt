@@ -25,13 +25,13 @@ ExternalProject_Add(ZeroMQ
   UPDATE_COMMAND ""    # Disable source work-tree update
 )
 
-#ExternalProject_Add(flatbuffers
-#  URL            https://github.com/google/flatbuffers/archive/v1.7.0.zip
-#  INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"
-#  CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-#  TEST_COMMAND   ""    # Disable test step
-#  UPDATE_COMMAND ""    # Disable source work-tree update
-#)
+ExternalProject_Add(flatbuffers
+  URL            https://github.com/google/flatbuffers/archive/v1.9.0.zip
+  INSTALL_DIR    "${CMAKE_INSTALL_PREFIX}"
+  CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+  TEST_COMMAND   ""    # Disable test step
+  UPDATE_COMMAND ""    # Disable source work-tree update
+)
 
 ExternalProject_add(
     boost
