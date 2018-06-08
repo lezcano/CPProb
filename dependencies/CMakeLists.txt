@@ -41,5 +41,5 @@ ExternalProject_add(
     CONFIGURE_COMMAND ./bootstrap.sh --with-libraries=program_options,filesystem
     INSTALL_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ./b2 install -j8 toolset=gcc cxxflags=-std=c++14 --with-program_options --with-filesystem
+    BUILD_COMMAND ./b2 install -j8 cxxflags=-std=c++1y --with-program_options --with-filesystem
 )
