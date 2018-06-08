@@ -18,8 +18,9 @@ matrix:
     - env: COMPILER=g++-7
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
-    - env: COMPILER=g++-8
-      addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
+      # Doesn't play well with flatbuffers
+      #- env: COMPILER=g++-8
+      #- addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - env: COMPILER=clang++-3.8
       addons: { apt: { packages: ["clang-3.8"], sources: ["ubuntu-toolchain-r-test"] } }
