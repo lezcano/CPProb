@@ -6,7 +6,7 @@ __CPProb__ is a probabilistic programming library specially designed to perform 
 on probabilistic models written in arbitrary C++14.
 
 __CPProb__ provides with an easy way to perform Bayesian inference on pre-existing C++ codebases,
-making almost no restrictions on the constructions within the language that can be used.
+making no restrictions on the features that can be used at a language level.
 One of the main problems of modern probabilistic programming is the means by which it has to be performed.
 Either one can choose to perform it using domain specific languages (DSL), or python-based variational libraries.
 In both cases, one has to rewrite their model in the DSL of choice, or in Python. This is not a
@@ -19,7 +19,7 @@ The main goals of __CPProb__ are
 
 A model in __CPProb__ is nothing but a C++ function that takes the observations as arguments and
 simulates the model via the use of `sample` and `observe` statements. __CPProb__ provides a third
-basic statement called `predict, which is used to determine the latent variables from which one wants to
+basic statement, `predict`, which is used to determine the latent variables from which one wants to
 compute their posterior marginal distribution.
 
 As a "hello world" in Bayesian inference, we provide here a conjugate-Gaussian model given by the equations
